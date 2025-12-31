@@ -1,65 +1,67 @@
-# Selfconta
+# Doclane
 
-**Selfconta** is a document workflow platform designed to simplify the
-relationship between accountants and their clients.
+**Doclane** is a document request and workflow platform designed to help
+professionals collect documents from their clients in a clear,
+structured, and reliable way.
 
-It enables accountants to request documents (one-time or recurring),
-while clients upload exactly what is needed, on time, in a clear and
-structured way.
+It enables teams to request documents (one-time or recurring), while
+clients upload exactly what is needed, on time, through a simple and
+secure portal.
 
-Selfconta focuses on reducing communication friction, eliminating
-document chaos, and creating a better experience for both sides.
+Doclane focuses on eliminating document chaos, reducing follow-ups, and
+creating a smooth experience for both professionals and their clients.
 
 ---
 
 ## 🎯 Problem
 
-Accountants and small businesses typically exchange documents through
-email, messaging apps, or shared folders.
+Professionals and their clients often exchange documents via email,
+messaging apps, or shared folders.
 
-This leads to:
-- lost or duplicated documents
-- constant follow-ups
-- lack of visibility on what is missing
-- wasted time and unnecessary stress
+This results in:
+- lost or duplicated files
+- constant follow-ups and reminders
+- lack of visibility into what is missing or overdue
+- wasted time and unnecessary friction
 
 ---
 
 ## ✅ Solution
 
-Selfconta provides a single, structured portal where:
+Doclane provides a single, structured workspace where:
 
-- Accountants create clients and define required documents
+- Professionals create clients and define required documents
 - Document requests can be one-time or recurring (e.g. monthly)
 - Clients upload files directly to each request
-- Both sides see clear status: missing, uploaded, overdue
+- Both sides see clear request status: missing, uploaded, overdue
 
-Selfconta is **not** accounting software.
-It is a workflow and document request system.
+Doclane is **not** a document storage service.
+It is a document request and workflow platform.
 
 ---
 
 ## 👥 User Roles
 
-### Accountant
+### Professional
 - Creates and manages clients
 - Defines document requests
 - Sets recurrence and deadlines
 - Monitors document status across all clients
 
-### Client (Business)
+### Client
 - Accesses only their own account
-- Sees required documents
+- Sees requested documents
 - Uploads files securely
-- Receives reminders for missing items
+- Receives reminders for missing or overdue items
 
 ---
 
 ## 🔁 Core Feature: Recurring Requests
 
-Accountants can mark document requests as recurring.
-Selfconta automatically generates new requests based on the defined
-schedule (e.g. every 30 days) and notifies clients accordingly.
+Document requests can be marked as recurring.
+Doclane automatically generates new requests based on the defined
+schedule (e.g. every 30 days) and notifies clients when action is
+required.
 
 ---
 
@@ -69,14 +71,14 @@ schedule (e.g. every 30 days) and notifies clients accordingly.
 - Frontend: React
 - Database: PostgreSQL
 - File Storage: Amazon S3 (or compatible object storage)
-- Authentication: JWT-based role authentication
+- Authentication: JWT-based role-based authentication
 
 ---
 
 ## 🚧 Project Status
 
-Selfconta is currently under active development.
-The product is in early-stage MVP phase.
+Doclane is currently under active development and in early-stage MVP
+phase.
 
 ---
 
