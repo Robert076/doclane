@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Robert076/doclane/backend/handlers/auth"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
@@ -17,6 +18,9 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World!"))
+	})
+	r.Route("/auth", func(r chi.Router) {
+		r.Post("/login", auth.LoginHandler)
 	})
 	http.ListenAndServe(":8080", r)
 }
