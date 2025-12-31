@@ -63,25 +63,6 @@ Doclane automatically generates new requests based on the defined
 schedule (e.g. every 30 days) and notifies clients when action is
 required.
 
----
-
-## 🧱 Tech Stack (Initial)
-
-- Backend: Go
-- Frontend: React
-- Database: PostgreSQL
-- File Storage: Amazon S3 (or compatible object storage)
-- Authentication: JWT-based role-based authentication
-
----
-
-## 🚧 Project Status
-
-Doclane is currently under active development and in early-stage MVP
-phase.
-
----
-
 ## 📄 License
 
 This project is licensed under a proprietary license.
