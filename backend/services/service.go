@@ -5,5 +5,6 @@ import (
 )
 
 type IUserService interface {
+	AddUser(email string, password string) (int, error)
 	GetUserByEmail(email string) (models.User, error)
 }

@@ -2,36 +2,39 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/Robert076/doclane/backend/types"
+	"github.com/Robert076/doclane/backend/types/errors"
+	"github.com/Robert076/doclane/backend/types/requests"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/config"
 	"golang.org/x/crypto/bcrypt"
 )
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	req := types.LoginRequest{}
+	req := requests.LoginRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		utils.WriteError(w, errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid request body received. %v", err)})
 		return
 	}
 
 	user, err := config.UserService.GetUserByEmail(req.Email)
 	if err != nil {
-		http.Error(w, "invalid email or password", http.StatusBadRequest)
+		utils.WriteError(w, errors.ErrNotFound{Msg: "Invalid email or password."})
 		return
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password)); err != nil {
-		http.Error(w, "invalid email or password", http.StatusBadRequest)
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid email or password."})
 		return
 	}
 
 	token, err := utils.GenerateJWT(user)
 	if err != nil {
-		http.Error(w, "could not generate jwt token", http.StatusInternalServerError)
+		utils.WriteError(w, errors.ErrInternalServerError{Msg: fmt.Sprintf("Could not encode token. %v", err)})
 		return
 	}
 
@@ -45,5 +48,5 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &authCookie)
 
-	w.WriteHeader(http.StatusOK)
+	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{Success: true, Token: token})
 }
