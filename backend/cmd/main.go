@@ -10,6 +10,7 @@ import (
 )
 
 func main() {
+
 	r := chi.NewRouter()
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -21,6 +22,7 @@ func main() {
 	})
 	r.Route("/auth", func(r chi.Router) {
 		r.Post("/login", auth.LoginHandler)
+		r.Post("/register", auth.RegisterHandler)
 	})
 	http.ListenAndServe(":8080", r)
 }
