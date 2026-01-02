@@ -1,0 +1,24 @@
+.button {
+  width: 80%;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  box-shadow: var(--box-shadow-default);
+  height: var(--height-input-and-button);
+  font-size: var(--font-size-m);
+  background-color: var(--color-primary);
+  color: white;
+  font-weight: 500;
+  margin: var(--margin-y-10);
+  cursor: pointer;
+  transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.button:hover {
+  filter: brightness(105%);
+  transform: translateY(-1px); 
+}
+
+.button:active {
+  background-color: #005bb5; 
+  transform: translateY(0); 
+}

@@ -1,0 +1,37 @@
+:root {
+  --background: #f0f0f0;
+  --margin-y-10: 10px 0;
+  --border-default: 1px solid rgba(0, 0, 0, 0.1);
+  --border-radius-default: 10px;
+  --box-shadow-default: 1px 3px 4px rgba(0, 0, 0, 0.05);
+  --text-color-secondary: #838383;
+  --height-input-and-button: 40px;
+  --font-size-m: 16px;
+  --color-primary: rgb(68, 173, 238);
+
+  --gap-10: 10px;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
+  background: var(--background);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+  font-family: 'Roboto';
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
