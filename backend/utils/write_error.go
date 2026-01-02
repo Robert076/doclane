@@ -19,6 +19,8 @@ func WriteError(w http.ResponseWriter, err error) {
 		WriteJSONSafe(w, http.StatusRequestEntityTooLarge, types.APIResponse{Success: false, Err: err.Error()})
 	case errors.ErrUnauthorized:
 		WriteJSONSafe(w, http.StatusUnauthorized, types.APIResponse{Success: false, Err: err.Error()})
+	case errors.ErrConflict:
+		WriteJSONSafe(w, http.StatusConflict, types.APIResponse{Success: false, Err: err.Error()})
 	case errors.ErrInternalServerError:
 		WriteJSONSafe(w, http.StatusInternalServerError, types.APIResponse{Success: false, Err: err.Error()})
 	default:

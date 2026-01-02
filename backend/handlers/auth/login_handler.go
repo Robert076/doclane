@@ -41,6 +41,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	authCookie := http.Cookie{
 		Name:     "auth_cookie",
 		Value:    token,
+		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
 		Secure:   false,
 		Expires:  time.Now().Add(time.Hour * 24),
@@ -48,5 +49,5 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	http.SetCookie(w, &authCookie)
 
-	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{Success: true, Token: token})
+	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{Success: true, Data: token})
 }

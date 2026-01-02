@@ -5,9 +5,11 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/Robert076/doclane/backend/types/requests"
 	"github.com/Robert076/doclane/backend/utils"
+	"github.com/Robert076/doclane/backend/utils/config"
 )
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
@@ -16,4 +18,12 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid body received. %v", err)})
 		return
 	}
+
+	id, err := config.UserService.AddUser(req.Email, req.Password, req.Role)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+
+	utils.WriteJSONSafe(w, http.StatusCreated, types.APIResponse{Success: true, Data: id})
 }

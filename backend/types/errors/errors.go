@@ -77,3 +77,16 @@ func IsInternalServerError(err error) bool {
 	_, ok := err.(ErrInternalServerError)
 	return ok
 }
+
+type ErrConflict struct {
+	Msg string
+}
+
+func (e ErrConflict) Error() string {
+	return e.Msg
+}
+
+func IsConflict(err error) bool {
+	_, ok := err.(ErrConflict)
+	return ok
+}

@@ -2,8 +2,11 @@ package repositories
 
 import (
 	"database/sql"
+	"strconv"
+	"strings"
 
 	"github.com/Robert076/doclane/backend/models"
+	"github.com/Robert076/doclane/backend/types/errors"
 )
 
 type UserRepository struct {
@@ -12,6 +15,88 @@ type UserRepository struct {
 
 func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
+}
+
+func (repo *UserRepository) GetUsers(
+	limit *int,
+	offset *int,
+	orderBy *string,
+	order *string,
+) ([]models.User, error) {
+
+	users := []models.User{}
+
+	// coloane permise pentru ORDER BY (whitelist)
+	allowedOrderBy := map[string]string{
+		"id":         "id",
+		"email":      "email",
+		"created_at": "created_at",
+		"updated_at": "updated_at",
+		"role":       "role",
+	}
+
+	query := `
+		SELECT id, email, password_hash, role, professional_id, is_active, created_at, updated_at
+		FROM users
+	`
+
+	// ORDER BY
+	if orderBy != nil {
+		column, ok := allowedOrderBy[*orderBy]
+		if ok {
+			direction := "ASC"
+			if order != nil && (*order == "asc" || *order == "desc") {
+				direction = strings.ToUpper(*order)
+			}
+			query += " ORDER BY " + column + " " + direction
+		}
+	}
+
+	args := []interface{}{}
+	argIndex := 1
+
+	// LIMIT
+	if limit != nil {
+		query += " LIMIT $" + strconv.Itoa(argIndex)
+		args = append(args, *limit)
+		argIndex++
+	}
+
+	// OFFSET
+	if offset != nil {
+		query += " OFFSET $" + strconv.Itoa(argIndex)
+		args = append(args, *offset)
+	}
+
+	rows, err := repo.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.PasswordHash,
+			&user.Role,
+			&user.ProfessionalID,
+			&user.IsActive,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }
 
 func (repo *UserRepository) AddUser(user models.User) (int, error) {
@@ -58,7 +143,7 @@ func (repo *UserRepository) GetUserByEmail(email string) (models.User, error) {
 
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return models.User{}, err
+			return models.User{}, errors.ErrNotFound{Msg: "User not found."}
 		}
 
 		return models.User{}, err
