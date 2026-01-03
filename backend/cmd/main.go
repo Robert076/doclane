@@ -6,6 +6,7 @@ import (
 
 	"github.com/Robert076/doclane/backend/handlers/auth"
 	auth_middleware "github.com/Robert076/doclane/backend/handlers/auth/middleware"
+	document_handler "github.com/Robert076/doclane/backend/handlers/documents"
 	user_handler "github.com/Robert076/doclane/backend/handlers/users"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -38,6 +39,7 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth_middleware.Middleware)
 		r.Get("/users", user_handler.GetUsersHandler)
+		r.Post("/document-requests", document_handler.AddDocumentHandler)
 	})
 	http.ListenAndServe(":8080", handler)
 }

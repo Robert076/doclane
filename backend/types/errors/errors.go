@@ -90,3 +90,16 @@ func IsConflict(err error) bool {
 	_, ok := err.(ErrConflict)
 	return ok
 }
+
+type ErrUnprocessableContent struct {
+	Msg string
+}
+
+func (e ErrUnprocessableContent) Error() string {
+	return e.Msg
+}
+
+func IsUnprocessableContent(err error) bool {
+	_, ok := err.(ErrUnprocessableContent)
+	return ok
+}

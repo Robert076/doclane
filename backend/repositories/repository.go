@@ -9,7 +9,7 @@ type IUserRepository interface {
 }
 
 type IDocumentRepository interface {
-	CreateDocumentRequest(req models.DocumentRequest) (int, error)
+	AddDocumentRequest(req models.DocumentRequest) (int, error)
 	GetDocumentRequestByID(id int) (models.DocumentRequest, error)
 	GetDocumentRequestsByProfessional(professionalID int) ([]models.DocumentRequest, error)
 	GetDocumentRequestsByClient(clientID int) ([]models.DocumentRequest, error)

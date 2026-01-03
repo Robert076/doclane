@@ -20,6 +20,7 @@ import (
 
 var JWTSecret string
 var UserService *services.UserService
+var DocumentService *services.DocumentService
 var S3Client *s3.Client
 
 func init() {
@@ -56,6 +57,14 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+
+	bucketName := os.Getenv("S3_BUCKET_NAME")
+	if bucketName == "" {
+		log.Fatal("S3_BUCKET_NAME not set")
+	}
+
+	documentRepository := repositories.NewDocumentRepository(db)
+	DocumentService = services.NewDocumentService(documentRepository, S3Client, bucketName)
 }
 
 func newS3Client() (*s3.Client, error) {

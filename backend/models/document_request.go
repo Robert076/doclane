@@ -22,4 +22,5 @@ type DocumentFile struct {
 	MimeType          *string   `db:"mime_type,omitempty" json:"mime_type,omitempty"`
 	FileSize          *int64    `db:"file_size,omitempty" json:"file_size,omitempty"`
 	UploadedAt        time.Time `db:"uploaded_at" json:"uploaded_at"`
+	S3VersionID       *string   `db:"s3_version_id" json:"s3_version_id"`
 }

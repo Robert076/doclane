@@ -14,7 +14,7 @@ func NewDocumentRepository(db *sql.DB) *DocumentRepository {
 	return &DocumentRepository{db: db}
 }
 
-func (repo *DocumentRepository) CreateDocumentRequest(req models.DocumentRequest) (int, error) {
+func (repo *DocumentRepository) AddDocumentRequest(req models.DocumentRequest) (int, error) {
 	var id int
 	err := repo.db.QueryRow(
 		`INSERT INTO document_requests (professional_id, client_id, title, description, due_date, status)
@@ -45,6 +45,41 @@ func (r *DocumentRepository) GetDocumentRequestByID(id int) (models.DocumentRequ
 	return req, err
 }
 
+func (r *DocumentRepository) GetDocumentRequestsByProfessional(professionalID int) ([]models.DocumentRequest, error) {
+	rows, err := r.db.Query(`
+		SELECT id, professional_id, client_id, title, description, due_date, status, created_at, updated_at
+		FROM document_requests
+		WHERE professional_id=$1
+		ORDER BY created_at DESC
+	`, professionalID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var requests []models.DocumentRequest
+	for rows.Next() {
+		var req models.DocumentRequest
+		err := rows.Scan(
+			&req.ID,
+			&req.ProfessionalID,
+			&req.ClientID,
+			&req.Title,
+			&req.Description,
+			&req.DueDate,
+			&req.Status,
+			&req.CreatedAt,
+			&req.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		requests = append(requests, req)
+	}
+
+	return requests, rows.Err()
+}
+
 func (r *DocumentRepository) GetDocumentRequestsByClient(clientID int) ([]models.DocumentRequest, error) {
 	rows, err := r.db.Query(`
         SELECT id, professional_id, client_id, title, description, due_date, status, created_at, updated_at
@@ -71,41 +106,6 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(clientID int) ([]models
 			&req.CreatedAt,
 			&req.UpdatedAt,
 		); err != nil {
-			return nil, err
-		}
-		requests = append(requests, req)
-	}
-
-	return requests, rows.Err()
-}
-
-func (r *DocumentRepository) GetDocumentRequestsByProfessional(professionalID int) ([]models.DocumentRequest, error) {
-	rows, err := r.db.Query(`
-        SELECT id, professional_id, client_id, title, description, due_date, status, created_at, updated_at
-        FROM document_requests
-        WHERE professional_id=$1
-        ORDER BY created_at DESC
-    `, professionalID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var requests []models.DocumentRequest
-	for rows.Next() {
-		var req models.DocumentRequest
-		err := rows.Scan(
-			&req.ID,
-			&req.ProfessionalID,
-			&req.ClientID,
-			&req.Title,
-			&req.Description,
-			&req.DueDate,
-			&req.Status,
-			&req.CreatedAt,
-			&req.UpdatedAt,
-		)
-		if err != nil {
 			return nil, err
 		}
 		requests = append(requests, req)
