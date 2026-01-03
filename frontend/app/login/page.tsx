@@ -3,10 +3,12 @@ import { useState } from "react";
 import LoginForm from "../components/LoginForm/LoginForm";
 import "./style.css";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const router = useRouter();
 
   const handleLogin = async () => {
     const loginPromise = fetch("http://localhost:8080/api/auth/login", {
@@ -31,7 +33,7 @@ const LoginPage = () => {
     });
 
     loginPromise.then((data) => {
-      console.log("User logged in:", data);
+      router.push("/");
     });
   };
 
