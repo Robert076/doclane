@@ -1,6 +1,7 @@
 package config
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -8,12 +9,18 @@ import (
 
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/services"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
 var JWTSecret string
 var UserService *services.UserService
+var S3Client *s3.Client
 
 func init() {
 	err := godotenv.Load("../../.env")
@@ -44,4 +51,35 @@ func init() {
 
 	userRepository := repositories.NewUserRepository(db)
 	UserService = services.NewUserService(userRepository)
+
+	S3Client, err = newS3Client()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func newS3Client() (*s3.Client, error) {
+	ctx := context.Background()
+
+	cfg, err := config.LoadDefaultConfig(
+		ctx,
+		config.WithRegion("eu-west-1"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	stsClient := sts.NewFromConfig(cfg)
+
+	roleProvider := stscreds.NewAssumeRoleProvider(
+		stsClient,
+		"arn:aws:iam::659775407830:role/s3-doclane-role",
+	)
+
+	assumedCfg := cfg
+	assumedCfg.Credentials = aws.NewCredentialsCache(roleProvider)
+
+	s3Client := s3.NewFromConfig(assumedCfg)
+
+	return s3Client, nil
 }

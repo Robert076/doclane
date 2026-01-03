@@ -11,10 +11,10 @@ type IUserRepository interface {
 type IDocumentRepository interface {
 	CreateDocumentRequest(req models.DocumentRequest) (int, error)
 	GetDocumentRequestByID(id int) (models.DocumentRequest, error)
-	ListDocumentRequestsByProfessional(professionalID int) ([]models.DocumentRequest, error)
-	ListDocumentRequestsByClient(clientID int) ([]models.DocumentRequest, error)
+	GetDocumentRequestsByProfessional(professionalID int) ([]models.DocumentRequest, error)
+	GetDocumentRequestsByClient(clientID int) ([]models.DocumentRequest, error)
 	UpdateDocumentRequestStatus(id int, status string) error
 
 	AddDocumentFile(file models.DocumentFile) (int, error)
-	ListFilesByRequest(requestID int) ([]models.DocumentFile, error)
+	GetFilesByRequest(requestID int) ([]models.DocumentFile, error)
 }
