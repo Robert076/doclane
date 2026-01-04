@@ -16,7 +16,7 @@ import (
 func main() {
 	r := chi.NewRouter()
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"}, // frontend-ul Next.js
+		AllowedOrigins:   []string{"http://localhost:3000"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -29,20 +29,41 @@ func main() {
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.Timeout(60 * time.Second))
+
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Hello World!"))
 	})
+
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/login", auth.LoginHandler)
 		r.Post("/register", auth.RegisterHandler)
 	})
+
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth_middleware.Middleware)
 		r.Get("/users", user_handler.GetUsersHandler)
+
 		r.Route("/document-requests", func(r chi.Router) {
+			// Creare request nou
 			r.Post("/", document_handler.AddDocumentRequestHandler)
-			r.Post("/{requestID}/files", document_handler.AddDocumentHandler)
+
+			// Liste filtrate
+			r.Get("/professional/{professionalID}", document_handler.GetDocumentRequestsByProfessionalHandler)
+			r.Get("/client/{clientID}", document_handler.GetDocumentRequestsByClientHandler)
+
+			// Operațiuni pe un request specific
+			r.Route("/{id}", func(r chi.Router) {
+				r.Get("/", document_handler.GetDocumentRequestByIDHandler)
+				r.Put("/status", document_handler.UpdateDocumentRequestStatusHandler)
+
+				// Gestiune fișiere per request
+				r.Route("/files", func(r chi.Router) {
+					r.Get("/", document_handler.GetFilesByRequestHandler)
+					r.Post("/", document_handler.AddDocumentHandler)
+				})
+			})
 		})
 	})
+
 	http.ListenAndServe(":8080", handler)
 }

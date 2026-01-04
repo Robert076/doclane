@@ -12,7 +12,8 @@ import (
 )
 
 func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
-	r.Body = http.MaxBytesReader(w, r.Body, 10<<20)
+	const maxRequestSize = 21 << 20
+	r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
 
 	userId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
@@ -20,21 +21,22 @@ func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	requestIDStr := chi.URLParam(r, "requestID")
+	requestIDStr := chi.URLParam(r, "id")
 	requestID, err := strconv.Atoi(requestIDStr)
 	if err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid request ID format."})
 		return
 	}
 
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
+	if err := r.ParseMultipartForm(5 << 20); err != nil {
 		utils.WriteError(w, err)
 		return
 	}
+	defer r.MultipartForm.RemoveAll()
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Could not get file from request."})
 		return
 	}
 	defer file.Close()

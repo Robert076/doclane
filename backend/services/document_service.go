@@ -401,11 +401,11 @@ func (service *DocumentService) GetFilesByRequest(
 
 func (service *DocumentService) validateRequestInput(title string, dueDate *time.Time) error {
 	if len(title) < 3 || len(title) > 40 {
-		return errors.ErrBadRequest{Msg: "Titlul trebuie să aibă între 3 și 40 de caractere."}
+		return errors.ErrBadRequest{Msg: "Title must be between 3 and 40 characters."}
 	}
 
 	if dueDate != nil && dueDate.Before(time.Now()) {
-		return errors.ErrBadRequest{Msg: "Data limită (due date) nu poate fi în trecut."}
+		return errors.ErrBadRequest{Msg: "Due date cannot be in the past."}
 	}
 
 	return nil
@@ -413,12 +413,12 @@ func (service *DocumentService) validateRequestInput(title string, dueDate *time
 
 func (service *DocumentService) validateFileInfo(fileName string, fileSize int64) error {
 	if fileSize <= 0 {
-		return errors.ErrBadRequest{Msg: "Fișierul este gol."}
+		return errors.ErrBadRequest{Msg: "File is empty."}
 	}
 
 	const maxFileSize = 20 * 1024 * 1024
 	if fileSize > maxFileSize {
-		return errors.ErrBadRequest{Msg: "Fișierul depășește limita de 20MB."}
+		return errors.ErrBadRequest{Msg: "File size must be less than 20MB."}
 	}
 
 	allowedExtensions := map[string]bool{
@@ -426,7 +426,7 @@ func (service *DocumentService) validateFileInfo(fileName string, fileSize int64
 	}
 	ext := filepath.Ext(fileName)
 	if !allowedExtensions[ext] {
-		return errors.ErrBadRequest{Msg: fmt.Sprintf("Extensia %s nu este permisă.", ext)}
+		return errors.ErrBadRequest{Msg: fmt.Sprintf("Extension %s is not allowed.", ext)}
 	}
 
 	return nil

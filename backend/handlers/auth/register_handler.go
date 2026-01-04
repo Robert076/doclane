@@ -3,6 +3,7 @@ package auth
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/Robert076/doclane/backend/types"
@@ -19,6 +20,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Print("Salut 1")
 	id, err := config.UserService.AddUser(r.Context(), req.Email, req.Password, req.Role)
 	if err != nil {
 		utils.WriteError(w, err)

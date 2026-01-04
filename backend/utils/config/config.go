@@ -52,6 +52,7 @@ func init() {
 		log.Fatal("JWT_SECRET not set")
 	}
 
+	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	userRepository := repositories.NewUserRepository(db)
 	UserService = services.NewUserService(userRepository, Logger)
 
@@ -65,7 +66,6 @@ func init() {
 		log.Fatal("S3_BUCKET_NAME not set")
 	}
 
-	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	documentRepository := repositories.NewDocumentRepository(db)
 	DocumentService = services.NewDocumentService(documentRepository, userRepository, S3Client, bucketName, Logger)
 }

@@ -33,7 +33,7 @@ func (service *UserService) GetUsers(ctx context.Context, limit *int, offset *in
 func (service *UserService) AddUser(ctx context.Context, email string, password string, role string) (int, error) {
 	service.logger.Info("attempting to register new user", slog.String("email", email))
 
-	if err := service.ValidateUserForRegister(ctx, email, password); err != nil {
+	if err := service.ValidateUserForRegister(ctx, email, password, role); err != nil {
 		service.logger.Warn("user validation failed for register",
 			slog.String("email", email),
 			slog.Any("error", err),
@@ -88,9 +88,13 @@ func (service *UserService) GetUserByEmail(ctx context.Context, email string) (m
 	return user, nil
 }
 
-func (service *UserService) ValidateUserForRegister(ctx context.Context, email string, password string) error {
+func (service *UserService) ValidateUserForRegister(ctx context.Context, email string, password string, role string) error {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid email received: %s", email)}
+	}
+
+	if role != "PROFESSIONAL" && role != "CLIENT" {
+		return errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid role: %s. Allowed: PROFESSIONAL, CLIENT", role)}
 	}
 
 	_, err := service.repo.GetUserByEmail(ctx, email)
