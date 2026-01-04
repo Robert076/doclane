@@ -24,7 +24,7 @@ func AddDocumentRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := config.DocumentService.AddDocumentRequest(r.Context(), userId, req.ProfessionalID, req.ClientID, req.Title, req.Description, req.DueDate)
+	id, err := config.DocumentService.AddDocumentRequest(r.Context(), userId, req.ClientID, req.Title, req.Description, req.DueDate)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

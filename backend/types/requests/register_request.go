@@ -1,7 +1,8 @@
 package requests
 
 type RegisterRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-	Role     string `json:"role"`
+	Email          string `json:"email"`
+	Password       string `json:"password"`
+	Role           string `json:"role"`
+	ProfessionalID *int   `json:"professional_id"`
 }

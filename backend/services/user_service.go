@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/mail"
+	"strconv"
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
@@ -15,6 +16,13 @@ import (
 type UserService struct {
 	repo   repositories.IUserRepository
 	logger *slog.Logger
+}
+
+type CreateUserParams struct {
+	Email          string
+	Password       string
+	Role           string
+	ProfessionalID *int
 }
 
 func NewUserService(repo repositories.IUserRepository, logger *slog.Logger) *UserService {
@@ -30,36 +38,45 @@ func (service *UserService) GetUsers(ctx context.Context, limit *int, offset *in
 	return users, nil
 }
 
-func (service *UserService) AddUser(ctx context.Context, email string, password string, role string) (int, error) {
-	service.logger.Info("attempting to register new user", slog.String("email", email))
+func (service *UserService) AddUser(ctx context.Context, params CreateUserParams) (int, error) {
+	service.logger.Info("attempting to register new user",
+		slog.String("email", params.Email),
+		slog.String("role", params.Role),
+	)
 
-	if err := service.ValidateUserForRegister(ctx, email, password, role); err != nil {
+	if err := service.ValidateUserForRegister(ctx, params.Email, params.Password, params.Role); err != nil {
 		service.logger.Warn("user validation failed for register",
-			slog.String("email", email),
+			slog.String("email", params.Email),
 			slog.Any("error", err),
 		)
 		return 0, err
 	}
 
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(params.Password), bcrypt.DefaultCost)
 	if err != nil {
 		service.logger.Error("failed to generate password hash",
-			slog.String("email", email),
+			slog.String("email", params.Email),
 			slog.Any("error", err),
 		)
 		return 0, err
 	}
 
 	user := models.User{
-		Email:        email,
+		Email:        params.Email,
 		PasswordHash: string(hashedPassword),
-		Role:         role,
+		Role:         params.Role,
+		IsActive:     true,
+	}
+
+	if params.ProfessionalID != nil {
+		profIdStr := strconv.Itoa(*params.ProfessionalID)
+		user.ProfessionalID = &profIdStr
 	}
 
 	id, err := service.repo.AddUser(ctx, user)
 	if err != nil {
 		service.logger.Error("failed to save user to database",
-			slog.String("email", email),
+			slog.String("email", params.Email),
 			slog.Any("error", err),
 		)
 		return 0, err
@@ -67,8 +84,9 @@ func (service *UserService) AddUser(ctx context.Context, email string, password 
 
 	service.logger.Info("user registered successfully",
 		slog.Int("user_id", id),
-		slog.String("email", email),
+		slog.String("email", params.Email),
 	)
+
 	return id, nil
 }
 

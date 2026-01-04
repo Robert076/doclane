@@ -38,7 +38,6 @@ func NewDocumentService(documentRepo repositories.IDocumentRepository, userRepo 
 func (service *DocumentService) AddDocumentRequest(
 	ctx context.Context,
 	jwtUserId int,
-	professionalId int,
 	clientId int,
 	title string,
 	description *string,
@@ -48,37 +47,41 @@ func (service *DocumentService) AddDocumentRequest(
 		return 0, err
 	}
 
-	if jwtUserId != professionalId {
-		service.logger.Warn("unauthorized request addition attempt",
-			slog.Int("jwt_user_id", jwtUserId),
-			slog.Int("professional_id", professionalId),
-		)
-		return 0, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to add request to user with id %v", jwtUserId, clientId)}
-	}
-
 	client, err := service.userRepo.GetUserByID(ctx, clientId)
 	if err != nil {
+		service.logger.Warn("client lookup failed for document request",
+			slog.Int("client_id", clientId),
+			slog.Int("requested_by", jwtUserId),
+			slog.Any("error", err),
+		)
 		return 0, errors.ErrNotFound{Msg: "Client not found."}
 	}
 
-	if client.ProfessionalID == nil || *client.ProfessionalID != strconv.Itoa(professionalId) {
-		service.logger.Warn("attempt to add request to unassigned client",
-			slog.Int("professional_id", professionalId),
+	jwtUserIdStr := strconv.Itoa(jwtUserId)
+	if client.ProfessionalID == nil || *client.ProfessionalID != jwtUserIdStr {
+		service.logger.Warn("unauthorized attempt to add request to unassigned client",
+			slog.Int("professional_id", jwtUserId),
 			slog.Int("client_id", clientId),
 		)
 		return 0, errors.ErrForbidden{Msg: "This client is not assigned to you."}
 	}
 
-	req := models.DocumentRequest{ProfessionalID: professionalId, ClientID: clientId, Title: title, Description: description, DueDate: dueDate}
-	req.CreatedAt = time.Now()
-	req.UpdatedAt = time.Now()
-	req.Status = "pending"
+	req := models.DocumentRequest{
+		ProfessionalID: jwtUserId,
+		ClientID:       clientId,
+		Title:          title,
+		Description:    description,
+		DueDate:        dueDate,
+		Status:         "pending",
+		CreatedAt:      time.Now(),
+		UpdatedAt:      time.Now(),
+	}
 
 	id, err := service.documentRepo.AddDocumentRequest(ctx, req)
 	if err != nil {
 		service.logger.Error("failed to create document request",
 			slog.Any("error", err),
-			slog.Int("professional_id", professionalId),
+			slog.Int("professional_id", jwtUserId),
 			slog.Int("client_id", clientId),
 		)
 		return 0, err
