@@ -41,22 +41,21 @@ func main() {
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth_middleware.Middleware)
-		r.Get("/users", user_handler.GetUsersHandler)
+		r.Route("/users", func(r chi.Router) {
+			r.Get("/", user_handler.GetUsersHandler)
+			r.Get("/my-clients", user_handler.GetClientsByProfessionalHandler)
+		})
 
 		r.Route("/document-requests", func(r chi.Router) {
-			// Creare request nou
 			r.Post("/", document_handler.AddDocumentRequestHandler)
 
-			// Liste filtrate
 			r.Get("/professional/{professionalID}", document_handler.GetDocumentRequestsByProfessionalHandler)
 			r.Get("/client/{clientID}", document_handler.GetDocumentRequestsByClientHandler)
 
-			// Operațiuni pe un request specific
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", document_handler.GetDocumentRequestByIDHandler)
 				r.Put("/status", document_handler.UpdateDocumentRequestStatusHandler)
 
-				// Gestiune fișiere per request
 				r.Route("/files", func(r chi.Router) {
 					r.Get("/", document_handler.GetFilesByRequestHandler)
 					r.Post("/", document_handler.AddDocumentHandler)

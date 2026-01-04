@@ -161,6 +161,65 @@ func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (m
 	return user, nil
 }
 
+func (repo *UserRepository) GetUsersByProfessionalID(
+	ctx context.Context,
+	professionalID int,
+	limit *int,
+	offset *int,
+) ([]models.User, error) {
+	users := []models.User{}
+
+	query := `
+        SELECT id, email, password_hash, role, professional_id, is_active, created_at, updated_at
+        FROM users
+        WHERE professional_id = $1
+    `
+
+	args := []interface{}{professionalID}
+	argIndex := 2
+
+	if limit != nil {
+		query += " LIMIT $" + strconv.Itoa(argIndex)
+		args = append(args, *limit)
+		argIndex++
+	}
+
+	if offset != nil {
+		query += " OFFSET $" + strconv.Itoa(argIndex)
+		args = append(args, *offset)
+	}
+
+	rows, err := repo.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.PasswordHash,
+			&user.Role,
+			&user.ProfessionalID,
+			&user.IsActive,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
 func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int, error) {
 	var id int
 

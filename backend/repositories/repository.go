@@ -10,6 +10,7 @@ type IUserRepository interface {
 	GetUsers(ctx context.Context, limit *int, offset *int, orderBy *string, order *string) ([]models.User, error)
 	GetUserByID(ctx context.Context, id int) (models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (models.User, error)
+	GetUsersByProfessionalID(ctx context.Context, professionalID int, limit *int, offset *int) ([]models.User, error)
 	AddUser(ctx context.Context, user models.User) (int, error)
 }
 

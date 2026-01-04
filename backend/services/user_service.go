@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/mail"
 	"strconv"
+	"time"
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
@@ -71,6 +72,8 @@ func (service *UserService) AddUser(ctx context.Context, params CreateUserParams
 		PasswordHash: string(hashedPassword),
 		Role:         params.Role,
 		IsActive:     true,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	if params.ProfessionalID != nil {
@@ -93,47 +96,6 @@ func (service *UserService) AddUser(ctx context.Context, params CreateUserParams
 	)
 
 	return id, nil
-}
-
-func (service *UserService) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
-	user, err := service.repo.GetUserByEmail(ctx, email)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return models.User{}, err
-		}
-
-		service.logger.Error("failed to fetch user by email",
-			slog.String("email", email),
-			slog.Any("error", err),
-		)
-		return models.User{}, err
-	}
-	return user, nil
-}
-
-func (service *UserService) ValidateUserForRegister(ctx context.Context, email string, password string, role string) error {
-	if _, err := mail.ParseAddress(email); err != nil {
-		return errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid email received: %s", email)}
-	}
-
-	if role != "PROFESSIONAL" && role != "CLIENT" {
-		return errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid role: %s. Allowed: PROFESSIONAL, CLIENT", role)}
-	}
-
-	_, err := service.repo.GetUserByEmail(ctx, email)
-	if err == nil {
-		return errors.ErrConflict{Msg: "User already exists."}
-	}
-
-	if !errors.IsNotFound(err) {
-		service.logger.Error("database error during email availability check",
-			slog.String("email", email),
-			slog.Any("error", err),
-		)
-		return errors.ErrInternalServerError{Msg: "Failed to check if user already exists."}
-	}
-
-	return nil
 }
 
 func (service *UserService) Login(ctx context.Context, params LoginParams) (models.User, error) {
@@ -160,4 +122,90 @@ func (service *UserService) Login(ctx context.Context, params LoginParams) (mode
 
 	service.logger.Info("successful login", slog.Int("user_id", uid), slog.String("email", params.Email))
 	return user, nil
+}
+
+func (service *UserService) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+	user, err := service.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return models.User{}, err
+		}
+
+		service.logger.Error("failed to fetch user by email",
+			slog.String("email", email),
+			slog.Any("error", err),
+		)
+		return models.User{}, err
+	}
+	return user, nil
+}
+
+func (service *UserService) GetProfessionalClients(
+	ctx context.Context,
+	jwtUserId int,
+	limit *int,
+	offset *int,
+) ([]models.User, error) {
+	service.logger.Info("fetching clients for professional", slog.Int("professional_id", jwtUserId))
+
+	user, err := service.repo.GetUserByID(ctx, jwtUserId)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, errors.ErrNotFound{Msg: "Professional user not found."}
+		}
+		service.logger.Error("failed to verify professional role",
+			slog.Int("user_id", jwtUserId),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	if user.Role != "PROFESSIONAL" {
+		service.logger.Warn("unauthorized access attempt to professional clients list",
+			slog.Int("user_id", jwtUserId),
+			slog.String("role", user.Role),
+		)
+		return nil, errors.ErrForbidden{Msg: "Only professionals can access this client list."}
+	}
+
+	clients, err := service.repo.GetUsersByProfessionalID(ctx, jwtUserId, limit, offset)
+	if err != nil {
+		service.logger.Error("failed to fetch clients for professional",
+			slog.Int("professional_id", jwtUserId),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	service.logger.Info("successfully retrieved clients",
+		slog.Int("professional_id", jwtUserId),
+		slog.Int("count", len(clients)),
+	)
+
+	return clients, nil
+}
+
+func (service *UserService) ValidateUserForRegister(ctx context.Context, email string, password string, role string) error {
+	if _, err := mail.ParseAddress(email); err != nil {
+		return errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid email received: %s", email)}
+	}
+
+	if role != "PROFESSIONAL" && role != "CLIENT" {
+		return errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid role: %s. Allowed: PROFESSIONAL, CLIENT", role)}
+	}
+
+	_, err := service.repo.GetUserByEmail(ctx, email)
+	if err == nil {
+		return errors.ErrConflict{Msg: "User already exists."}
+	}
+
+	if !errors.IsNotFound(err) {
+		service.logger.Error("database error during email availability check",
+			slog.String("email", email),
+			slog.Any("error", err),
+		)
+		return errors.ErrInternalServerError{Msg: "Failed to check if user already exists."}
+	}
+
+	return nil
 }
