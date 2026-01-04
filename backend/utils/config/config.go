@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 
 	"github.com/Robert076/doclane/backend/repositories"
@@ -19,6 +20,7 @@ import (
 )
 
 var JWTSecret string
+var Logger *slog.Logger
 var UserService *services.UserService
 var DocumentService *services.DocumentService
 var S3Client *s3.Client
@@ -51,7 +53,7 @@ func init() {
 	}
 
 	userRepository := repositories.NewUserRepository(db)
-	UserService = services.NewUserService(userRepository)
+	UserService = services.NewUserService(userRepository, Logger)
 
 	S3Client, err = newS3Client()
 	if err != nil {
@@ -63,8 +65,9 @@ func init() {
 		log.Fatal("S3_BUCKET_NAME not set")
 	}
 
+	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 	documentRepository := repositories.NewDocumentRepository(db)
-	DocumentService = services.NewDocumentService(documentRepository, userRepository, S3Client, bucketName)
+	DocumentService = services.NewDocumentService(documentRepository, userRepository, S3Client, bucketName, Logger)
 }
 
 func newS3Client() (*s3.Client, error) {

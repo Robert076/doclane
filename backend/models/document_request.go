@@ -24,3 +24,8 @@ type DocumentFile struct {
 	UploadedAt        time.Time `db:"uploaded_at" json:"uploaded_at"`
 	S3VersionID       *string   `db:"s3_version_id" json:"s3_version_id"`
 }
+
+type DocumentFileResponse struct {
+	DocumentFile
+	DownloadURL string `json:"download_url"` // presigned url for s3 reading
+}
