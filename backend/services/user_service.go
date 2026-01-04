@@ -44,6 +44,87 @@ func (service *UserService) GetUsers(ctx context.Context, limit *int, offset *in
 	return users, nil
 }
 
+func (service *UserService) GetUserByID(ctx context.Context, id int) (models.User, error) {
+	service.logger.Info("fetching user by id", slog.Int("user_id", id))
+
+	user, err := service.repo.GetUserByID(ctx, id)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			service.logger.Warn("user not found", slog.Int("user_id", id))
+			return models.User{}, errors.ErrNotFound{Msg: fmt.Sprintf("User with ID %d not found", id)}
+		}
+
+		service.logger.Error("failed to fetch user by id",
+			slog.Int("user_id", id),
+			slog.Any("error", err),
+		)
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
+func (service *UserService) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+	user, err := service.repo.GetUserByEmail(ctx, email)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return models.User{}, err
+		}
+
+		service.logger.Error("failed to fetch user by email",
+			slog.String("email", email),
+			slog.Any("error", err),
+		)
+		return models.User{}, err
+	}
+	return user, nil
+}
+
+func (service *UserService) GetProfessionalClients(
+	ctx context.Context,
+	jwtUserId int,
+	limit *int,
+	offset *int,
+) ([]models.User, error) {
+	service.logger.Info("fetching clients for professional", slog.Int("professional_id", jwtUserId))
+
+	user, err := service.repo.GetUserByID(ctx, jwtUserId)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return nil, errors.ErrNotFound{Msg: "Professional user not found."}
+		}
+		service.logger.Error("failed to verify professional role",
+			slog.Int("user_id", jwtUserId),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	if user.Role != "PROFESSIONAL" {
+		service.logger.Warn("unauthorized access attempt to professional clients list",
+			slog.Int("user_id", jwtUserId),
+			slog.String("role", user.Role),
+		)
+		return nil, errors.ErrForbidden{Msg: "Only professionals can access this client list."}
+	}
+
+	clients, err := service.repo.GetUsersByProfessionalID(ctx, jwtUserId, limit, offset)
+	if err != nil {
+		service.logger.Error("failed to fetch clients for professional",
+			slog.Int("professional_id", jwtUserId),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	service.logger.Info("successfully retrieved clients",
+		slog.Int("professional_id", jwtUserId),
+		slog.Int("count", len(clients)),
+	)
+
+	return clients, nil
+}
+
 func (service *UserService) AddUser(ctx context.Context, params CreateUserParams) (int, error) {
 	service.logger.Info("attempting to register new user",
 		slog.String("email", params.Email),
@@ -122,67 +203,6 @@ func (service *UserService) Login(ctx context.Context, params LoginParams) (mode
 
 	service.logger.Info("successful login", slog.Int("user_id", uid), slog.String("email", params.Email))
 	return user, nil
-}
-
-func (service *UserService) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
-	user, err := service.repo.GetUserByEmail(ctx, email)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return models.User{}, err
-		}
-
-		service.logger.Error("failed to fetch user by email",
-			slog.String("email", email),
-			slog.Any("error", err),
-		)
-		return models.User{}, err
-	}
-	return user, nil
-}
-
-func (service *UserService) GetProfessionalClients(
-	ctx context.Context,
-	jwtUserId int,
-	limit *int,
-	offset *int,
-) ([]models.User, error) {
-	service.logger.Info("fetching clients for professional", slog.Int("professional_id", jwtUserId))
-
-	user, err := service.repo.GetUserByID(ctx, jwtUserId)
-	if err != nil {
-		if errors.IsNotFound(err) {
-			return nil, errors.ErrNotFound{Msg: "Professional user not found."}
-		}
-		service.logger.Error("failed to verify professional role",
-			slog.Int("user_id", jwtUserId),
-			slog.Any("error", err),
-		)
-		return nil, err
-	}
-
-	if user.Role != "PROFESSIONAL" {
-		service.logger.Warn("unauthorized access attempt to professional clients list",
-			slog.Int("user_id", jwtUserId),
-			slog.String("role", user.Role),
-		)
-		return nil, errors.ErrForbidden{Msg: "Only professionals can access this client list."}
-	}
-
-	clients, err := service.repo.GetUsersByProfessionalID(ctx, jwtUserId, limit, offset)
-	if err != nil {
-		service.logger.Error("failed to fetch clients for professional",
-			slog.Int("professional_id", jwtUserId),
-			slog.Any("error", err),
-		)
-		return nil, err
-	}
-
-	service.logger.Info("successfully retrieved clients",
-		slog.Int("professional_id", jwtUserId),
-		slog.Int("count", len(clients)),
-	)
-
-	return clients, nil
 }
 
 func (service *UserService) ValidateUserForRegister(ctx context.Context, email string, password string, role string) error {

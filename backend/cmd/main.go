@@ -40,7 +40,8 @@ func main() {
 	})
 
 	r.Route("/api", func(r chi.Router) {
-		r.Use(auth_middleware.Middleware)
+		r.Use(auth_middleware.AuthGuard)
+		r.Use(auth_middleware.MustBeActive)
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", user_handler.GetUsersHandler)
 			r.Get("/my-clients", user_handler.GetClientsByProfessionalHandler)
@@ -49,8 +50,8 @@ func main() {
 		r.Route("/document-requests", func(r chi.Router) {
 			r.Post("/", document_handler.AddDocumentRequestHandler)
 
-			r.Get("/professional/{professionalID}", document_handler.GetDocumentRequestsByProfessionalHandler)
-			r.Get("/client/{clientID}", document_handler.GetDocumentRequestsByClientHandler)
+			r.Get("/professional/documents", document_handler.GetDocumentRequestsByProfessionalHandler)
+			r.Get("/client/documents", document_handler.GetDocumentRequestsByClientHandler)
 
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", document_handler.GetDocumentRequestByIDHandler)

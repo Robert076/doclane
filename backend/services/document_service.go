@@ -119,20 +119,26 @@ func (service *DocumentService) GetDocumentRequestByID(
 func (service *DocumentService) GetDocumentRequestsByProfessional(
 	ctx context.Context,
 	jwtUserId int,
-	professionalId int,
 ) ([]models.DocumentRequest, error) {
-	if jwtUserId != professionalId {
-		service.logger.Warn("unauthorized professional requests access",
-			slog.Int("jwt_user_id", jwtUserId),
-			slog.Int("requested_prof_id", professionalId),
-		)
-		return nil, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to access document requests from professional with id %v", jwtUserId, professionalId)}
+	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
+	if err != nil {
+		service.logger.Error("failed to fetch professional for document requests",
+			slog.Int("user_id", jwtUserId),
+			slog.Any("error", err))
+		return nil, err
 	}
 
-	reqs, err := service.documentRepo.GetDocumentRequestsByProfessional(ctx, professionalId)
+	if user.Role != "PROFESSIONAL" {
+		service.logger.Warn("non-professional tried to access professional endpoint for document requests",
+			slog.Int("user_id", jwtUserId),
+			slog.String("role", user.Role))
+		return nil, errors.ErrForbidden{Msg: "This is a professional endpoint."}
+	}
+
+	reqs, err := service.documentRepo.GetDocumentRequestsByProfessional(ctx, jwtUserId)
 	if err != nil {
 		service.logger.Error("failed to fetch professional document requests",
-			slog.Int("professional_id", professionalId),
+			slog.Int("user_id", jwtUserId),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -144,47 +150,27 @@ func (service *DocumentService) GetDocumentRequestsByProfessional(
 func (service *DocumentService) GetDocumentRequestsByClient(
 	ctx context.Context,
 	jwtUserId int,
-	clientId int,
 ) ([]models.DocumentRequest, error) {
-	client, err := service.userRepo.GetUserByID(ctx, clientId)
+	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
 	if err != nil {
-		service.logger.Error("failed to fetch client for requests",
-			slog.Int("client_id", clientId),
+		service.logger.Error("failed to fetch client for document requests",
+			slog.Int("user_id", jwtUserId),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
-	if !client.IsActive {
-		service.logger.Warn("access attempt to deactivated client account",
+	if user.Role != "CLIENT" {
+		service.logger.Warn("non-client tried to access client endpoint for document requests",
 			slog.Int("user_id", jwtUserId),
-			slog.Int("client_id", clientId),
-		)
-		return nil, errors.ErrForbidden{Msg: "This client account is deactivated."}
+			slog.String("role", user.Role))
+		return nil, errors.ErrForbidden{Msg: "This is a client endpoint."}
 	}
 
-	isOwner := clientId == jwtUserId
-	isAssignedProfessional := false
-
-	if client.ProfessionalID != nil {
-		profId, _ := strconv.Atoi(*client.ProfessionalID)
-		if profId == jwtUserId {
-			isAssignedProfessional = true
-		}
-	}
-
-	if !isOwner && !isAssignedProfessional {
-		service.logger.Warn("unauthorized access to client requests",
-			slog.Int("user_id", jwtUserId),
-			slog.Int("client_id", clientId),
-		)
-		return nil, errors.ErrForbidden{Msg: "You do not have permission to view these requests."}
-	}
-
-	reqs, err := service.documentRepo.GetDocumentRequestsByClient(ctx, clientId)
+	reqs, err := service.documentRepo.GetDocumentRequestsByClient(ctx, jwtUserId)
 	if err != nil {
 		service.logger.Error("failed to fetch document requests from repo",
-			slog.Int("client_id", clientId),
+			slog.Int("client_id", jwtUserId),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -248,7 +234,7 @@ func (service *DocumentService) UpdateDocumentRequestStatus(
 
 func (service *DocumentService) AddDocumentFile(
 	ctx context.Context,
-	userId int,
+	jwtUserId int,
 	requestID int,
 	fileName string,
 	fileSize int64,
@@ -260,7 +246,7 @@ func (service *DocumentService) AddDocumentFile(
 	}
 
 	service.logger.Info("attempting file upload",
-		slog.Int("user_id", userId),
+		slog.Int("user_id", jwtUserId),
 		slog.Int("request_id", requestID),
 		slog.String("file_name", fileName),
 	)
@@ -270,8 +256,8 @@ func (service *DocumentService) AddDocumentFile(
 		return 0, errors.ErrNotFound{Msg: fmt.Sprintf("Document request not found. %v", err)}
 	}
 
-	if docReq.ClientID != userId && docReq.ProfessionalID != userId {
-		return 0, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to modify document request with id %v.", userId, requestID)}
+	if docReq.ClientID != jwtUserId && docReq.ProfessionalID != jwtUserId {
+		return 0, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to modify document request with id %v.", jwtUserId, requestID)}
 	}
 
 	cleanFileName := filepath.Base(fileName)
