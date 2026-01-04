@@ -45,7 +45,7 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 		orderPtr = &o
 	}
 
-	users, err := config.UserService.GetUsers(limitPtr, offsetPtr, orderByPtr, orderPtr)
+	users, err := config.UserService.GetUsers(r.Context(), limitPtr, offsetPtr, orderByPtr, orderPtr)
 	if err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: fmt.Sprintf("Could not fetch users. %v", err)})
 		return

@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 	"strconv"
 	"strings"
@@ -18,6 +19,7 @@ func NewUserRepository(db *sql.DB) *UserRepository {
 }
 
 func (repo *UserRepository) GetUsers(
+	ctx context.Context,
 	limit *int,
 	offset *int,
 	orderBy *string,
@@ -68,7 +70,7 @@ func (repo *UserRepository) GetUsers(
 		args = append(args, *offset)
 	}
 
-	rows, err := repo.db.Query(query, args...)
+	rows, err := repo.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -99,36 +101,43 @@ func (repo *UserRepository) GetUsers(
 	return users, nil
 }
 
-func (repo *UserRepository) AddUser(user models.User) (int, error) {
-	var id int
-
-	err := repo.db.QueryRow(
-		`INSERT INTO users (email, password_hash, role, professional_id, is_active, created_at, updated_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7)
-		 RETURNING id`,
-		user.Email,
-		user.PasswordHash,
-		user.Role,
-		user.ProfessionalID,
-		user.IsActive,
-		user.CreatedAt,
-		user.UpdatedAt,
-	).Scan(&id)
-
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
-}
-
-func (repo *UserRepository) GetUserByEmail(email string) (models.User, error) {
+func (repo *UserRepository) GetUserByID(ctx context.Context, id int) (models.User, error) {
 	var user models.User
 
-	err := repo.db.QueryRow(
+	err := repo.db.QueryRowContext(ctx,
 		`SELECT id, email, password_hash, role, professional_id, is_active, created_at, updated_at
-		 FROM users
-		 WHERE email = $1`,
+		FROM users
+		WHERE id = $1`,
+		id,
+	).Scan(
+		&user.ID,
+		&user.Email,
+		&user.PasswordHash,
+		&user.Role,
+		&user.ProfessionalID,
+		&user.IsActive,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return models.User{}, errors.ErrNotFound{Msg: "User not found."}
+		}
+
+		return models.User{}, err
+	}
+
+	return user, nil
+}
+
+func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+	var user models.User
+
+	err := repo.db.QueryRowContext(ctx,
+		`SELECT id, email, password_hash, role, professional_id, is_active, created_at, updated_at
+			FROM users
+			WHERE email = $1`,
 		email,
 	).Scan(
 		&user.ID,
@@ -150,4 +159,27 @@ func (repo *UserRepository) GetUserByEmail(email string) (models.User, error) {
 	}
 
 	return user, nil
+}
+
+func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int, error) {
+	var id int
+
+	err := repo.db.QueryRowContext(ctx,
+		`INSERT INTO users (email, password_hash, role, professional_id, is_active, created_at, updated_at)
+				 VALUES ($1, $2, $3, $4, $5, $6, $7)
+				 RETURNING id`,
+		user.Email,
+		user.PasswordHash,
+		user.Role,
+		user.ProfessionalID,
+		user.IsActive,
+		user.CreatedAt,
+		user.UpdatedAt,
+	).Scan(&id)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return id, nil
 }

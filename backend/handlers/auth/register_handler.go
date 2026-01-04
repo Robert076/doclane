@@ -19,7 +19,7 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := config.UserService.AddUser(req.Email, req.Password, req.Role)
+	id, err := config.UserService.AddUser(r.Context(), req.Email, req.Password, req.Role)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

@@ -21,7 +21,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := config.UserService.GetUserByEmail(req.Email)
+	user, err := config.UserService.GetUserByEmail(r.Context(), req.Email)
 	if err != nil {
 		utils.WriteError(w, errors.ErrNotFound{Msg: "Invalid email or password."})
 		return

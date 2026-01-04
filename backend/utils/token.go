@@ -1,13 +1,19 @@
 package utils
 
 import (
+	"context"
 	"errors"
+	"strconv"
 	"time"
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/utils/config"
 	"github.com/golang-jwt/jwt"
 )
+
+type contextKey string
+
+const ClaimsKey contextKey = "jwtClaims"
 
 type CustomClaims struct {
 	UserID         string `json:"user_id"`
@@ -55,4 +61,25 @@ func ValidateJWT(tokenString string) (*CustomClaims, error) {
 	}
 
 	return claims, nil
+}
+
+func GetClaimsFromContext(ctx context.Context) (*CustomClaims, error) {
+	claims, ok := ctx.Value(ClaimsKey).(*CustomClaims)
+	if !ok {
+		return nil, errors.New("could not find user claims in context")
+	}
+	return claims, nil
+}
+
+func GetUserIDFromContext(ctx context.Context) (int, error) {
+	claims, err := GetClaimsFromContext(ctx)
+	if err != nil {
+		return 0, err
+	}
+	uidInt, err := strconv.Atoi(claims.UserID)
+	if err != nil {
+		return 0, err
+	}
+
+	return uidInt, nil
 }

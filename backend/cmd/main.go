@@ -39,7 +39,10 @@ func main() {
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth_middleware.Middleware)
 		r.Get("/users", user_handler.GetUsersHandler)
-		r.Post("/document-requests", document_handler.AddDocumentHandler)
+		r.Route("/document-requests", func(r chi.Router) {
+			r.Post("/", document_handler.AddDocumentRequestHandler)
+			r.Post("/{requestID}/files", document_handler.AddDocumentHandler)
+		})
 	})
 	http.ListenAndServe(":8080", handler)
 }

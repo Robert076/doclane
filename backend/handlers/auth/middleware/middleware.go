@@ -27,7 +27,7 @@ func Middleware(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "jwtClaims", claims)
+		ctx := context.WithValue(r.Context(), utils.ClaimsKey, claims)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})

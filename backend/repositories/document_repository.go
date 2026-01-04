@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/Robert076/doclane/backend/models"
@@ -14,9 +15,9 @@ func NewDocumentRepository(db *sql.DB) *DocumentRepository {
 	return &DocumentRepository{db: db}
 }
 
-func (repo *DocumentRepository) AddDocumentRequest(req models.DocumentRequest) (int, error) {
+func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error) {
 	var id int
-	err := repo.db.QueryRow(
+	err := repo.db.QueryRowContext(ctx,
 		`INSERT INTO document_requests (professional_id, client_id, title, description, due_date, status)
 		 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
 		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.DueDate, req.Status,
@@ -24,9 +25,9 @@ func (repo *DocumentRepository) AddDocumentRequest(req models.DocumentRequest) (
 	return id, err
 }
 
-func (r *DocumentRepository) GetDocumentRequestByID(id int) (models.DocumentRequest, error) {
+func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequest, error) {
 	var req models.DocumentRequest
-	row := r.db.QueryRow(`
+	row := r.db.QueryRowContext(ctx, `
         SELECT id, professional_id, client_id, title, description, due_date, status, created_at, updated_at
         FROM document_requests WHERE id=$1
     `, id)
@@ -45,8 +46,8 @@ func (r *DocumentRepository) GetDocumentRequestByID(id int) (models.DocumentRequ
 	return req, err
 }
 
-func (r *DocumentRepository) GetDocumentRequestsByProfessional(professionalID int) ([]models.DocumentRequest, error) {
-	rows, err := r.db.Query(`
+func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequest, error) {
+	rows, err := r.db.QueryContext(ctx, `
 		SELECT id, professional_id, client_id, title, description, due_date, status, created_at, updated_at
 		FROM document_requests
 		WHERE professional_id=$1
@@ -80,8 +81,8 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(professionalID in
 	return requests, rows.Err()
 }
 
-func (r *DocumentRepository) GetDocumentRequestsByClient(clientID int) ([]models.DocumentRequest, error) {
-	rows, err := r.db.Query(`
+func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequest, error) {
+	rows, err := r.db.QueryContext(ctx, `
         SELECT id, professional_id, client_id, title, description, due_date, status, created_at, updated_at
         FROM document_requests
         WHERE client_id=$1
@@ -114,30 +115,50 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(clientID int) ([]models
 	return requests, rows.Err()
 }
 
-func (r *DocumentRepository) UpdateDocumentRequestStatus(id int, status string) error {
-	_, err := r.db.Exec(`UPDATE document_requests SET status=$1, updated_at=NOW() WHERE id=$2`, status, id)
+func (r *DocumentRepository) UpdateDocumentRequestStatus(ctx context.Context, id int, status string) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE document_requests SET status=$1, updated_at=NOW() WHERE id=$2`, status, id)
 	return err
 }
 
-func (r *DocumentRepository) AddDocumentFile(file models.DocumentFile) (int, error) {
+func (r *DocumentRepository) AddDocumentFile(ctx context.Context, file models.DocumentFile) (int, error) {
 	var id int
-	err := r.db.QueryRow(`
-        INSERT INTO document_files (document_request_id, file_name, file_path, mime_type, file_size)
-        VALUES ($1,$2,$3,$4,$5)
+
+	query := `
+        INSERT INTO document_files (
+            document_request_id, 
+            file_name, 
+            file_path, 
+            mime_type, 
+            file_size, 
+            s3_version_id, 
+            uploaded_at
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        ON CONFLICT (document_request_id, file_name) 
+        DO UPDATE SET 
+            file_path = EXCLUDED.file_path,
+            mime_type = EXCLUDED.mime_type,
+            file_size = EXCLUDED.file_size,
+            s3_version_id = EXCLUDED.s3_version_id,
+            uploaded_at = EXCLUDED.uploaded_at
         RETURNING id
-    `,
+    `
+
+	err := r.db.QueryRowContext(ctx,
+		query,
 		file.DocumentRequestID,
 		file.FileName,
 		file.FilePath,
 		file.MimeType,
 		file.FileSize,
+		file.S3VersionID,
+		file.UploadedAt,
 	).Scan(&id)
 
 	return id, err
 }
-
-func (r *DocumentRepository) GetFilesByRequest(requestID int) ([]models.DocumentFile, error) {
-	rows, err := r.db.Query(`
+func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFile, error) {
+	rows, err := r.db.QueryContext(ctx, `
         SELECT id, document_request_id, file_name, file_path, mime_type, file_size, uploaded_at
         FROM document_files
         WHERE document_request_id=$1

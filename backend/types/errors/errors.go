@@ -103,3 +103,29 @@ func IsUnprocessableContent(err error) bool {
 	_, ok := err.(ErrUnprocessableContent)
 	return ok
 }
+
+type ErrBadGateway struct {
+	Msg string
+}
+
+func (e ErrBadGateway) Error() string {
+	return e.Msg
+}
+
+func IsBadGateway(err error) bool {
+	_, ok := err.(ErrBadGateway)
+	return ok
+}
+
+type ErrForbidden struct {
+	Msg string
+}
+
+func (e ErrForbidden) Error() string {
+	return e.Msg
+}
+
+func IsForbidden(err error) bool {
+	_, ok := err.(ErrForbidden)
+	return ok
+}
