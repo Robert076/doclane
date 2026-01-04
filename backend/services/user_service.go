@@ -25,6 +25,11 @@ type CreateUserParams struct {
 	ProfessionalID *int
 }
 
+type LoginParams struct {
+	Email    string
+	Password string
+}
+
 func NewUserService(repo repositories.IUserRepository, logger *slog.Logger) *UserService {
 	return &UserService{repo: repo, logger: logger}
 }
@@ -129,4 +134,30 @@ func (service *UserService) ValidateUserForRegister(ctx context.Context, email s
 	}
 
 	return nil
+}
+
+func (service *UserService) Login(ctx context.Context, params LoginParams) (models.User, error) {
+	service.logger.Info("login attempt", slog.String("email", params.Email))
+
+	user, err := service.repo.GetUserByEmail(ctx, params.Email)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return models.User{}, errors.ErrUnauthorized{Msg: "Invalid email or password."}
+		}
+		service.logger.Error("database error during login", slog.Any("error", err))
+		return models.User{}, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(params.Password)); err != nil {
+		service.logger.Warn("failed login attempt: incorrect password", slog.String("email", params.Email))
+		return models.User{}, errors.ErrUnauthorized{Msg: "Invalid email or password."}
+	}
+
+	uid, err := strconv.Atoi(user.ID)
+	if err != nil {
+		return models.User{}, errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid user id %s", user.ID)}
+	}
+
+	service.logger.Info("successful login", slog.Int("user_id", uid), slog.String("email", params.Email))
+	return user, nil
 }
