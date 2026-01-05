@@ -1,7 +1,11 @@
-import React from "react";
+import "./LoadingSkeleton.css";
 
 const LoadingSkeleton = () => {
-  return <div>LoadingSkeleton</div>;
+  return (
+    <div className="loading-overlay">
+      <div className="loading-spinner"></div>
+    </div>
+  );
 };
 
 export default LoadingSkeleton;

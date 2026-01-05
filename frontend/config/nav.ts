@@ -19,7 +19,6 @@ export const SIDEBAR_CONFIG: Record<string, NavItem[]> = {
   PROFESSIONAL: [
     { label: "Overview", href: "/dashboard", icon: MdDashboard },
     { label: "My Clients", href: "/dashboard/clients", icon: MdPeople },
-    { label: "Document Requests", href: "/dashboard/requests", icon: MdDescription },
     { label: "Settings", href: "/dashboard/settings", icon: MdSettings },
   ],
   CLIENT: [

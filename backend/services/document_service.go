@@ -95,14 +95,14 @@ func (service *DocumentService) GetDocumentRequestByID(
 	ctx context.Context,
 	jwtUserId int,
 	id int,
-) (models.DocumentRequest, error) {
+) (models.DocumentRequestDTO, error) {
 	req, err := service.documentRepo.GetDocumentRequestByID(ctx, id)
 	if err != nil {
 		service.logger.Error("failed to get document request by id",
 			slog.Int("request_id", id),
 			slog.Any("error", err),
 		)
-		return models.DocumentRequest{}, err
+		return models.DocumentRequestDTO{}, err
 	}
 
 	if req.ProfessionalID != jwtUserId && req.ClientID != jwtUserId {
@@ -110,7 +110,7 @@ func (service *DocumentService) GetDocumentRequestByID(
 			slog.Int("user_id", jwtUserId),
 			slog.Int("request_id", id),
 		)
-		return models.DocumentRequest{}, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to access document request with id %v", jwtUserId, req.ID)}
+		return models.DocumentRequestDTO{}, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to access document request with id %v", jwtUserId, req.ID)}
 	}
 
 	return req, nil
@@ -119,7 +119,7 @@ func (service *DocumentService) GetDocumentRequestByID(
 func (service *DocumentService) GetDocumentRequestsByProfessional(
 	ctx context.Context,
 	jwtUserId int,
-) ([]models.DocumentRequest, error) {
+) ([]models.DocumentRequestDTO, error) {
 	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
 	if err != nil {
 		service.logger.Error("failed to fetch professional for document requests",
@@ -150,7 +150,7 @@ func (service *DocumentService) GetDocumentRequestsByProfessional(
 func (service *DocumentService) GetDocumentRequestsByClient(
 	ctx context.Context,
 	jwtUserId int,
-) ([]models.DocumentRequest, error) {
+) ([]models.DocumentRequestDTO, error) {
 	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
 	if err != nil {
 		service.logger.Error("failed to fetch client for document requests",

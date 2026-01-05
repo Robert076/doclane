@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import "./error.css";
-import Button from "@/components/Button/Button";
+import ButtonPrimary from "@/components/Buttons/ButtonPrimary/ButtonPrimary";
 
 export default function GlobalError({
   error,
@@ -31,7 +31,7 @@ export default function GlobalError({
 
         {error.digest && <span className="error-digest">Error ID: {error.digest}</span>}
 
-        <Button text="Try again" onClick={() => reset()} />
+        <ButtonPrimary text="Try again" onClick={() => reset()} />
       </div>
     </div>
   );

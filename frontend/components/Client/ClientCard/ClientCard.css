@@ -1,0 +1,37 @@
+.client-card {
+  background: white;
+  border: var(--border-default);
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+  height: 100%; /* Pentru a fi egale în grid */
+}
+
+.client-card:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--box-shadow-default);
+}
+
+.client-name {
+  margin: 0;
+  font-size: 1.125rem;
+  color: #1a202c;
+  font-weight: 700;
+}
+
+.client-body {
+  flex: 1; /* Împinge footer-ul jos dacă numele e scurt */
+}
+
+.client-email {
+  font-size: 0.875rem;
+  color: #718096;
+  margin: 0;
+}
+
+.client-footer {
+  width: 100%;
+}

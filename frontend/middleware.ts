@@ -12,6 +12,12 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (token && pathname === "/login") {
+    const url = request.nextUrl.clone();
+    url.pathname = "/dashboard";
+    return NextResponse.redirect(url);
+  }
+
   if (token && pathname === "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";

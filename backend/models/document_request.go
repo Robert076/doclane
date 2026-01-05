@@ -14,6 +14,19 @@ type DocumentRequest struct {
 	UpdatedAt      time.Time  `db:"updated_at" json:"updated_at"`
 }
 
+type DocumentRequestDTO struct {
+	ID             int        `db:"id" json:"id"`
+	ProfessionalID int        `db:"professional_id" json:"professional_id"`
+	ClientID       int        `db:"client_id" json:"client_id"`
+	ClientEmail    string     `json:"client_email"`
+	Title          string     `db:"title" json:"title"`
+	Description    *string    `db:"description,omitempty" json:"description,omitempty"`
+	DueDate        *time.Time `db:"due_date,omitempty" json:"due_date,omitempty"`
+	Status         string     `db:"status" json:"status"`
+	CreatedAt      time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt      time.Time  `db:"updated_at" json:"updated_at"`
+}
+
 type DocumentFile struct {
 	ID                int       `db:"id" json:"id"`
 	DocumentRequestID int       `db:"document_request_id" json:"document_request_id"`

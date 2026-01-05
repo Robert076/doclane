@@ -23,18 +23,16 @@ export default async function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-gray-50">
-      <Suspense fallback={<LoadingSkeleton />}>
-        {(() => {
-          switch (user.role) {
-            case "PROFESSIONAL":
-              return <ProfessionalView user={user} />;
-            case "CLIENT":
-              return <ClientView />;
-            default:
-              return <p>Unknown role.</p>;
-          }
-        })()}
-      </Suspense>
+      {(() => {
+        switch (user.role) {
+          case "PROFESSIONAL":
+            return <ProfessionalView user={user} />;
+          case "CLIENT":
+            return <ClientView />;
+          default:
+            return <p>Unknown role.</p>;
+        }
+      })()}
     </main>
   );
 }

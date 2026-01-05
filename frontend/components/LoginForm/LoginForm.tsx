@@ -2,11 +2,12 @@ import { Dispatch, SetStateAction } from "react";
 import Input from "../Input/Input";
 import Logo from "../Logo/Logo";
 import "./LoginForm.css";
-import Button from "../Button/Button";
+
 import SeparatorWithText from "../Separators/SeparatorWithText/SeparatorWithText";
 import Separator from "../Separators/Separator/Separator";
 import ClickableCard from "./ClickableCard/ClickableCard";
 import { MdCardGiftcard, MdLock, MdWork } from "react-icons/md";
+import ButtonPrimary from "../Buttons/ButtonPrimary/ButtonPrimary";
 
 interface LoginFormProps {
   email: string;
@@ -48,7 +49,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
         isPassword={true}
       />
 
-      <Button text="Log In" onClick={handleLogin} />
+      <ButtonPrimary text="Log In" onClick={handleLogin} />
 
       <SeparatorWithText text="New to Doclane?" />
 

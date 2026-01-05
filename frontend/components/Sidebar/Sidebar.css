@@ -9,6 +9,7 @@
   top: 0;
   border-right: var(--border-default);
   box-shadow: var(--box-shadow-default);
+    height: 100vh;
 }
 
 .sidebar-nav {

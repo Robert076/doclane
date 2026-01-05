@@ -25,17 +25,22 @@ func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req mode
 	return id, err
 }
 
-func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequest, error) {
-	var req models.DocumentRequest
-	row := r.db.QueryRowContext(ctx, `
-        SELECT id, professional_id, client_id, title, description, due_date, status, created_at, updated_at
-        FROM document_requests WHERE id=$1
-    `, id)
+func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTO, error) {
+	var req models.DocumentRequestDTO
+	query := `
+        SELECT dr.id, dr.professional_id, dr.client_id, u.email as client_email, 
+               dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
+        FROM document_requests dr
+        JOIN users u ON dr.client_id = u.id
+        WHERE dr.id=$1
+    `
+	row := r.db.QueryRowContext(ctx, query, id)
 
 	err := row.Scan(
 		&req.ID,
 		&req.ProfessionalID,
 		&req.ClientID,
+		&req.ClientEmail,
 		&req.Title,
 		&req.Description,
 		&req.DueDate,
@@ -46,25 +51,29 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 	return req, err
 }
 
-func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequest, error) {
-	rows, err := r.db.QueryContext(ctx, `
-		SELECT id, professional_id, client_id, title, description, due_date, status, created_at, updated_at
-		FROM document_requests
-		WHERE professional_id=$1
-		ORDER BY created_at DESC
-	`, professionalID)
+func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequestDTO, error) {
+	query := `
+        SELECT dr.id, dr.professional_id, dr.client_id, u.email as client_email, 
+               dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
+        FROM document_requests dr
+        JOIN users u ON dr.client_id = u.id
+        WHERE dr.professional_id=$1
+        ORDER BY dr.created_at DESC
+    `
+	rows, err := r.db.QueryContext(ctx, query, professionalID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var requests []models.DocumentRequest
+	var requests []models.DocumentRequestDTO
 	for rows.Next() {
-		var req models.DocumentRequest
+		var req models.DocumentRequestDTO
 		err := rows.Scan(
 			&req.ID,
 			&req.ProfessionalID,
 			&req.ClientID,
+			&req.ClientEmail,
 			&req.Title,
 			&req.Description,
 			&req.DueDate,
@@ -81,25 +90,29 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Conte
 	return requests, rows.Err()
 }
 
-func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequest, error) {
-	rows, err := r.db.QueryContext(ctx, `
-        SELECT id, professional_id, client_id, title, description, due_date, status, created_at, updated_at
-        FROM document_requests
-        WHERE client_id=$1
-        ORDER BY created_at DESC
-    `, clientID)
+func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequestDTO, error) {
+	query := `
+        SELECT dr.id, dr.professional_id, dr.client_id, u.email as client_email, 
+               dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
+        FROM document_requests dr
+        JOIN users u ON dr.client_id = u.id
+        WHERE dr.client_id=$1
+        ORDER BY dr.created_at DESC
+    `
+	rows, err := r.db.QueryContext(ctx, query, clientID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var requests []models.DocumentRequest
+	var requests []models.DocumentRequestDTO
 	for rows.Next() {
-		var req models.DocumentRequest
+		var req models.DocumentRequestDTO
 		if err := rows.Scan(
 			&req.ID,
 			&req.ProfessionalID,
 			&req.ClientID,
+			&req.ClientEmail,
 			&req.Title,
 			&req.Description,
 			&req.DueDate,
