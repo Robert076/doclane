@@ -37,6 +37,7 @@ func main() {
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/login", auth.LoginHandler)
 		r.Post("/register", auth.RegisterHandler)
+		r.Post("/logout", auth.LogoutHandler)
 	})
 
 	r.Route("/api", func(r chi.Router) {
@@ -44,6 +45,7 @@ func main() {
 		r.Use(auth_middleware.MustBeActive)
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", user_handler.GetUsersHandler)
+			r.Get("/me", user_handler.GetCurrentUserHandler)
 			r.Get("/my-clients", user_handler.GetClientsByProfessionalHandler)
 		})
 
