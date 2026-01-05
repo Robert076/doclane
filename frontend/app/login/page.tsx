@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import LoginForm from "../components/LoginForm/LoginForm";
+import LoginForm from "../../components/LoginForm/LoginForm";
 import "./style.css";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,7 @@ const LoginPage = () => {
   const router = useRouter();
 
   const handleLogin = async () => {
-    const loginPromise = fetch("http://localhost:8080/api/auth/login", {
+    const loginPromise = fetch("/api/backend/auth/login", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -32,8 +32,8 @@ const LoginPage = () => {
       error: (err) => `Login failed: ${err.message}`,
     });
 
-    loginPromise.then((data) => {
-      router.push("/");
+    loginPromise.then((_) => {
+      router.push("/dashboard");
     });
   };
 

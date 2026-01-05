@@ -7,7 +7,12 @@
   --text-color-secondary: #838383;
   --height-input-and-button: 40px;
   --font-size-m: 16px;
+  --font-size-s: 15px;
   --color-primary: rgb(68, 173, 238);
+
+  --sidebar-width: 260px;
+  --padding-sidebar-link: 0.75rem 1rem;
+  --padding-sidebar: 2rem 1.5rem;
 
   --gap-10: 10px;
 }
