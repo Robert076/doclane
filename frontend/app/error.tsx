@@ -31,7 +31,7 @@ export default function GlobalError({
 
         {error.digest && <span className="error-digest">Error ID: {error.digest}</span>}
 
-        <ButtonPrimary text="Try again" onClick={() => reset()} />
+        <ButtonPrimary text="Try again" onClick={() => reset()} fullWidth />
       </div>
     </div>
   );

@@ -1,5 +1,5 @@
 :root {
-  --background: #f0f0f0;
+  --background: #f8fafc;
   --margin-y-10: 10px 0;
   --border-default: 1px solid rgba(0, 0, 0, 0.1);
   --border-radius-default: 10px;
@@ -13,6 +13,13 @@
   --sidebar-width: 260px;
   --padding-sidebar-link: 0.75rem 1rem;
   --padding-sidebar: 2rem 1.5rem;
+
+  --padding-details-card: 2rem;
+
+  --request-details-width: 1200px;
+  --padding-xl: 3rem;
+  --padding-l: 2rem;
+  --padding-m: 1.5rem;
 
   --gap-10: 10px;
 }

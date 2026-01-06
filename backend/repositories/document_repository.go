@@ -128,6 +128,61 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, cl
 	return requests, rows.Err()
 }
 
+// GetFileByID returnează un singur fișier după ID-ul său primar
+func (r *DocumentRepository) GetFileByID(ctx context.Context, id int) (models.DocumentFile, error) {
+	var f models.DocumentFile
+	query := `
+        SELECT id, document_request_id, file_name, file_path, mime_type, file_size, uploaded_at, s3_version_id
+        FROM document_files
+        WHERE id=$1
+    `
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&f.ID,
+		&f.DocumentRequestID,
+		&f.FileName,
+		&f.FilePath,
+		&f.MimeType,
+		&f.FileSize,
+		&f.UploadedAt,
+		&f.S3VersionID,
+	)
+	return f, err
+}
+
+func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFile, error) {
+	query := `
+        SELECT id, document_request_id, file_name, file_path, mime_type, file_size, uploaded_at, s3_version_id
+        FROM document_files
+        WHERE document_request_id=$1
+        ORDER BY uploaded_at ASC
+    `
+	rows, err := r.db.QueryContext(ctx, query, requestID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var files []models.DocumentFile
+	for rows.Next() {
+		var f models.DocumentFile
+		if err := rows.Scan(
+			&f.ID,
+			&f.DocumentRequestID,
+			&f.FileName,
+			&f.FilePath,
+			&f.MimeType,
+			&f.FileSize,
+			&f.UploadedAt,
+			&f.S3VersionID,
+		); err != nil {
+			return nil, err
+		}
+		files = append(files, f)
+	}
+
+	return files, rows.Err()
+}
+
 func (r *DocumentRepository) UpdateDocumentRequestStatus(ctx context.Context, id int, status string) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE document_requests SET status=$1, updated_at=NOW() WHERE id=$2`, status, id)
 	return err
@@ -147,15 +202,16 @@ func (r *DocumentRepository) AddDocumentFile(ctx context.Context, file models.Do
             uploaded_at
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (document_request_id, file_name) 
-        DO UPDATE SET 
-            file_path = EXCLUDED.file_path,
-            mime_type = EXCLUDED.mime_type,
-            file_size = EXCLUDED.file_size,
-            s3_version_id = EXCLUDED.s3_version_id,
-            uploaded_at = EXCLUDED.uploaded_at
-        RETURNING id
-    `
+		RETURNING id
+		`
+	// ON CONFLICT (document_request_id, file_name)
+	// DO UPDATE SET
+	//     file_path = EXCLUDED.file_path,
+	//     mime_type = EXCLUDED.mime_type,
+	//     file_size = EXCLUDED.file_size,
+	//     s3_version_id = EXCLUDED.s3_version_id,
+	//     uploaded_at = EXCLUDED.uploaded_at
+	// RETURNING id
 
 	err := r.db.QueryRowContext(ctx,
 		query,
@@ -169,35 +225,4 @@ func (r *DocumentRepository) AddDocumentFile(ctx context.Context, file models.Do
 	).Scan(&id)
 
 	return id, err
-}
-func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFile, error) {
-	rows, err := r.db.QueryContext(ctx, `
-        SELECT id, document_request_id, file_name, file_path, mime_type, file_size, uploaded_at
-        FROM document_files
-        WHERE document_request_id=$1
-        ORDER BY uploaded_at ASC
-    `, requestID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	var files []models.DocumentFile
-	for rows.Next() {
-		var f models.DocumentFile
-		if err := rows.Scan(
-			&f.ID,
-			&f.DocumentRequestID,
-			&f.FileName,
-			&f.FilePath,
-			&f.MimeType,
-			&f.FileSize,
-			&f.UploadedAt,
-		); err != nil {
-			return nil, err
-		}
-		files = append(files, f)
-	}
-
-	return files, rows.Err()
 }

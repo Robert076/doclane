@@ -1,5 +1,4 @@
-import { User, DocumentRequest, ApiResponse } from "@/types";
-import { cookies } from "next/headers";
+import { User } from "@/types";
 import "./ProfessionalView.css";
 import getDocumentRequests from "@/lib/getDocumentRequests";
 import RequestsSection from "@/components/RequestsSection/RequestsSection";

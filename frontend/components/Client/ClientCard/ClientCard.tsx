@@ -22,7 +22,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client }) => {
       <div className="client-footer">
         <ButtonPrimary
           text="New Request"
-          variant="ghost" // Am pus secondary pentru a fi la fel ca "View Details"
+          variant="ghost"
           fullWidth={true}
           onClick={() => console.log("New request for:", client.id)}
         />

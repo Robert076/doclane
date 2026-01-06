@@ -1,0 +1,92 @@
+/* FileSection.css */
+
+.files-section {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Se asigură că ocupă card-ul */
+    width: 800px;
+}
+
+.section-header {   
+    margin-bottom: var(--margin-y-10, 15px);
+}
+
+.pagination-counter {
+    font-size: 0.8rem;
+    color: var(--text-color-secondary);
+    font-weight: 500;
+}
+
+.empty-files {
+    padding: var(--padding-l);
+    text-align: center;
+    background: #f9fafb;
+    border: 2px dashed #e2e8f0;
+    border-radius: 12px;
+    color: #94a3b8;
+}
+
+.files-container {
+    /* Înălțime fixă bazată pe 4 FileItems (aprox 72px fiecare + gap) */
+    display: flex;
+    flex-direction: column;
+}
+
+.files-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+
+
+.pagination-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 15px;
+    margin-top: auto; /* Împinge paginarea mereu jos */
+    border-top: 1px solid #f1f1f1;
+}
+
+.pag-button {
+    background: white;
+    border: var(--border-default);
+    padding: 6px 14px;
+    border-radius: var(--border-radius-default);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-color-secondary);
+}
+
+.pag-button:hover:not(:disabled) {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background-color: #f8fafc;
+}
+
+.pag-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+/* Bulinele de paginare din mijloc */
+.page-dots {
+    display: flex;
+    gap: 6px;
+}
+
+.dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background-color: #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.dot.active {
+    background-color: var(--color-primary);
+    transform: scale(1.3);
+}

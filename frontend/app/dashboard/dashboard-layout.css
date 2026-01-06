@@ -6,7 +6,7 @@
 
 .dashboard-content {
   flex: 1;
-  background-color: #f8fafc;
-  padding: 2rem;
+  background-color: var(--background);
+  padding: var(--padding-l);
   overflow-y: auto;
 }

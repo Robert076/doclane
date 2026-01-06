@@ -62,6 +62,7 @@ func main() {
 				r.Route("/files", func(r chi.Router) {
 					r.Get("/", document_handler.GetFilesByRequestHandler)
 					r.Post("/", document_handler.AddDocumentHandler)
+					r.Get("/{fileId}/presign", document_handler.GetFilePresignedURLHandler)
 				})
 			})
 		})

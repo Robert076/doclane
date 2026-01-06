@@ -11,21 +11,21 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func GetFilesByRequestHandler(w http.ResponseWriter, r *http.Request) {
+func GetFilePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
 	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	requestIDStr := chi.URLParam(r, "id")
-	requestID, err := strconv.Atoi(requestIDStr)
+	fileIDStr := chi.URLParam(r, "fileId")
+	fileID, err := strconv.Atoi(fileIDStr)
 	if err != nil {
-		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid request ID format."})
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid file ID format."})
 		return
 	}
 
-	files, err := config.DocumentService.GetFilesByRequest(r.Context(), jwtUserId, requestID)
+	url, err := config.DocumentService.GetFilePresignedURL(r.Context(), jwtUserId, fileID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -33,7 +33,7 @@ func GetFilesByRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Files retrieved successfully.",
-		Data:    files,
+		Msg:     "Presigned URL generated successfully.",
+		Data:    map[string]string{"url": url},
 	})
 }

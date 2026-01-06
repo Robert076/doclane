@@ -1,16 +1,22 @@
 "use client";
+
+import { useRouter } from "next/navigation"; // Importăm hook-ul de navigare
 import { DocumentRequest, RequestStatus } from "@/types";
 import StatusBadge from "./StatusBadge/StatusBadge";
-
-import "./Request.css";
 import ButtonPrimary from "../Buttons/ButtonPrimary/ButtonPrimary";
+import "./Request.css";
 
 interface RequestProps {
   request: DocumentRequest;
 }
 
 const Request: React.FC<RequestProps> = ({ request }) => {
+  const router = useRouter(); // Inițializăm router-ul
   const isOverdue = request.status === "overdue";
+
+  const handleViewDetails = () => {
+    router.push(`/dashboard/requests/${request.id}`);
+  };
 
   return (
     <div className={`document-request-card ${isOverdue ? "is-overdue" : ""}`}>
@@ -32,7 +38,7 @@ const Request: React.FC<RequestProps> = ({ request }) => {
           text="View Details"
           variant="ghost"
           fullWidth={true}
-          onClick={() => console.log("Details for:", request.id)}
+          onClick={handleViewDetails}
         />
       </div>
     </div>

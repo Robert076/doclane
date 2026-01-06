@@ -1,0 +1,21 @@
+.details-card {
+  background: white;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  padding: var(--padding-details-card);
+  box-shadow: var(--box-shadow-default);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.85rem 0;
+}
+
+.info-row strong {
+    color: var(--text-color-secondary);
+}
+
+.info-description {
+  margin-top: 1.5rem;
+}

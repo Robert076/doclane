@@ -8,7 +8,7 @@
 
 .clients-empty {
   text-align: center;
-  padding: 3rem;
+  padding: var(--padding-xl);
   background: #f9f9f9;
   border-radius: 12px;
   border: 1px dashed #ccc;

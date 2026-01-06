@@ -1,0 +1,91 @@
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-10, 12px);
+  padding: 14px 18px;
+  background-color: white;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  margin-bottom: 8px;
+
+}
+
+.file-item:hover {
+  box-shadow: var(--box-shadow-default);
+  border-color: var(--color-primary);
+}
+
+/* Badge pentru tipul de fișier */
+.file-type-badge {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  flex-shrink: 0;
+}
+
+.file-type-badge.pdf { background-color: #e53e3e; }
+.file-type-badge.img { background-color: #3182ce; }
+.file-type-badge.doc { background-color: #718096; }
+
+/* Detalii fișier */
+.file-info-wrapper {
+  flex: 1;
+  min-width: 0; /* Important pentru text-overflow */
+}
+
+.file-name {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #2d3748;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.file-metadata {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--font-size-s, 0.8rem);
+  color: var(--text-color-secondary);
+  margin-top: 3px;
+}
+
+.separator {
+  opacity: 0.5;
+}
+
+/* Butonul de acțiune */
+.view-button {
+  background: transparent;
+  border: 1px solid var(--color-primary);
+  color: var(--color-primary);
+  padding: 6px 16px;
+  border-radius: var(--border-radius-default);
+  font-size: var(--font-size-s);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.view-button:hover:not(:disabled) {
+  background-color: var(--color-primary);
+  color: #ffffff;
+}
+
+.view-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  border-color: #cbd5e0;
+  color: #718096;
+}

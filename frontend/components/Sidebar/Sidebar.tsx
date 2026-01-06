@@ -13,7 +13,7 @@ import Logo from "../Logo/Logo";
 
 export default function Sidebar() {
   const pathname = usePathname();
-  const user = useUser(); // Luăm user-ul direct din context, fără props
+  const user = useUser();
 
   const links = SIDEBAR_CONFIG[user.role] || [];
 
@@ -46,7 +46,7 @@ export default function Sidebar() {
           <span className="sidebar-user-role">{user.role.toLowerCase()}</span>
         </div>
 
-        <ButtonPrimary text="Log out" variant="secondary" fullWidth={true} onClick={logout} />
+        <ButtonPrimary text="Log out" variant="primary" fullWidth={true} onClick={logout} />
       </div>
     </aside>
   );

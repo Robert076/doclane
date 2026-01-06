@@ -325,67 +325,66 @@ func (service *DocumentService) GetFilesByRequest(
 	ctx context.Context,
 	jwtUserId int,
 	requestID int,
-) ([]models.DocumentFileResponse, error) {
+) ([]models.DocumentFile, error) {
 	docReq, err := service.documentRepo.GetDocumentRequestByID(ctx, requestID)
 	if err != nil {
-		service.logger.Error("failed to find document request for file retrieval",
-			slog.Int("request_id", requestID),
-			slog.Any("error", err),
-		)
+		service.logger.Error("failed to find document request", slog.Int("request_id", requestID), slog.Any("error", err))
 		return nil, err
 	}
 
 	if docReq.ProfessionalID != jwtUserId && docReq.ClientID != jwtUserId {
-		service.logger.Warn("unauthorized attempt to access request files",
-			slog.Int("user_id", jwtUserId),
-			slog.Int("request_id", requestID),
-		)
+		service.logger.Warn("unauthorized access attempt", slog.Int("user_id", jwtUserId), slog.Int("request_id", requestID))
 		return nil, errors.ErrForbidden{Msg: "You are not authorized to view files for this request."}
 	}
 
 	files, err := service.documentRepo.GetFilesByRequest(ctx, requestID)
 	if err != nil {
-		service.logger.Error("failed to fetch files from repository",
-			slog.Int("request_id", requestID),
-			slog.Any("error", err),
-		)
+		service.logger.Error("failed to fetch files", slog.Int("request_id", requestID), slog.Any("error", err))
 		return nil, err
 	}
 
-	presignClient := s3.NewPresignClient(service.s3Client)
+	service.logger.Info("files retrieved successfully", slog.Int("request_id", requestID), slog.Int("count", len(files)))
+	return files, nil
+}
 
-	response := make([]models.DocumentFileResponse, 0, len(files))
-	for _, file := range files {
-		presignParams := &s3.GetObjectInput{
-			Bucket:    aws.String(service.bucket),
-			Key:       aws.String(file.FilePath),
-			VersionId: file.S3VersionID,
-		}
-
-		presignedReq, err := presignClient.PresignGetObject(ctx, presignParams, func(opts *s3.PresignOptions) {
-			opts.Expires = 15 * time.Minute
-		})
-
-		if err != nil {
-			service.logger.Error("failed to generate presigned URL for file",
-				slog.Int("file_id", file.ID),
-				slog.String("path", file.FilePath),
-				slog.Any("error", err),
-			)
-			continue
-		}
-
-		response = append(response, models.DocumentFileResponse{
-			DocumentFile: file,
-			DownloadURL:  presignedReq.URL,
-		})
+func (service *DocumentService) GetFilePresignedURL(
+	ctx context.Context,
+	jwtUserId int,
+	fileID int,
+) (string, error) {
+	file, err := service.documentRepo.GetFileByID(ctx, fileID)
+	if err != nil {
+		return "", err
 	}
 
-	service.logger.Info("files retrieved successfully",
-		slog.Int("request_id", requestID),
-		slog.Int("file_count", len(response)),
-	)
-	return response, nil
+	docReq, err := service.documentRepo.GetDocumentRequestByID(ctx, file.DocumentRequestID)
+	if err != nil {
+		return "", err
+	}
+
+	if docReq.ProfessionalID != jwtUserId && docReq.ClientID != jwtUserId {
+		return "", errors.ErrForbidden{Msg: "No access to this file."}
+	}
+
+	presignClient := s3.NewPresignClient(service.s3Client)
+	presignParams := &s3.GetObjectInput{
+		Bucket:    aws.String(service.bucket),
+		Key:       aws.String(file.FilePath),
+		VersionId: file.S3VersionID,
+	}
+
+	presignedReq, err := presignClient.PresignGetObject(ctx, presignParams, func(opts *s3.PresignOptions) {
+		opts.Expires = 15 * time.Minute
+	})
+
+	if err != nil {
+		service.logger.Error("s3 presign failed",
+			slog.Int("file_id", fileID),
+			slog.Any("error", err))
+		return "", err
+	}
+
+	return presignedReq.URL, nil
 }
 
 func (service *DocumentService) validateRequestInput(title string, dueDate *time.Time) error {
