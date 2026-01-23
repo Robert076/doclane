@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 module "s3" {
-  source     = "../../modules/s3"
+  source     = "../modules/s3"
   project    = "doclane"
   env        = "dev"
   account_id = "659775407830"
@@ -31,4 +31,8 @@ resource "aws_iam_role" "s3_doclane_role" {
 resource "aws_iam_role_policy_attachment" "s3_attach" {
   role       = aws_iam_role.s3_doclane_role.name
   policy_arn = module.s3.s3_policy_arn
+}
+
+output "s3_doclane_role" {
+  value = aws_iam_role.s3_doclane_role.arn
 }
