@@ -1,0 +1,9 @@
+.requests-empty {
+  text-align: center;
+  padding: var(--padding-xl);
+  background: #f9f9f9;
+  border-radius: 12px;
+  border: 1px dashed #ccc;
+  color: #666;
+  margin-top: 2rem;
+}

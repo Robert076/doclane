@@ -1,16 +1,10 @@
 "use client";
 import { useState } from "react";
 import "./FileItem.css";
+import { DocumentFile } from "@/types";
 
 interface FileItemProps {
-  file: {
-    id: number;
-    document_request_id: number;
-    file_name: string;
-    file_size: number;
-    mime_type: string;
-    uploaded_at: string;
-  };
+  file: DocumentFile;
 }
 
 export default function FileItem({ file }: FileItemProps) {
@@ -71,7 +65,7 @@ export default function FileItem({ file }: FileItemProps) {
 
       <div className="file-actions">
         <button onClick={handleViewFile} className="view-button" disabled={isRequesting}>
-          {isRequesting ? "Se încarcă..." : "Vizualizează"}
+          {isRequesting ? "Loading..." : "View file"}
         </button>
       </div>
     </div>

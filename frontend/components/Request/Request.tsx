@@ -1,17 +1,18 @@
 "use client";
 
-import { useRouter } from "next/navigation"; // Importăm hook-ul de navigare
+import { useRouter } from "next/navigation";
 import { DocumentRequest, RequestStatus } from "@/types";
 import StatusBadge from "./StatusBadge/StatusBadge";
 import ButtonPrimary from "../Buttons/ButtonPrimary/ButtonPrimary";
 import "./Request.css";
+import RequestBody from "./_components/RequestBody";
 
 interface RequestProps {
   request: DocumentRequest;
 }
 
 const Request: React.FC<RequestProps> = ({ request }) => {
-  const router = useRouter(); // Inițializăm router-ul
+  const router = useRouter();
   const isOverdue = request.status === "overdue";
 
   const handleViewDetails = () => {
@@ -26,12 +27,7 @@ const Request: React.FC<RequestProps> = ({ request }) => {
 
       <h3 className="request-title">{request.title}</h3>
 
-      <div className="request-body">
-        <p className="request-info">
-          <strong>Client:</strong> {request.client_email}
-        </p>
-        {request.description && <p className="request-desc">{request.description}</p>}
-      </div>
+      <RequestBody request={request} />
 
       <div className="request-footer">
         <ButtonPrimary

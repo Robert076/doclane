@@ -1,0 +1,5 @@
+.pagination-counter {
+    font-size: 0.8rem;
+    color: var(--text-color-secondary);
+    font-weight: 500;
+}

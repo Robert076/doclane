@@ -1,6 +1,7 @@
 import { DocumentRequest } from "@/types";
 import Request from "../Request/Request";
 import "./RequestsSection.css";
+import EmptyRequestsSection from "./_components/EmptyRequestsSection";
 
 interface RequestsSectionProps {
   requests: DocumentRequest[];
@@ -8,11 +9,7 @@ interface RequestsSectionProps {
 
 const RequestsSection: React.FC<RequestsSectionProps> = ({ requests }) => {
   if (requests.length === 0) {
-    return (
-      <div className="requests-empty">
-        <p>No document requests found.</p>
-      </div>
-    );
+    return <EmptyRequestsSection />;
   }
 
   return (

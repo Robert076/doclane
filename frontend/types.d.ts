@@ -21,6 +21,17 @@ export interface DocumentRequest {
   updated_at: string;
 }
 
+export interface DocumentFile {
+  id: number;
+  document_request_id: number;
+  file_name: string;
+  file_path: string;
+  mime_type: string;
+  file_size: number;
+  uploaded_at: string;
+  s3_version_id?: string;
+}
+
 export type RequestStatus = "pending" | "uploaded" | "overdue";
 export type UserRole = "CLIENT" | "PROFESSIONAL";
 

@@ -1,6 +1,7 @@
-import { DocumentRequest } from "@/types";
+import { DocumentRequest, RequestStatus } from "@/types";
 import "./DetailsCard.css";
 import SectionTitle from "@/components/SectionTitle/SectionTitle";
+import StatusBadge from "@/components/Request/StatusBadge/StatusBadge";
 
 export default function DetailsCard({ data }: { data: DocumentRequest }) {
   return (
@@ -18,6 +19,12 @@ export default function DetailsCard({ data }: { data: DocumentRequest }) {
             month: "long",
             year: "numeric",
           })}
+        </span>
+      </div>
+      <div className="info-row">
+        <strong>Status:</strong>
+        <span>
+          <StatusBadge status={data.status as RequestStatus} />
         </span>
       </div>
       {data.description && (

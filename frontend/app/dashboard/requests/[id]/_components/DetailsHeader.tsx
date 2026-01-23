@@ -1,5 +1,4 @@
-import StatusBadge from "@/components/Request/StatusBadge/StatusBadge";
-import { DocumentRequest, RequestStatus } from "@/types";
+import { DocumentRequest } from "@/types";
 import Link from "next/link";
 import "./DetailsHeader.css";
 
@@ -11,7 +10,6 @@ export default function DetailsHeader({ data }: { data: DocumentRequest }) {
       </Link>
       <div className="header-main">
         <h1>{data.title}</h1>
-        <StatusBadge status={data.status as RequestStatus} />
       </div>
     </header>
   );
