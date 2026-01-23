@@ -1,5 +1,9 @@
 # Doclane
 
+## 🚀 Table of contents
+
+- [AWS Deployment](#️-aws-deployment)
+
 **Doclane** is a document request and workflow platform designed to help
 professionals collect documents from their clients in a clear,
 structured, and reliable way.
@@ -19,6 +23,7 @@ Professionals and their clients often exchange documents via email,
 messaging apps, or shared folders.
 
 This results in:
+
 - lost or duplicated files
 - constant follow-ups and reminders
 - lack of visibility into what is missing or overdue
@@ -40,34 +45,23 @@ It is a document request and workflow platform.
 
 ---
 
-## 👥 User Roles
+## ☁️ AWS Deployment
 
-### Professional
-- Creates and manages clients
-- Defines document requests
-- Sets recurrence and deadlines
-- Monitors document status across all clients
+The deployment is done in AWS, and is made up of three distinct environments:
 
-### Client
-- Accesses only their own account
-- Sees requested documents
-- Uploads files securely
-- Receives reminders for missing or overdue items
+- dev
+- staging
+- prod
 
----
+For better maintainability, scalability and the ability to audit changes to the infrastructure in a version controlled way, I chose to use Terraform for the deployment.
 
-## 🎨 UI
+### 🧑🏼‍💻 Dev environment
 
-https://stitch.withgoogle.com/projects/4930524337684907394
+The dev environment is used for local testing. It contains only a subset of the services used in prod or staging.
 
----
+Since when developing locally we run the frontend and backend on our machine, the only provisioned resources in the AWS cloud are an S3 bucket used for storing documents, a dev IAM role containing policies that adhere to the least-privilege principle, only being able to access the S3 bucket in the dev environment (the role is assumed by the local backend).
 
-## 🔁 Core Feature: Recurring Requests
-
-Document requests can be marked as recurring.
-Doclane automatically generates new requests based on the defined
-schedule (e.g. every 30 days) and notifies clients when action is
-required.
+> Check out the Terraform configuration files for the dev environment in /terraform/dev
 
 ## 📄 License
 
