@@ -83,9 +83,13 @@ func newS3Client() (*s3.Client, error) {
 
 	stsClient := sts.NewFromConfig(cfg)
 
+	s3IamRole := os.Getenv("AWS_ROLE_S3")
+	if s3IamRole == "" {
+		log.Fatal("AWS_ROLE_S3 not set")
+	}
 	roleProvider := stscreds.NewAssumeRoleProvider(
 		stsClient,
-		"arn:aws:iam::659775407830:role/s3-doclane-role",
+		s3IamRole,
 	)
 
 	assumedCfg := cfg
