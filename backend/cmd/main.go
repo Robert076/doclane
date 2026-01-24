@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	// Hello World
+	// Hello World (with better CI)
 	r := chi.NewRouter()
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
