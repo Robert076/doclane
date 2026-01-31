@@ -32,14 +32,22 @@ func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, err)
 		return
 	}
-	defer r.MultipartForm.RemoveAll()
+	defer func() {
+		if err := r.MultipartForm.RemoveAll(); err != nil {
+			utils.WriteError(w, errors.ErrInternalServerError{Msg: "Error removing temp files from multipart form"})
+		}
+	}()
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: "Could not get file from request."})
 		return
 	}
-	defer file.Close()
+	defer func() {
+		if err := file.Close(); err != nil {
+			utils.WriteError(w, errors.ErrInternalServerError{Msg: "Error closing file"})
+		}
+	}()
 
 	id, err := config.DocumentService.AddDocumentFile(
 		r.Context(),

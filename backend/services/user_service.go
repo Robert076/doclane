@@ -21,6 +21,8 @@ type UserService struct {
 
 type CreateUserParams struct {
 	Email          string
+	FirstName      string
+	LastName       string
 	Password       string
 	Role           string
 	ProfessionalID *int
@@ -131,7 +133,7 @@ func (service *UserService) AddUser(ctx context.Context, params CreateUserParams
 		slog.String("role", params.Role),
 	)
 
-	if err := service.ValidateUserForRegister(ctx, params.Email, params.Password, params.Role); err != nil {
+	if err := service.ValidateUserForRegister(ctx, params.Email, params.Password, params.Role, params.FirstName, params.LastName); err != nil {
 		service.logger.Warn("user validation failed for register",
 			slog.String("email", params.Email),
 			slog.Any("error", err),
@@ -150,6 +152,8 @@ func (service *UserService) AddUser(ctx context.Context, params CreateUserParams
 
 	user := models.User{
 		Email:        params.Email,
+		FirstName:    params.FirstName,
+		LastName:     params.LastName,
 		PasswordHash: string(hashedPassword),
 		Role:         params.Role,
 		IsActive:     true,
@@ -205,13 +209,17 @@ func (service *UserService) Login(ctx context.Context, params LoginParams) (mode
 	return user, nil
 }
 
-func (service *UserService) ValidateUserForRegister(ctx context.Context, email string, password string, role string) error {
+func (service *UserService) ValidateUserForRegister(ctx context.Context, email, password, role, firstName, lastName string) error {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid email received: %s", email)}
 	}
 
 	if role != "PROFESSIONAL" && role != "CLIENT" {
 		return errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid role: %s. Allowed: PROFESSIONAL, CLIENT", role)}
+	}
+
+	if firstName == "" || lastName == "" {
+		return errors.ErrBadRequest{Msg: fmt.Sprintf("First and last name cannot be empty.")}
 	}
 
 	_, err := service.repo.GetUserByEmail(ctx, email)

@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/Robert076/doclane/backend/models"
 )
@@ -18,17 +19,17 @@ func NewDocumentRepository(db *sql.DB) *DocumentRepository {
 func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error) {
 	var id int
 	err := repo.db.QueryRowContext(ctx,
-		`INSERT INTO document_requests (professional_id, client_id, title, description, due_date, status)
-		 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
-		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.DueDate, req.Status,
+		`INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_days, due_date, status)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.IsRecurring, req.RecurrenceDays, req.DueDate, req.Status,
 	).Scan(&id)
 	return id, err
 }
 
-func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTO, error) {
-	var req models.DocumentRequestDTO
+func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTORead, error) {
+	var req models.DocumentRequestDTORead
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, u.email as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_days, u.email as client_email, 
                dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
@@ -40,6 +41,8 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 		&req.ID,
 		&req.ProfessionalID,
 		&req.ClientID,
+		&req.IsRecurring,
+		&req.RecurrenceDays,
 		&req.ClientEmail,
 		&req.Title,
 		&req.Description,
@@ -51,9 +54,9 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 	return req, err
 }
 
-func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequestDTO, error) {
+func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequestDTORead, error) {
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, u.email as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_days, u.email as client_email, 
                dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
@@ -66,13 +69,15 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Conte
 	}
 	defer rows.Close()
 
-	var requests []models.DocumentRequestDTO
+	var requests []models.DocumentRequestDTORead
 	for rows.Next() {
-		var req models.DocumentRequestDTO
+		var req models.DocumentRequestDTORead
 		err := rows.Scan(
 			&req.ID,
 			&req.ProfessionalID,
 			&req.ClientID,
+			&req.IsRecurring,
+			&req.RecurrenceDays,
 			&req.ClientEmail,
 			&req.Title,
 			&req.Description,
@@ -90,9 +95,9 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Conte
 	return requests, rows.Err()
 }
 
-func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequestDTO, error) {
+func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequestDTORead, error) {
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, u.email as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_days, u.email as client_email, 
                dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
@@ -105,13 +110,15 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, cl
 	}
 	defer rows.Close()
 
-	var requests []models.DocumentRequestDTO
+	var requests []models.DocumentRequestDTORead
 	for rows.Next() {
-		var req models.DocumentRequestDTO
+		var req models.DocumentRequestDTORead
 		if err := rows.Scan(
 			&req.ID,
 			&req.ProfessionalID,
 			&req.ClientID,
+			&req.IsRecurring,
+			&req.RecurrenceDays,
 			&req.ClientEmail,
 			&req.Title,
 			&req.Description,
@@ -160,7 +167,12 @@ func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID in
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		err := errors.Join(err, rows.Close())
+		if err != nil {
+
+		}
+	}()
 
 	var files []models.DocumentFile
 	for rows.Next() {

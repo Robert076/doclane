@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 	"strconv"
 	"strings"
 
@@ -11,10 +12,11 @@ import (
 )
 
 type UserRepository struct {
-	db *sql.DB
+	db     *sql.DB
+	logger *slog.Logger
 }
 
-func NewUserRepository(db *sql.DB) *UserRepository {
+func NewUserRepository(db *sql.DB, logger *slog.Logger) *UserRepository {
 	return &UserRepository{db: db}
 }
 
@@ -38,7 +40,7 @@ func (repo *UserRepository) GetUsers(
 	}
 
 	query := `
-		SELECT id, email, password_hash, role, professional_id, is_active, created_at, updated_at
+		SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
 		FROM users
 	`
 
@@ -81,6 +83,8 @@ func (repo *UserRepository) GetUsers(
 		err := rows.Scan(
 			&user.ID,
 			&user.Email,
+			&user.FirstName,
+			&user.LastName,
 			&user.PasswordHash,
 			&user.Role,
 			&user.ProfessionalID,
@@ -105,13 +109,15 @@ func (repo *UserRepository) GetUserByID(ctx context.Context, id int) (models.Use
 	var user models.User
 
 	err := repo.db.QueryRowContext(ctx,
-		`SELECT id, email, password_hash, role, professional_id, is_active, created_at, updated_at
+		`SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
 		FROM users
 		WHERE id = $1`,
 		id,
 	).Scan(
 		&user.ID,
 		&user.Email,
+		&user.FirstName,
+		&user.LastName,
 		&user.PasswordHash,
 		&user.Role,
 		&user.ProfessionalID,
@@ -135,13 +141,15 @@ func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (m
 	var user models.User
 
 	err := repo.db.QueryRowContext(ctx,
-		`SELECT id, email, password_hash, role, professional_id, is_active, created_at, updated_at
+		`SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
 			FROM users
 			WHERE email = $1`,
 		email,
 	).Scan(
 		&user.ID,
 		&user.Email,
+		&user.FirstName,
+		&user.LastName,
 		&user.PasswordHash,
 		&user.Role,
 		&user.ProfessionalID,
@@ -170,7 +178,7 @@ func (repo *UserRepository) GetUsersByProfessionalID(
 	users := []models.User{}
 
 	query := `
-        SELECT id, email, password_hash, role, professional_id, is_active, created_at, updated_at
+        SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
         FROM users
         WHERE professional_id = $1
     `
@@ -200,6 +208,8 @@ func (repo *UserRepository) GetUsersByProfessionalID(
 		err := rows.Scan(
 			&user.ID,
 			&user.Email,
+			&user.FirstName,
+			&user.LastName,
 			&user.PasswordHash,
 			&user.Role,
 			&user.ProfessionalID,
@@ -224,10 +234,12 @@ func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int,
 	var id int
 
 	err := repo.db.QueryRowContext(ctx,
-		`INSERT INTO users (email, password_hash, role, professional_id, is_active, created_at, updated_at)
-				 VALUES ($1, $2, $3, $4, $5, $6, $7)
+		`INSERT INTO users (email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at)
+				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 				 RETURNING id`,
 		user.Email,
+		&user.FirstName,
+		&user.LastName,
 		user.PasswordHash,
 		user.Role,
 		user.ProfessionalID,

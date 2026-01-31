@@ -38,19 +38,16 @@ func NewDocumentService(documentRepo repositories.IDocumentRepository, userRepo 
 func (service *DocumentService) AddDocumentRequest(
 	ctx context.Context,
 	jwtUserId int,
-	clientId int,
-	title string,
-	description *string,
-	dueDate *time.Time,
+	dto models.DocumentRequestDTOCreate,
 ) (int, error) {
-	if err := service.validateRequestInput(title, dueDate); err != nil {
+	if err := service.validateRequestInput(dto.Title, dto.DueDate); err != nil {
 		return 0, err
 	}
 
-	client, err := service.userRepo.GetUserByID(ctx, clientId)
+	client, err := service.userRepo.GetUserByID(ctx, dto.ClientID)
 	if err != nil {
 		service.logger.Warn("client lookup failed for document request",
-			slog.Int("client_id", clientId),
+			slog.Int("client_id", dto.ClientID),
 			slog.Int("requested_by", jwtUserId),
 			slog.Any("error", err),
 		)
@@ -61,20 +58,24 @@ func (service *DocumentService) AddDocumentRequest(
 	if client.ProfessionalID == nil || *client.ProfessionalID != jwtUserIdStr {
 		service.logger.Warn("unauthorized attempt to add request to unassigned client",
 			slog.Int("professional_id", jwtUserId),
-			slog.Int("client_id", clientId),
+			slog.Int("client_id", dto.ClientID),
 		)
 		return 0, errors.ErrForbidden{Msg: "This client is not assigned to you."}
 	}
 
 	req := models.DocumentRequest{
 		ProfessionalID: jwtUserId,
-		ClientID:       clientId,
-		Title:          title,
-		Description:    description,
-		DueDate:        dueDate,
-		Status:         "pending",
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+		DocumentRequestBase: models.DocumentRequestBase{
+			ClientID:       dto.ClientID,
+			Title:          dto.Title,
+			Description:    dto.Description,
+			IsRecurring:    dto.IsRecurring,
+			RecurrenceDays: dto.RecurrenceDays,
+			DueDate:        dto.DueDate,
+		},
+		Status:    "pending",
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 
 	id, err := service.documentRepo.AddDocumentRequest(ctx, req)
@@ -82,7 +83,7 @@ func (service *DocumentService) AddDocumentRequest(
 		service.logger.Error("failed to create document request",
 			slog.Any("error", err),
 			slog.Int("professional_id", jwtUserId),
-			slog.Int("client_id", clientId),
+			slog.Int("client_id", dto.ClientID),
 		)
 		return 0, err
 	}
@@ -95,14 +96,14 @@ func (service *DocumentService) GetDocumentRequestByID(
 	ctx context.Context,
 	jwtUserId int,
 	id int,
-) (models.DocumentRequestDTO, error) {
+) (models.DocumentRequestDTORead, error) {
 	req, err := service.documentRepo.GetDocumentRequestByID(ctx, id)
 	if err != nil {
 		service.logger.Error("failed to get document request by id",
 			slog.Int("request_id", id),
 			slog.Any("error", err),
 		)
-		return models.DocumentRequestDTO{}, err
+		return models.DocumentRequestDTORead{}, err
 	}
 
 	if req.ProfessionalID != jwtUserId && req.ClientID != jwtUserId {
@@ -110,7 +111,7 @@ func (service *DocumentService) GetDocumentRequestByID(
 			slog.Int("user_id", jwtUserId),
 			slog.Int("request_id", id),
 		)
-		return models.DocumentRequestDTO{}, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to access document request with id %v", jwtUserId, req.ID)}
+		return models.DocumentRequestDTORead{}, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to access document request with id %v", jwtUserId, req.ID)}
 	}
 
 	return req, nil
@@ -119,7 +120,7 @@ func (service *DocumentService) GetDocumentRequestByID(
 func (service *DocumentService) GetDocumentRequestsByProfessional(
 	ctx context.Context,
 	jwtUserId int,
-) ([]models.DocumentRequestDTO, error) {
+) ([]models.DocumentRequestDTORead, error) {
 	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
 	if err != nil {
 		service.logger.Error("failed to fetch professional for document requests",
@@ -150,7 +151,7 @@ func (service *DocumentService) GetDocumentRequestsByProfessional(
 func (service *DocumentService) GetDocumentRequestsByClient(
 	ctx context.Context,
 	jwtUserId int,
-) ([]models.DocumentRequestDTO, error) {
+) ([]models.DocumentRequestDTORead, error) {
 	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
 	if err != nil {
 		service.logger.Error("failed to fetch client for document requests",

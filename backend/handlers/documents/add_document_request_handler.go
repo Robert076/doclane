@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
-	"github.com/Robert076/doclane/backend/types/requests"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/config"
 )
@@ -18,13 +18,13 @@ func AddDocumentRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := requests.AddDocumentRequestRequest{}
+	req := models.DocumentRequestDTOCreate{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
-	id, err := config.DocumentService.AddDocumentRequest(r.Context(), userId, req.ClientID, req.Title, req.Description, req.DueDate)
+	id, err := config.DocumentService.AddDocumentRequest(r.Context(), userId, req)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

@@ -21,6 +21,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	params := services.CreateUserParams{
 		Email:          req.Email,
+		FirstName:      req.FirstName,
+		LastName:       req.LastName,
 		Password:       req.Password,
 		Role:           req.Role,
 		ProfessionalID: req.ProfessionalID,

@@ -80,27 +80,3 @@ func MustBeActive(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r)
 	})
 }
-
-func MustBeProfessional(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims, ok := r.Context().Value(utils.ClaimsKey).(*utils.CustomClaims)
-		if !ok {
-			config.Logger.Error("middleware context error: claims not found in MustBeProfessional")
-			utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
-			return
-		}
-
-		if claims.Role != "PROFESSIONAL" {
-			config.Logger.Warn("unauthorized role access attempt",
-				slog.String("user_id", claims.UserID),
-				slog.String("required_role", "PROFESSIONAL"),
-				slog.String("actual_role", claims.Role),
-				slog.String("path", r.URL.Path),
-			)
-			utils.WriteError(w, errors.ErrForbidden{Msg: "Access denied. Professional role required."})
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}

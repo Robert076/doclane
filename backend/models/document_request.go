@@ -2,29 +2,31 @@ package models
 
 import "time"
 
-type DocumentRequest struct {
-	ID             int        `db:"id" json:"id"`
-	ProfessionalID int        `db:"professional_id" json:"professional_id"`
+type DocumentRequestBase struct {
 	ClientID       int        `db:"client_id" json:"client_id"`
 	Title          string     `db:"title" json:"title"`
 	Description    *string    `db:"description,omitempty" json:"description,omitempty"`
+	IsRecurring    bool       `db:"is_recurring" json:"is_recurring"`
+	RecurrenceDays *int       `db:"recurrence_days" json:"recurrence_days"`
 	DueDate        *time.Time `db:"due_date,omitempty" json:"due_date,omitempty"`
-	Status         string     `db:"status" json:"status"`
-	CreatedAt      time.Time  `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time  `db:"updated_at" json:"updated_at"`
 }
 
-type DocumentRequestDTO struct {
-	ID             int        `db:"id" json:"id"`
-	ProfessionalID int        `db:"professional_id" json:"professional_id"`
-	ClientID       int        `db:"client_id" json:"client_id"`
-	ClientEmail    string     `json:"client_email"`
-	Title          string     `db:"title" json:"title"`
-	Description    *string    `db:"description,omitempty" json:"description,omitempty"`
-	DueDate        *time.Time `db:"due_date,omitempty" json:"due_date,omitempty"`
-	Status         string     `db:"status" json:"status"`
-	CreatedAt      time.Time  `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time  `db:"updated_at" json:"updated_at"`
+type DocumentRequest struct {
+	DocumentRequestBase
+	ID             int       `db:"id" json:"id"`
+	ProfessionalID int       `db:"professional_id" json:"professional_id"`
+	Status         string    `db:"status" json:"status"`
+	CreatedAt      time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt      time.Time `db:"updated_at" json:"updated_at"`
+}
+
+type DocumentRequestDTORead struct {
+	DocumentRequest
+	ClientEmail string `json:"client_email"`
+}
+
+type DocumentRequestDTOCreate struct {
+	DocumentRequestBase
 }
 
 type DocumentFile struct {

@@ -16,9 +16,9 @@ type IUserRepository interface {
 
 type IDocumentRepository interface {
 	AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error)
-	GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTO, error)
-	GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequestDTO, error)
-	GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequestDTO, error)
+	GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTORead, error)
+	GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequestDTORead, error)
+	GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequestDTORead, error)
 	UpdateDocumentRequestStatus(ctx context.Context, id int, status string) error
 
 	AddDocumentFile(ctx context.Context, file models.DocumentFile) (int, error)

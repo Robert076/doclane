@@ -32,12 +32,11 @@ func init() {
 	}
 
 	dbHost := os.Getenv("DB_HOST")
-	dbPassword := os.Getenv("DB_PASSWORD")
 	dbPort := 5432
-	dbUser := "postgres"
-	dbName := "postgres"
+	dbUser := "robert"
+	dbName := "doclane"
 
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbPassword, dbName)
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable", dbHost, dbPort, dbUser, dbName)
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
@@ -53,7 +52,7 @@ func init() {
 	}
 
 	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	userRepository := repositories.NewUserRepository(db)
+	userRepository := repositories.NewUserRepository(db, Logger)
 	UserService = services.NewUserService(userRepository, Logger)
 
 	S3Client, err = newS3Client()

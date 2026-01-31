@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -32,7 +33,10 @@ func main() {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("Hello World!"))
+		_, err := w.Write([]byte("Hello World!"))
+		if err != nil {
+			log.Fatal(err)
+		}
 	})
 
 	r.Route("/api/auth", func(r chi.Router) {
@@ -69,5 +73,7 @@ func main() {
 		})
 	})
 
-	http.ListenAndServe(":8080", handler)
+	if err := http.ListenAndServe(":8080", handler); err != nil {
+		log.Fatal(err)
+	}
 }
