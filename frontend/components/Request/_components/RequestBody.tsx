@@ -12,7 +12,7 @@ const RequestBody: React.FC<RequestBodyProps> = ({ request }) => {
       <p className="request-info">
         <strong>Client:</strong> {request.client_email}
       </p>
-      {request.description && <p className="request-desc">{request.description}</p>}
+      {/* {request.description && <p className="request-desc">{request.description}</p>} */}
     </div>
   );
 };

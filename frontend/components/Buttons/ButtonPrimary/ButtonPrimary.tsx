@@ -19,7 +19,7 @@ const ButtonPrimary: React.FC<ButtonPrimaryProps> = ({
 
   return (
     <button
-      className={`button-primary-base ${variantClass} ${widthClass} ${className}`}
+      className={`button button-primary-base ${variantClass} ${widthClass} ${className}`}
       {...props}
     >
       {text}

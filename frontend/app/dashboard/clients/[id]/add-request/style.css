@@ -1,0 +1,5 @@
+.add-request-for-client {
+  padding: var(--padding-l);
+  max-width: var(--request-details-width);
+  margin: 0 auto;
+}
