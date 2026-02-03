@@ -34,4 +34,5 @@ require (
 	github.com/aws/smithy-go v1.24.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
+	github.com/robfig/cron/v3 v3.0.1 // indirect
 )

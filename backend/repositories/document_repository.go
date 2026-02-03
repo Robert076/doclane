@@ -19,9 +19,9 @@ func NewDocumentRepository(db *sql.DB) *DocumentRepository {
 func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error) {
 	var id int
 	err := repo.db.QueryRowContext(ctx,
-		`INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_cron, last_uploaded_at, due_date, status)
+		`INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_cron, last_uploaded_at, due_date, next_due_at)
 		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.IsRecurring, req.RecurrenceCron, req.LastUploadedAt, req.DueDate, req.Status,
+		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.IsRecurring, req.RecurrenceCron, req.LastUploadedAt, req.DueDate, req.NextDueAt,
 	).Scan(&id)
 	return id, err
 }
@@ -30,7 +30,7 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 	var req models.DocumentRequestDTORead
 	query := `
         SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email as client_email, 
-               dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
+               dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
         WHERE dr.id=$1
@@ -48,7 +48,7 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 		&req.Title,
 		&req.Description,
 		&req.DueDate,
-		&req.Status,
+		&req.NextDueAt,
 		&req.CreatedAt,
 		&req.UpdatedAt,
 	)
@@ -58,7 +58,7 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequestDTORead, error) {
 	query := `
         SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email as client_email, 
-               dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
+               dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
         WHERE dr.professional_id=$1
@@ -84,7 +84,7 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Conte
 			&req.Title,
 			&req.Description,
 			&req.DueDate,
-			&req.Status,
+			&req.NextDueAt,
 			&req.CreatedAt,
 			&req.UpdatedAt,
 		)
@@ -100,7 +100,7 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Conte
 func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequestDTORead, error) {
 	query := `
         SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email as client_email, 
-               dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
+               dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
         WHERE dr.client_id=$1
@@ -126,7 +126,7 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, cl
 			&req.Title,
 			&req.Description,
 			&req.DueDate,
-			&req.Status,
+			&req.NextDueAt,
 			&req.CreatedAt,
 			&req.UpdatedAt,
 		); err != nil {
@@ -239,4 +239,19 @@ func (r *DocumentRepository) AddDocumentFile(ctx context.Context, file models.Do
 	).Scan(&id)
 
 	return id, err
+}
+
+func (r *DocumentRepository) SetFileUploaded(ctx context.Context, id int) error {
+	query := `
+		UPDATE document_requests
+		SET last_uploaded_at = NOW()
+		WHERE id = $1
+	`
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

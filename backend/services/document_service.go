@@ -15,6 +15,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
+	"github.com/robfig/cron/v3"
 )
 
 type DocumentService struct {
@@ -63,6 +64,7 @@ func (service *DocumentService) AddDocumentRequest(
 		return 0, errors.ErrForbidden{Msg: "This client is not assigned to you."}
 	}
 
+	nextDueAt := computeNextDueAt(dto.DueDate, dto.RecurrenceCron)
 	req := models.DocumentRequest{
 		ProfessionalID: jwtUserId,
 		DocumentRequestBase: models.DocumentRequestBase{
@@ -71,10 +73,10 @@ func (service *DocumentService) AddDocumentRequest(
 			Description:    dto.Description,
 			IsRecurring:    dto.IsRecurring,
 			RecurrenceCron: dto.RecurrenceCron,
+			NextDueAt:      nextDueAt,
 			LastUploadedAt: dto.LastUploadedAt,
 			DueDate:        dto.DueDate,
 		},
-		Status:    "pending",
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -115,6 +117,8 @@ func (service *DocumentService) GetDocumentRequestByID(
 		return models.DocumentRequestDTORead{}, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to access document request with id %v", jwtUserId, req.ID)}
 	}
 
+	req.Status = computeStatus(req.LastUploadedAt, req.NextDueAt)
+
 	return req, nil
 }
 
@@ -144,6 +148,10 @@ func (service *DocumentService) GetDocumentRequestsByProfessional(
 			slog.Any("error", err),
 		)
 		return nil, err
+	}
+
+	for i := range reqs {
+		reqs[i].Status = computeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt)
 	}
 
 	return reqs, nil
@@ -178,60 +186,11 @@ func (service *DocumentService) GetDocumentRequestsByClient(
 		return nil, err
 	}
 
+	for i := range reqs {
+		reqs[i].Status = computeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt)
+	}
+
 	return reqs, nil
-}
-
-func (service *DocumentService) UpdateDocumentRequestStatus(
-	ctx context.Context,
-	jwtUserId int,
-	id int,
-	status string,
-) error {
-	req, err := service.documentRepo.GetDocumentRequestByID(ctx, id)
-	if err != nil {
-		service.logger.Error("failed to find request for status update",
-			slog.Int("request_id", id),
-			slog.Any("error", err),
-		)
-		return err
-	}
-
-	if req.ProfessionalID != jwtUserId && req.ClientID != jwtUserId {
-		service.logger.Warn("unauthorized status update attempt",
-			slog.Int("user_id", jwtUserId),
-			slog.Int("request_id", id),
-		)
-		return errors.ErrForbidden{Msg: "You are not authorized to update this request status."}
-	}
-
-	validStatuses := map[string]bool{
-		"pending":  true,
-		"uploaded": true,
-		"overdue":  true,
-	}
-
-	if !validStatuses[status] {
-		service.logger.Warn("invalid status update value provided",
-			slog.String("status", status),
-			slog.Int("request_id", id),
-		)
-		return errors.ErrBadRequest{Msg: "Invalid status. Allowed: 'pending', 'uploaded', 'overdue'."}
-	}
-
-	if err := service.documentRepo.UpdateDocumentRequestStatus(ctx, id, status); err != nil {
-		service.logger.Error("failed to update request status in repo",
-			slog.Int("request_id", id),
-			slog.String("status", status),
-			slog.Any("error", err),
-		)
-		return err
-	}
-
-	service.logger.Info("document request status updated",
-		slog.Int("request_id", id),
-		slog.String("status", status),
-	)
-	return nil
 }
 
 func (service *DocumentService) AddDocumentFile(
@@ -318,6 +277,8 @@ func (service *DocumentService) AddDocumentFile(
 
 		return 0, errors.ErrInternalServerError{Msg: fmt.Sprintf("Metadata save failed, file removed from storage. %v", err)}
 	}
+
+	service.documentRepo.SetFileUploaded(ctx, requestID)
 
 	service.logger.Info("file upload successful", slog.Int("file_id", id))
 	return id, nil
@@ -420,4 +381,43 @@ func (service *DocumentService) validateFileInfo(fileName string, fileSize int64
 	}
 
 	return nil
+}
+
+func computeNextDueAt(dueDate *time.Time, cronExpr *string) *time.Time {
+	now := time.Now()
+
+	if dueDate != nil {
+		return dueDate
+	}
+
+	if cronExpr == nil || *cronExpr == "" {
+		return nil
+	}
+
+	schedule, err := cron.ParseStandard(*cronExpr)
+	if err != nil {
+		return nil
+	}
+
+	next := schedule.Next(now)
+
+	return &next
+}
+
+func computeStatus(lastUploadedAt *time.Time, nextDueAt *time.Time) string {
+	now := time.Now()
+
+	if nextDueAt == nil {
+		return "pending"
+	}
+
+	if lastUploadedAt != nil && !lastUploadedAt.Before(*nextDueAt) {
+		return "uploaded"
+	}
+
+	if now.After(*nextDueAt) {
+		return "overdue"
+	}
+
+	return "pending"
 }

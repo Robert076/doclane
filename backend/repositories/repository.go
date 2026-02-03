@@ -24,4 +24,5 @@ type IDocumentRepository interface {
 	AddDocumentFile(ctx context.Context, file models.DocumentFile) (int, error)
 	GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFile, error)
 	GetFileByID(ctx context.Context, id int) (models.DocumentFile, error)
+	SetFileUploaded(ctx context.Context, id int) error
 }

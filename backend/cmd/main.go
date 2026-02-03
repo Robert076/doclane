@@ -62,7 +62,6 @@ func main() {
 
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", document_handler.GetDocumentRequestByIDHandler)
-				r.Put("/status", document_handler.UpdateDocumentRequestStatusHandler)
 
 				r.Route("/files", func(r chi.Router) {
 					r.Get("/", document_handler.GetFilesByRequestHandler)
