@@ -1,3 +1,8 @@
 .add-request-for-client-form .button{
     margin-top: 30px;
 }
+
+.radio-inputs-time {
+    display: flex;
+    gap: 20px;
+}

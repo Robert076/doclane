@@ -1,20 +1,20 @@
 import React from "react";
-import "./CheckboxInput.css";
+import "./RadioInput.css";
 
-interface CheckboxInputProps {
+interface RadioInputProps {
   label: string;
   isChecked: boolean;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
-const CheckboxInput: React.FC<CheckboxInputProps> = ({ label, isChecked, onChange }) => {
+const RadioInput: React.FC<RadioInputProps> = ({ label, isChecked, onChange }) => {
   return (
     <label className="checkbox-input">
-      <input type="checkbox" checked={isChecked} onChange={onChange} />
+      <input type="radio" checked={isChecked} onChange={onChange} />
       <span className="checkmark"></span>
       {label}
     </label>
   );
 };
 
-export default CheckboxInput;
+export default RadioInput;

@@ -9,7 +9,8 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import CronInput from "./CronInput";
 import { RecurrenceUnit } from "@/types";
-import CheckboxInput from "@/components/Input/CheckboxInput";
+import RadioInput from "@/components/Input/RadioInput";
+import DeadlineInput from "./DeadlineInput";
 
 interface AddRequestForClientFormProps {
   id: string;
@@ -19,11 +20,13 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
   const [requestName, setRequestName] = useState("");
   const [requestDescription, setRequestDescription] = useState("");
 
+  const [isNoneSelected, setIsNoneSelected] = useState(true);
   const [isRecurring, setIsRecurring] = useState(false);
+  const [isDeadline, setIsDeadline] = useState(false);
   const [unit, setUnit] = useState<RecurrenceUnit>("month");
   const [hour, setHour] = useState("09");
   const [minute, setMinute] = useState("00");
-
+  const [dueDate, setDueDate] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -32,6 +35,7 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
     if (!requestName) return;
 
     const recurrenceCron = isRecurring ? buildCron(hour, minute, unit) : undefined;
+    const dueDateRFC3339 = dueDate && isDeadline ? new Date(dueDate).toISOString() : undefined;
 
     const createRequestPromise = fetch("/api/backend/document-requests", {
       method: "POST",
@@ -43,7 +47,8 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
         title: requestName,
         description: requestDescription,
         client_id: +id,
-        ...(recurrenceCron ? { recurrence_cron: recurrenceCron } : {}),
+        ...(recurrenceCron && isRecurring ? { recurrence_cron: recurrenceCron } : {}),
+        ...(dueDate && isDeadline ? { due_date: dueDateRFC3339 } : {}),
       }),
     }).then(async (res) => {
       if (!res.ok) {
@@ -80,13 +85,35 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
         onChange={(e: any) => setRequestDescription(e.target.value)}
       />
 
-      <CheckboxInput
-        isChecked={isRecurring}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          setIsRecurring(e.target.checked);
-        }}
-        label="Is recurring"
-      />
+      <div className="radio-inputs-time">
+        <RadioInput
+          isChecked={isNoneSelected}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setIsNoneSelected(e.target.checked);
+            setIsRecurring(false);
+            setIsDeadline(false);
+          }}
+          label="No time constraint"
+        />
+        <RadioInput
+          isChecked={isRecurring}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setIsRecurring(e.target.checked);
+            setIsNoneSelected(false);
+            setIsDeadline(false);
+          }}
+          label="Recurring"
+        />
+        <RadioInput
+          isChecked={isDeadline}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            setIsDeadline(e.target.checked);
+            setIsRecurring(false);
+            setIsNoneSelected(false);
+          }}
+          label="Deadline"
+        />
+      </div>
 
       {isRecurring && (
         <CronInput
@@ -98,6 +125,8 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
           setMinute={setMinute}
         />
       )}
+
+      {isDeadline && <DeadlineInput dueDate={dueDate} setDueDate={setDueDate} />}
 
       <ButtonPrimary text="Create request" />
     </form>
