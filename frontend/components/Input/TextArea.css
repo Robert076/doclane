@@ -22,6 +22,10 @@ textarea {
     padding: 10px;
 }
 
+textarea:focus {
+    outline: 1px solid var(--color-primary);
+}
+
 .input-with-icon .input-icon {
     margin-right: 8px; 
     display: flex;

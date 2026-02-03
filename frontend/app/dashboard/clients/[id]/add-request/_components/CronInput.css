@@ -1,0 +1,61 @@
+/* Containerul principal */
+.recurrence-ui {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap; /* Permite trecerea pe rând nou pe ecrane mici */
+    gap: 20px; /* Spațiu între grupul "Every" și grupul "At" */
+    width: 80%; /* Aliniat cu referința ta */
+    margin: var(--margin-y-10);
+    font-family: inherit;
+}
+
+/* Stil pentru labels (textul descriptiv) */
+.recurrence-ui label {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Spațiu între text și input */
+    font-weight: 500;
+    font-size: var(--font-size-m);
+}
+
+/* Stil comun pentru Select și Input */
+.recurrence-ui select,
+.recurrence-ui input {
+    background: #fff;
+    border: var(--border-default);
+    border-radius: var(--border-radius-default);
+    box-shadow: var(--box-shadow-default);
+    height: 32px;
+    padding: 0 12px;
+    font-size: var(--font-size-m);
+    outline: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+/* Efect de focus pentru a indica activitatea */
+.recurrence-ui select:focus,
+.recurrence-ui input:focus {
+    border-color: var(--color-primary); /* Sau culoarea principală a brandului tău */
+    box-shadow: var(--box-shadow-default);
+}
+
+/* Specific pentru Select - adaugă o săgeată custom minimalistă dacă dorești, 
+   dar aici păstrăm stilul nativ curat */
+.recurrence-ui select {
+    min-width: 100px;
+}
+
+/* Specific pentru input-urile de timp (ore/minute) */
+.recurrence-ui input[type="number"] {
+    width: 60px; /* Lățime fixă, mică */
+    text-align: center; /* Numere centrate */
+    cursor: text;
+}
+
+/* Ascundem săgețile standard de la input number pentru un look mai curat (opțional) */
+.recurrence-ui input[type=number]::-webkit-inner-spin-button, 
+.recurrence-ui input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}

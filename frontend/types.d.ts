@@ -39,3 +39,5 @@ export interface ApiResponse<T> {
   data: T;
   error?: string;
 }
+
+type RecurrenceUnit = "day" | "week" | "month" | "year";

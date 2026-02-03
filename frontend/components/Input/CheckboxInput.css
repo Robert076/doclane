@@ -1,0 +1,7 @@
+.checkbox-input {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  gap: 3px; 
+  font-size: var(--font-size-l);
+}

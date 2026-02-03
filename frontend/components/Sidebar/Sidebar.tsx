@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useUser } from "@/context/UserContext"; // Folosim contextul creat
+import { useUser } from "@/context/UserContext";
 import { SIDEBAR_CONFIG } from "@/config/nav";
 import { logout } from "@/lib/logout";
 
