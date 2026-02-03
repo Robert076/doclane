@@ -7,7 +7,8 @@ type DocumentRequestBase struct {
 	Title          string     `db:"title" json:"title"`
 	Description    *string    `db:"description,omitempty" json:"description,omitempty"`
 	IsRecurring    bool       `db:"is_recurring" json:"is_recurring"`
-	RecurrenceDays *int       `db:"recurrence_days" json:"recurrence_days"`
+	RecurrenceCron *string    `db:"recurrence_cron" json:"recurrence_cron"`
+	LastUploadedAt *time.Time `db:"last_uploaded_at" json:"last_uploaded_at"`
 	DueDate        *time.Time `db:"due_date,omitempty" json:"due_date,omitempty"`
 }
 

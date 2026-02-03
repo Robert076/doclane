@@ -19,9 +19,9 @@ func NewDocumentRepository(db *sql.DB) *DocumentRepository {
 func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error) {
 	var id int
 	err := repo.db.QueryRowContext(ctx,
-		`INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_days, due_date, status)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
-		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.IsRecurring, req.RecurrenceDays, req.DueDate, req.Status,
+		`INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_cron, last_uploaded_at, due_date, status)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.IsRecurring, req.RecurrenceCron, req.LastUploadedAt, req.DueDate, req.Status,
 	).Scan(&id)
 	return id, err
 }
@@ -29,7 +29,7 @@ func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req mode
 func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTORead, error) {
 	var req models.DocumentRequestDTORead
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_days, u.email as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email as client_email, 
                dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
@@ -42,7 +42,8 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 		&req.ProfessionalID,
 		&req.ClientID,
 		&req.IsRecurring,
-		&req.RecurrenceDays,
+		&req.RecurrenceCron,
+		&req.LastUploadedAt,
 		&req.ClientEmail,
 		&req.Title,
 		&req.Description,
@@ -56,7 +57,7 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 
 func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequestDTORead, error) {
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_days, u.email as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email as client_email, 
                dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
@@ -77,7 +78,8 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Conte
 			&req.ProfessionalID,
 			&req.ClientID,
 			&req.IsRecurring,
-			&req.RecurrenceDays,
+			&req.RecurrenceCron,
+			&req.LastUploadedAt,
 			&req.ClientEmail,
 			&req.Title,
 			&req.Description,
@@ -97,7 +99,7 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Conte
 
 func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequestDTORead, error) {
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_days, u.email as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email as client_email, 
                dr.title, dr.description, dr.due_date, dr.status, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
@@ -118,7 +120,8 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, cl
 			&req.ProfessionalID,
 			&req.ClientID,
 			&req.IsRecurring,
-			&req.RecurrenceDays,
+			&req.RecurrenceCron,
+			&req.LastUploadedAt,
 			&req.ClientEmail,
 			&req.Title,
 			&req.Description,
@@ -135,7 +138,6 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, cl
 	return requests, rows.Err()
 }
 
-// GetFileByID returnează un singur fișier după ID-ul său primar
 func (r *DocumentRepository) GetFileByID(ctx context.Context, id int) (models.DocumentFile, error) {
 	var f models.DocumentFile
 	query := `
