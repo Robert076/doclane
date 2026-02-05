@@ -12,27 +12,21 @@ import (
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/types/errors"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/google/uuid"
-	"github.com/robfig/cron/v3"
 )
 
 type DocumentService struct {
 	documentRepo repositories.IDocumentRepository
 	userRepo     repositories.IUserRepository
-	s3Client     *s3.Client
-	bucket       string
 	logger       *slog.Logger
+	fileStorage  *FileStorageService
 }
 
-func NewDocumentService(documentRepo repositories.IDocumentRepository, userRepo repositories.IUserRepository, s3Client *s3.Client, bucket string, logger *slog.Logger) *DocumentService {
+func NewDocumentService(documentRepo repositories.IDocumentRepository, userRepo repositories.IUserRepository, logger *slog.Logger, fileStorage *FileStorageService) *DocumentService {
 	return &DocumentService{
 		documentRepo: documentRepo,
 		userRepo:     userRepo,
-		s3Client:     s3Client,
-		bucket:       bucket,
 		logger:       logger,
+		fileStorage:  fileStorage,
 	}
 }
 
@@ -41,7 +35,7 @@ func (service *DocumentService) AddDocumentRequest(
 	jwtUserId int,
 	dto models.DocumentRequestDTOCreate,
 ) (int, error) {
-	if err := service.validateRequestInput(dto.Title, dto.DueDate); err != nil {
+	if err := ValidateRequestInput(dto.Title, dto.DueDate); err != nil {
 		return 0, err
 	}
 
@@ -64,7 +58,7 @@ func (service *DocumentService) AddDocumentRequest(
 		return 0, errors.ErrForbidden{Msg: "This client is not assigned to you."}
 	}
 
-	nextDueAt := computeNextDueAt(dto.DueDate, dto.RecurrenceCron)
+	nextDueAt := ComputeNextDueAt(dto.DueDate, dto.RecurrenceCron)
 	req := models.DocumentRequest{
 		ProfessionalID: jwtUserId,
 		DocumentRequestBase: models.DocumentRequestBase{
@@ -117,7 +111,7 @@ func (service *DocumentService) GetDocumentRequestByID(
 		return models.DocumentRequestDTORead{}, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to access document request with id %v", jwtUserId, req.ID)}
 	}
 
-	req.Status = computeStatus(req.LastUploadedAt, req.NextDueAt)
+	req.Status = ComputeStatus(req.LastUploadedAt, req.NextDueAt)
 
 	return req, nil
 }
@@ -126,58 +120,39 @@ func (service *DocumentService) GetDocumentRequestsByProfessional(
 	ctx context.Context,
 	jwtUserId int,
 ) ([]models.DocumentRequestDTORead, error) {
-	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
-	if err != nil {
-		service.logger.Error("failed to fetch professional for document requests",
-			slog.Int("user_id", jwtUserId),
-			slog.Any("error", err))
-		return nil, err
-	}
-
-	if user.Role != "PROFESSIONAL" {
-		service.logger.Warn("non-professional tried to access professional endpoint for document requests",
-			slog.Int("user_id", jwtUserId),
-			slog.String("role", user.Role))
-		return nil, errors.ErrForbidden{Msg: "This is a professional endpoint."}
-	}
-
-	reqs, err := service.documentRepo.GetDocumentRequestsByProfessional(ctx, jwtUserId)
-	if err != nil {
-		service.logger.Error("failed to fetch professional document requests",
-			slog.Int("user_id", jwtUserId),
-			slog.Any("error", err),
-		)
-		return nil, err
-	}
-
-	for i := range reqs {
-		reqs[i].Status = computeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt)
-	}
-
-	return reqs, nil
+	return service.getDocumentRequestsByRole(ctx, jwtUserId, "PROFESSIONAL", service.documentRepo.GetDocumentRequestsByProfessional)
 }
 
 func (service *DocumentService) GetDocumentRequestsByClient(
 	ctx context.Context,
 	jwtUserId int,
 ) ([]models.DocumentRequestDTORead, error) {
+	return service.getDocumentRequestsByRole(ctx, jwtUserId, "CLIENT", service.documentRepo.GetDocumentRequestsByClient)
+}
+
+func (service *DocumentService) getDocumentRequestsByRole(
+	ctx context.Context,
+	jwtUserId int,
+	requiredRole string,
+	fetchFunc func(context.Context, int) ([]models.DocumentRequestDTORead, error),
+) ([]models.DocumentRequestDTORead, error) {
 	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
 	if err != nil {
-		service.logger.Error("failed to fetch client for document requests",
+		service.logger.Error("failed to fetch user for document requests",
 			slog.Int("user_id", jwtUserId),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
-	if user.Role != "CLIENT" {
-		service.logger.Warn("non-client tried to access client endpoint for document requests",
+	if user.Role != requiredRole {
+		service.logger.Warn("user tried to access other role's endpoint for document requests",
 			slog.Int("user_id", jwtUserId),
 			slog.String("role", user.Role))
-		return nil, errors.ErrForbidden{Msg: "This is a client endpoint."}
+		return nil, errors.ErrForbidden{Msg: fmt.Sprintf("This is a %s endpoint.", requiredRole)}
 	}
 
-	reqs, err := service.documentRepo.GetDocumentRequestsByClient(ctx, jwtUserId)
+	reqs, err := fetchFunc(ctx, jwtUserId)
 	if err != nil {
 		service.logger.Error("failed to fetch document requests from repo",
 			slog.Int("client_id", jwtUserId),
@@ -187,7 +162,7 @@ func (service *DocumentService) GetDocumentRequestsByClient(
 	}
 
 	for i := range reqs {
-		reqs[i].Status = computeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt)
+		reqs[i].Status = ComputeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt)
 	}
 
 	return reqs, nil
@@ -202,7 +177,7 @@ func (service *DocumentService) AddDocumentFile(
 	contentType string,
 	content io.Reader,
 ) (int, error) {
-	if err := service.validateFileInfo(fileName, fileSize); err != nil {
+	if err := ValidateFileInfo(fileName, fileSize); err != nil {
 		return 0, err
 	}
 
@@ -222,16 +197,9 @@ func (service *DocumentService) AddDocumentFile(
 	}
 
 	cleanFileName := filepath.Base(fileName)
-	uniqueID := uuid.New().String()
+	s3Key := generateS3Key(fileName, requestID)
 
-	s3Key := fmt.Sprintf("requests/%d/%s-%s", requestID, uniqueID, cleanFileName)
-
-	result, err := service.s3Client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:      aws.String(service.bucket),
-		Key:         aws.String(s3Key),
-		Body:        content,
-		ContentType: aws.String(contentType),
-	})
+	result, err := service.fileStorage.UploadFile(ctx, s3Key, content, contentType)
 	if err != nil {
 		service.logger.Error("s3 upload failed",
 			slog.String("key", s3Key),
@@ -260,18 +228,8 @@ func (service *DocumentService) AddDocumentFile(
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		_, cleanupErr := service.s3Client.DeleteObject(cleanupCtx, &s3.DeleteObjectInput{
-			Bucket:    aws.String(service.bucket),
-			Key:       aws.String(s3Key),
-			VersionId: result.VersionId,
-		})
-
+		cleanupErr := service.fileStorage.DeleteFile(cleanupCtx, fileModel.FilePath, fileModel.S3VersionID)
 		if cleanupErr != nil {
-			service.logger.Error("S3 CLEANUP FAILED - ZOMBIE FILE ALERT",
-				slog.String("key", s3Key),
-				slog.Any("error", cleanupErr),
-			)
-
 			return 0, errors.ErrBadGateway{Msg: fmt.Sprintf("Failed to cleanup S3 object after DB failure. Key: %s, Version: %s, Error: %v\n", s3Key, *result.VersionId, cleanupErr)}
 		}
 
@@ -329,95 +287,12 @@ func (service *DocumentService) GetFilePresignedURL(
 		return "", errors.ErrForbidden{Msg: "No access to this file."}
 	}
 
-	presignClient := s3.NewPresignClient(service.s3Client)
-	presignParams := &s3.GetObjectInput{
-		Bucket:    aws.String(service.bucket),
-		Key:       aws.String(file.FilePath),
-		VersionId: file.S3VersionID,
-	}
-
-	presignedReq, err := presignClient.PresignGetObject(ctx, presignParams, func(opts *s3.PresignOptions) {
-		opts.Expires = 15 * time.Minute
-	})
-
+	presignedURL, err := service.fileStorage.GeneratePresignedURL(ctx, file.FilePath, file.S3VersionID, 15*time.Minute)
 	if err != nil {
 		service.logger.Error("s3 presign failed",
 			slog.Int("file_id", fileID),
 			slog.Any("error", err))
 		return "", err
 	}
-
-	return presignedReq.URL, nil
-}
-
-func (service *DocumentService) validateRequestInput(title string, dueDate *time.Time) error {
-	if len(title) < 3 || len(title) > 40 {
-		return errors.ErrBadRequest{Msg: "Title must be between 3 and 40 characters."}
-	}
-
-	if dueDate != nil && dueDate.Before(time.Now()) {
-		return errors.ErrBadRequest{Msg: "Due date cannot be in the past."}
-	}
-
-	return nil
-}
-
-func (service *DocumentService) validateFileInfo(fileName string, fileSize int64) error {
-	if fileSize <= 0 {
-		return errors.ErrBadRequest{Msg: "File is empty."}
-	}
-
-	const maxFileSize = 20 * 1024 * 1024
-	if fileSize > maxFileSize {
-		return errors.ErrBadRequest{Msg: "File size must be less than 20MB."}
-	}
-
-	allowedExtensions := map[string]bool{
-		".pdf": true, ".jpg": true, ".jpeg": true, ".png": true, ".doc": true, ".docx": true,
-	}
-	ext := filepath.Ext(fileName)
-	if !allowedExtensions[ext] {
-		return errors.ErrBadRequest{Msg: fmt.Sprintf("Extension %s is not allowed.", ext)}
-	}
-
-	return nil
-}
-
-func computeNextDueAt(dueDate *time.Time, cronExpr *string) *time.Time {
-	now := time.Now()
-
-	if dueDate != nil {
-		return dueDate
-	}
-
-	if cronExpr == nil || *cronExpr == "" {
-		return nil
-	}
-
-	schedule, err := cron.ParseStandard(*cronExpr)
-	if err != nil {
-		return nil
-	}
-
-	next := schedule.Next(now)
-
-	return &next
-}
-
-func computeStatus(lastUploadedAt *time.Time, nextDueAt *time.Time) string {
-	now := time.Now()
-
-	if nextDueAt == nil {
-		return "pending"
-	}
-
-	if lastUploadedAt != nil && !lastUploadedAt.Before(*nextDueAt) {
-		return "uploaded"
-	}
-
-	if now.After(*nextDueAt) {
-		return "overdue"
-	}
-
-	return "pending"
+	return presignedURL, nil
 }

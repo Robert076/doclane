@@ -66,7 +66,8 @@ func init() {
 	}
 
 	documentRepository := repositories.NewDocumentRepository(db)
-	DocumentService = services.NewDocumentService(documentRepository, userRepository, S3Client, bucketName, Logger)
+	fileStorage := services.NewFileStorageService(S3Client, bucketName, Logger)
+	DocumentService = services.NewDocumentService(documentRepository, userRepository, Logger, fileStorage)
 }
 
 func newS3Client() (*s3.Client, error) {

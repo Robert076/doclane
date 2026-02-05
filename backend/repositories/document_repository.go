@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"errors"
 
 	"github.com/Robert076/doclane/backend/models"
 )
@@ -169,12 +168,7 @@ func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID in
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		err := errors.Join(err, rows.Close())
-		if err != nil {
-
-		}
-	}()
+	defer rows.Close()
 
 	var files []models.DocumentFile
 	for rows.Next() {
