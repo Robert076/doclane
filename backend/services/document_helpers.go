@@ -67,6 +67,10 @@ func ComputeNextDueAt(dueDate *time.Time, cronExpr *string) *time.Time {
 func ComputeStatus(lastUploadedAt *time.Time, nextDueAt *time.Time) string {
 	now := time.Now()
 
+	if nextDueAt == nil && lastUploadedAt != nil {
+		return "uploaded"
+	}
+
 	if nextDueAt == nil {
 		return "pending"
 	}

@@ -119,22 +119,25 @@ func (service *DocumentService) GetDocumentRequestByID(
 func (service *DocumentService) GetDocumentRequestsByProfessional(
 	ctx context.Context,
 	jwtUserId int,
+	search *string,
 ) ([]models.DocumentRequestDTORead, error) {
-	return service.getDocumentRequestsByRole(ctx, jwtUserId, "PROFESSIONAL", service.documentRepo.GetDocumentRequestsByProfessional)
+	return service.getDocumentRequestsByRole(ctx, jwtUserId, "PROFESSIONAL", search, service.documentRepo.GetDocumentRequestsByProfessional)
 }
 
 func (service *DocumentService) GetDocumentRequestsByClient(
 	ctx context.Context,
 	jwtUserId int,
+	search *string,
 ) ([]models.DocumentRequestDTORead, error) {
-	return service.getDocumentRequestsByRole(ctx, jwtUserId, "CLIENT", service.documentRepo.GetDocumentRequestsByClient)
+	return service.getDocumentRequestsByRole(ctx, jwtUserId, "CLIENT", search, service.documentRepo.GetDocumentRequestsByClient)
 }
 
 func (service *DocumentService) getDocumentRequestsByRole(
 	ctx context.Context,
 	jwtUserId int,
 	requiredRole string,
-	fetchFunc func(context.Context, int) ([]models.DocumentRequestDTORead, error),
+	search *string,
+	fetchFunc func(context.Context, int, *string) ([]models.DocumentRequestDTORead, error),
 ) ([]models.DocumentRequestDTORead, error) {
 	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
 	if err != nil {
@@ -152,7 +155,7 @@ func (service *DocumentService) getDocumentRequestsByRole(
 		return nil, errors.ErrForbidden{Msg: fmt.Sprintf("This is a %s endpoint.", requiredRole)}
 	}
 
-	reqs, err := fetchFunc(ctx, jwtUserId)
+	reqs, err := fetchFunc(ctx, jwtUserId, search)
 	if err != nil {
 		service.logger.Error("failed to fetch document requests from repo",
 			slog.Int("client_id", jwtUserId),
@@ -216,6 +219,7 @@ func (service *DocumentService) AddDocumentFile(
 		FileSize:          &fileSize,
 		S3VersionID:       result.VersionId,
 		UploadedAt:        time.Now(),
+		UploadedBy:        &jwtUserId,
 	}
 
 	id, err := service.documentRepo.AddDocumentFile(ctx, fileModel)
@@ -236,7 +240,18 @@ func (service *DocumentService) AddDocumentFile(
 		return 0, errors.ErrInternalServerError{Msg: fmt.Sprintf("Metadata save failed, file removed from storage. %v", err)}
 	}
 
-	service.documentRepo.SetFileUploaded(ctx, requestID)
+	uploadedFile, err := service.documentRepo.GetFileByIDExtended(ctx, id)
+	if err != nil {
+		service.logger.Error("error getting uploaded file",
+			slog.Int("id", uploadedFile.ID),
+			slog.Any("err", err),
+		)
+	}
+
+	if uploadedFile.AuthorRole == "CLIENT" {
+		// Maybe the professional uploads an example, the request should not be marked as finished
+		service.documentRepo.SetFileUploaded(ctx, requestID)
+	}
 
 	service.logger.Info("file upload successful", slog.Int("file_id", id))
 	return id, nil
@@ -246,7 +261,7 @@ func (service *DocumentService) GetFilesByRequest(
 	ctx context.Context,
 	jwtUserId int,
 	requestID int,
-) ([]models.DocumentFile, error) {
+) ([]models.DocumentFileDTORead, error) {
 	docReq, err := service.documentRepo.GetDocumentRequestByID(ctx, requestID)
 	if err != nil {
 		service.logger.Error("failed to find document request", slog.Int("request_id", requestID), slog.Any("error", err))

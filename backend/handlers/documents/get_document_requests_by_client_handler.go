@@ -16,7 +16,15 @@ func GetDocumentRequestsByClientHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	reqs, err := config.DocumentService.GetDocumentRequestsByClient(r.Context(), userId)
+	q := r.URL.Query()
+	var searchPtr *string
+
+	// search
+	if s := q.Get("search"); s != "" {
+		searchPtr = &s
+	}
+
+	reqs, err := config.DocumentService.GetDocumentRequestsByClient(r.Context(), userId, searchPtr)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

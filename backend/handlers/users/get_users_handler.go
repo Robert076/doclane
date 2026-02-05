@@ -15,7 +15,7 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 
 	var limitPtr, offsetPtr *int
-	var orderByPtr, orderPtr *string
+	var orderByPtr, orderPtr, searchPtr *string
 
 	// limit
 	if l := q.Get("limit"); l != "" {
@@ -37,15 +37,22 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// orderBy
 	if ob := q.Get("orderBy"); ob != "" {
 		orderByPtr = &ob
 	}
 
+	// order
 	if o := q.Get("order"); o != "" {
 		orderPtr = &o
 	}
 
-	users, err := config.UserService.GetUsers(r.Context(), limitPtr, offsetPtr, orderByPtr, orderPtr)
+	// search
+	if s := q.Get("search"); s != "" {
+		searchPtr = &s
+	}
+
+	users, err := config.UserService.GetUsers(r.Context(), limitPtr, offsetPtr, orderByPtr, orderPtr, searchPtr)
 	if err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: fmt.Sprintf("Could not fetch users. %v", err)})
 		return

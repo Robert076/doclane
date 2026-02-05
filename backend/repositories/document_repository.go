@@ -3,6 +3,8 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"strconv"
+	"strings"
 
 	"github.com/Robert076/doclane/backend/models"
 )
@@ -28,7 +30,7 @@ func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req mode
 func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTORead, error) {
 	var req models.DocumentRequestDTORead
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email, u.first_name, u.last_name as client_email, 
                dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
@@ -44,6 +46,8 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 		&req.RecurrenceCron,
 		&req.LastUploadedAt,
 		&req.ClientEmail,
+		&req.ClientFirstName,
+		&req.ClientLastName,
 		&req.Title,
 		&req.Description,
 		&req.DueDate,
@@ -54,16 +58,39 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 	return req, err
 }
 
-func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Context, professionalID int) ([]models.DocumentRequestDTORead, error) {
+func (r *DocumentRepository) GetDocumentRequestsByProfessional(
+	ctx context.Context,
+	professionalID int,
+	search *string,
+) ([]models.DocumentRequestDTORead, error) {
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, 
+               dr.last_uploaded_at, u.email, u.first_name, u.last_name, 
                dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
         WHERE dr.professional_id=$1
-        ORDER BY dr.created_at DESC
     `
-	rows, err := r.db.QueryContext(ctx, query, professionalID)
+
+	args := []interface{}{professionalID}
+	argIndex := 2
+
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` AND (
+            LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(dr.description) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(u.email) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(u.first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(u.last_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(u.first_name || ' ' || u.last_name) LIKE $` + strconv.Itoa(argIndex) + `
+        )`
+		args = append(args, searchPattern)
+	}
+
+	query += " ORDER BY dr.created_at DESC"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -80,6 +107,8 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Conte
 			&req.RecurrenceCron,
 			&req.LastUploadedAt,
 			&req.ClientEmail,
+			&req.ClientFirstName,
+			&req.ClientLastName,
 			&req.Title,
 			&req.Description,
 			&req.DueDate,
@@ -92,20 +121,38 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(ctx context.Conte
 		}
 		requests = append(requests, req)
 	}
-
 	return requests, rows.Err()
 }
 
-func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, clientID int) ([]models.DocumentRequestDTORead, error) {
+func (r *DocumentRepository) GetDocumentRequestsByClient(
+	ctx context.Context,
+	clientID int,
+	search *string,
+) ([]models.DocumentRequestDTORead, error) {
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, 
+               dr.last_uploaded_at, u.email, u.first_name, u.last_name, 
                dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
         WHERE dr.client_id=$1
-        ORDER BY dr.created_at DESC
     `
-	rows, err := r.db.QueryContext(ctx, query, clientID)
+
+	args := []interface{}{clientID}
+	argIndex := 2
+
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` AND (
+            LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(dr.description) LIKE $` + strconv.Itoa(argIndex) + `
+        )`
+		args = append(args, searchPattern)
+	}
+
+	query += " ORDER BY dr.created_at DESC"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -122,6 +169,8 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, cl
 			&req.RecurrenceCron,
 			&req.LastUploadedAt,
 			&req.ClientEmail,
+			&req.ClientFirstName,
+			&req.ClientLastName,
 			&req.Title,
 			&req.Description,
 			&req.DueDate,
@@ -133,14 +182,13 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(ctx context.Context, cl
 		}
 		requests = append(requests, req)
 	}
-
 	return requests, rows.Err()
 }
 
 func (r *DocumentRepository) GetFileByID(ctx context.Context, id int) (models.DocumentFile, error) {
 	var f models.DocumentFile
 	query := `
-        SELECT id, document_request_id, file_name, file_path, mime_type, file_size, uploaded_at, s3_version_id
+        SELECT id, document_request_id, file_name, file_path, mime_type, file_size, uploaded_at, s3_version_id, uploaded_by
         FROM document_files
         WHERE id=$1
     `
@@ -153,14 +201,39 @@ func (r *DocumentRepository) GetFileByID(ctx context.Context, id int) (models.Do
 		&f.FileSize,
 		&f.UploadedAt,
 		&f.S3VersionID,
+		&f.UploadedBy,
 	)
 	return f, err
 }
 
-func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFile, error) {
+func (r *DocumentRepository) GetFileByIDExtended(ctx context.Context, id int) (models.DocumentFileDTOExtended, error) {
+	var f models.DocumentFileDTOExtended
 	query := `
-        SELECT id, document_request_id, file_name, file_path, mime_type, file_size, uploaded_at, s3_version_id
-        FROM document_files
+        SELECT df.id, df.document_request_id, df.file_name, df.file_path, df.mime_type, df.file_size, df.uploaded_at, df.s3_version_id, df.uploaded_by, u.role
+        FROM document_files df 
+		JOIN users u ON u.id = df.uploaded_by
+        WHERE id=$1
+    `
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&f.ID,
+		&f.DocumentRequestID,
+		&f.FileName,
+		&f.FilePath,
+		&f.MimeType,
+		&f.FileSize,
+		&f.UploadedAt,
+		&f.S3VersionID,
+		&f.UploadedBy,
+		&f.AuthorRole,
+	)
+	return f, err
+}
+
+func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFileDTORead, error) {
+	query := `
+        SELECT df.id, df.document_request_id, df.file_name, df.file_path, df.mime_type, df.file_size, df.uploaded_at, df.s3_version_id, df.uploaded_by, u.first_name, u.last_name
+        FROM document_files df
+		JOIN users u ON u.id = df.uploaded_by
         WHERE document_request_id=$1
         ORDER BY uploaded_at ASC
     `
@@ -170,9 +243,9 @@ func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID in
 	}
 	defer rows.Close()
 
-	var files []models.DocumentFile
+	var files []models.DocumentFileDTORead
 	for rows.Next() {
-		var f models.DocumentFile
+		var f models.DocumentFileDTORead
 		if err := rows.Scan(
 			&f.ID,
 			&f.DocumentRequestID,
@@ -182,6 +255,9 @@ func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID in
 			&f.FileSize,
 			&f.UploadedAt,
 			&f.S3VersionID,
+			&f.UploadedBy,
+			&f.UploadedByFirstName,
+			&f.UploadedByLastName,
 		); err != nil {
 			return nil, err
 		}
@@ -189,11 +265,6 @@ func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID in
 	}
 
 	return files, rows.Err()
-}
-
-func (r *DocumentRepository) UpdateDocumentRequestStatus(ctx context.Context, id int, status string) error {
-	_, err := r.db.ExecContext(ctx, `UPDATE document_requests SET status=$1, updated_at=NOW() WHERE id=$2`, status, id)
-	return err
 }
 
 func (r *DocumentRepository) AddDocumentFile(ctx context.Context, file models.DocumentFile) (int, error) {
@@ -207,9 +278,10 @@ func (r *DocumentRepository) AddDocumentFile(ctx context.Context, file models.Do
             mime_type, 
             file_size, 
             s3_version_id, 
-            uploaded_at
+            uploaded_at,
+			uploaded_by
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 		RETURNING id
 		`
 	// ON CONFLICT (document_request_id, file_name)
@@ -230,6 +302,7 @@ func (r *DocumentRepository) AddDocumentFile(ctx context.Context, file models.Do
 		file.FileSize,
 		file.S3VersionID,
 		file.UploadedAt,
+		file.UploadedBy,
 	).Scan(&id)
 
 	return id, err

@@ -23,8 +23,10 @@ type DocumentRequest struct {
 
 type DocumentRequestDTORead struct {
 	DocumentRequest
-	ClientEmail string `json:"client_email"`
-	Status      string `json:"status"`
+	ClientEmail     string `json:"client_email"`
+	ClientFirstName string `json:"client_first_name"`
+	ClientLastName  string `json:"client_last_name"`
+	Status          string `json:"status"`
 }
 
 type DocumentRequestDTOCreate struct {
@@ -40,4 +42,16 @@ type DocumentFile struct {
 	FileSize          *int64    `db:"file_size,omitempty" json:"file_size,omitempty"`
 	UploadedAt        time.Time `db:"uploaded_at" json:"uploaded_at"`
 	S3VersionID       *string   `db:"s3_version_id" json:"s3_version_id"`
+	UploadedBy        *int      `db:"uploaded_by" json:"uploaded_by"`
+}
+
+type DocumentFileDTORead struct {
+	DocumentFile
+	UploadedByFirstName string `json:"uploaded_by_first_name"`
+	UploadedByLastName  string `json:"uploaded_by_last_name"`
+}
+
+type DocumentFileDTOExtended struct {
+	DocumentFile
+	AuthorRole string
 }

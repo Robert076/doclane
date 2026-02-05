@@ -37,8 +37,8 @@ func NewUserService(repo repositories.IUserRepository, logger *slog.Logger) *Use
 	return &UserService{repo: repo, logger: logger}
 }
 
-func (service *UserService) GetUsers(ctx context.Context, limit *int, offset *int, orderBy *string, order *string) ([]models.User, error) {
-	users, err := service.repo.GetUsers(ctx, limit, offset, orderBy, order)
+func (service *UserService) GetUsers(ctx context.Context, limit *int, offset *int, orderBy *string, order *string, search *string) ([]models.User, error) {
+	users, err := service.repo.GetUsers(ctx, limit, offset, orderBy, order, search)
 	if err != nil {
 		service.logger.Error("failed to fetch users list", slog.Any("error", err))
 		return nil, err

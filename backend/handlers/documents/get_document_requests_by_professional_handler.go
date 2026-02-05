@@ -16,7 +16,15 @@ func GetDocumentRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	reqs, err := config.DocumentService.GetDocumentRequestsByProfessional(r.Context(), jwtUserId)
+	q := r.URL.Query()
+	var searchPtr *string
+
+	// search
+	if s := q.Get("search"); s != "" {
+		searchPtr = &s
+	}
+
+	reqs, err := config.DocumentService.GetDocumentRequestsByProfessional(r.Context(), jwtUserId, searchPtr)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

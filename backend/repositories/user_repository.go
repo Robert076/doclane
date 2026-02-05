@@ -26,8 +26,8 @@ func (repo *UserRepository) GetUsers(
 	offset *int,
 	orderBy *string,
 	order *string,
+	search *string,
 ) ([]models.User, error) {
-
 	users := []models.User{}
 
 	// coloane permise pentru ORDER BY (whitelist)
@@ -40,9 +40,25 @@ func (repo *UserRepository) GetUsers(
 	}
 
 	query := `
-		SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
-		FROM users
-	`
+        SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
+        FROM users
+    `
+
+	args := []interface{}{}
+	argIndex := 1
+
+	// WHERE clause for search
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` WHERE (
+            LOWER(email) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(last_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(first_name || ' ' || last_name) LIKE $` + strconv.Itoa(argIndex) + `
+        )`
+		args = append(args, searchPattern)
+		argIndex++
+	}
 
 	// ORDER BY
 	if orderBy != nil {
@@ -55,9 +71,6 @@ func (repo *UserRepository) GetUsers(
 			query += " ORDER BY " + column + " " + direction
 		}
 	}
-
-	args := []interface{}{}
-	argIndex := 1
 
 	// LIMIT
 	if limit != nil {
