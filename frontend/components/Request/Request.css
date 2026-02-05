@@ -1,39 +1,67 @@
 .document-request-card {
   background: white;
-  border: var(--border-default);
+  border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: var(--padding-m);
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .document-request-card:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--box-shadow-default);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  border-color: #cbd5e1;
+}
+
+.document-request-card.is-overdue {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.request-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .request-title {
   margin: 0;
   font-size: 1.125rem;
   color: #1a202c;
-  font-weight: 700;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
 }
 
 .status-badge {
   font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 8px;
+  font-weight: 600;
+  padding: 0.25rem 0.625rem;
   border-radius: 6px;
   text-transform: uppercase;
+  letter-spacing: 0.025em;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
 }
-
-.status-badge.pending { background: #fff7ed; color: #c2410c; }
-.status-badge.completed { background: #f0fdf4; color: #15803d; }
 
 .request-info {
   font-size: 0.875rem;
-  color: #718096;
+  color: #64748b;
   margin: 0;
+  line-height: 1.5;
+}
+
+.request-footer {
+  margin-top: 0.25rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid #f1f5f9;
+}
+
+/* Optional: Add smooth transitions to all interactive elements */
+.document-request-card * {
+  transition: color 0.15s ease, background-color 0.15s ease;
 }

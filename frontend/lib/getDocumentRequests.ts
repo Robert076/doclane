@@ -14,7 +14,7 @@ export default async function getDocumentRequests(role: UserRole): Promise<Docum
           "Content-Type": "application/json",
         },
         cache: "no-store",
-      }
+      },
     );
 
     if (!res.ok) {

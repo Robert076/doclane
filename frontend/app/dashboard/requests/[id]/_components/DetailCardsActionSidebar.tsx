@@ -47,12 +47,12 @@ export default function DetailCardsActionSidebar({ id }: { id: string }) {
       <div className="action-buttons">
         <UploadDocumentButton requestId={id} />
 
-        <ButtonPrimary
+        {/* <ButtonPrimary
           text="Mark as Completed"
           variant="secondary"
           fullWidth
           onClick={handleMarkCompleted}
-        />
+        /> */}
       </div>
     </aside>
   );

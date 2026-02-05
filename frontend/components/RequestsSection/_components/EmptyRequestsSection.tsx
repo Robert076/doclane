@@ -1,8 +1,10 @@
 import "./EmptyRequestsSection.css";
+
 const EmptyRequestsSection = () => {
   return (
     <div className="requests-empty">
-      <p>No document requests found.</p>
+      <h3>No document requests yet</h3>
+      <p>Document requests you create will appear here</p>
     </div>
   );
 };

@@ -1,14 +1,17 @@
+import { User } from "@/types";
 import "./ProfessionalHeader.css";
 
 interface ProfessionalHeaderProps {
-  email: string;
+  user: User;
   length: number;
 }
 
-const ProfessionalHeader: React.FC<ProfessionalHeaderProps> = ({ email, length }) => {
+const ProfessionalHeader: React.FC<ProfessionalHeaderProps> = ({ user, length }) => {
   return (
     <header className="professional-header">
-      <h1 className="overview-h1">Welcome back, {email.split("@")[0]}</h1>
+      <h1 className="overview-h1">
+        Welcome back, {user.first_name} {user.last_name}
+      </h1>
       <p className="overview-p">You have {length} active document requests.</p>
     </header>
   );

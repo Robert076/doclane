@@ -11,7 +11,7 @@ export default async function ClientsPage() {
     <div className="clients-container">
       <header className="clients-header">
         <div>
-          <h1 className="overview-h1">My Clients</h1>
+          <h1 className="overview-h1">Clients</h1>
           <p className="overview-p">Manage and view your assigned clients.</p>
         </div>
       </header>

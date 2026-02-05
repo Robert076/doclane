@@ -6,6 +6,8 @@ export interface User {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  first_name: string;
+  last_name: string;
 }
 
 export interface DocumentRequest {
@@ -13,6 +15,8 @@ export interface DocumentRequest {
   professional_id: number;
   client_id: number;
   client_email: string;
+  client_first_name: string;
+  client_last_name: string;
   title: string;
   description?: string | null;
   due_date?: string | null;
@@ -30,6 +34,9 @@ export interface DocumentFile {
   file_size: number;
   uploaded_at: string;
   s3_version_id?: string;
+  uploaded_by: number;
+  uploaded_by_first_name: string;
+  uploaded_by_last_name: string;
 }
 
 export type RequestStatus = "pending" | "uploaded" | "overdue";

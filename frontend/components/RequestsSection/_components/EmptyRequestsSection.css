@@ -1,9 +1,21 @@
 .requests-empty {
   text-align: center;
   padding: var(--padding-xl);
-  background: #f9f9f9;
-  border-radius: 12px;
-  border: 1px dashed #ccc;
-  color: #666;
+  background: white;
+  border-radius: var(--border-radius-default);
+  border: var(--border-default);
+  box-shadow: var(--box-shadow-default);
   margin-top: 2rem;
+}
+
+.requests-empty h3 {
+  color: #333;
+  font-size: var(--font-size-m);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+}
+
+.requests-empty p {
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-s);
 }

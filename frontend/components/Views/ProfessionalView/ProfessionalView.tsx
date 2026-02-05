@@ -12,7 +12,7 @@ export default async function ProfessionalView({ user }: ProfessionalViewProps) 
 
   return (
     <div className="professional-view">
-      <ProfessionalHeader email={user.email} length={requests.length} />
+      <ProfessionalHeader user={user} length={requests.length} />
       <RequestsSection requests={requests} />
     </div>
   );

@@ -28,7 +28,7 @@ export default function FileItem({ file }: FileItemProps) {
         {
           method: "GET",
           credentials: "include",
-        }
+        },
       );
 
       const result = await response.json();
@@ -60,6 +60,19 @@ export default function FileItem({ file }: FileItemProps) {
           <span>{formatFileSize(file.file_size)}</span>
           <span className="metadata-separator">•</span>
           <span>{new Date(file.uploaded_at).toLocaleDateString("ro-RO")}</span>
+          {file.uploaded_by ? (
+            <>
+              <span className="metadata-separator">•</span>
+              <span>
+                {"Uploaded by " +
+                  file.uploaded_by_first_name +
+                  " " +
+                  file.uploaded_by_last_name}
+              </span>
+            </>
+          ) : (
+            <></>
+          )}
         </div>
       </div>
 
