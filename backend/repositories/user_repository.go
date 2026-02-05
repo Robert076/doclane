@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"database/sql"
-	"log/slog"
 	"strconv"
 	"strings"
 
@@ -12,11 +11,10 @@ import (
 )
 
 type UserRepository struct {
-	db     *sql.DB
-	logger *slog.Logger
+	db *sql.DB
 }
 
-func NewUserRepository(db *sql.DB, logger *slog.Logger) *UserRepository {
+func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 

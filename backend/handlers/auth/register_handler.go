@@ -1,3 +1,4 @@
+// handlers/auth/register_handler.go
 package auth
 
 import (
@@ -12,8 +13,8 @@ import (
 	"github.com/Robert076/doclane/backend/utils/config"
 )
 
-func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	req := requests.RegisterRequest{}
+func RegisterProfessionalHandler(w http.ResponseWriter, r *http.Request) {
+	req := requests.RegisterProfessionalRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid JSON body format."})
 		return
@@ -24,8 +25,8 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 		FirstName:      req.FirstName,
 		LastName:       req.LastName,
 		Password:       req.Password,
-		Role:           req.Role,
-		ProfessionalID: req.ProfessionalID,
+		Role:           "PROFESSIONAL",
+		ProfessionalID: nil,
 	}
 
 	id, err := config.UserService.AddUser(r.Context(), params)
@@ -36,6 +37,50 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusCreated, types.APIResponse{
 		Success: true,
+		Msg:     "Professional registered successfully.",
+		Data:    id,
+	})
+}
+
+func RegisterClientHandler(w http.ResponseWriter, r *http.Request) {
+	req := requests.RegisterClientRequest{}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid JSON body format."})
+		return
+	}
+
+	if req.InvitationCode == "" {
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invitation code is required."})
+		return
+	}
+
+	profID, err := config.InvitationCodeService.ValidateAndUseInvitationCode(
+		r.Context(),
+		req.InvitationCode,
+	)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+
+	params := services.CreateUserParams{
+		Email:          req.Email,
+		FirstName:      req.FirstName,
+		LastName:       req.LastName,
+		Password:       req.Password,
+		Role:           "CLIENT",
+		ProfessionalID: &profID,
+	}
+
+	id, err := config.UserService.AddUser(r.Context(), params)
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+
+	utils.WriteJSONSafe(w, http.StatusCreated, types.APIResponse{
+		Success: true,
+		Msg:     "Client registered successfully.",
 		Data:    id,
 	})
 }
