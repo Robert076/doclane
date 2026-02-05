@@ -1,0 +1,156 @@
+.codes-modal {
+  max-width: 600px;
+}
+
+.codes-loading,
+.codes-empty {
+  text-align: center;
+  padding: 2rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.codes-empty {
+  background: #f8fafc;
+  border: 2px dashed #cbd5e1;
+  border-radius: 8px;
+  margin: 1.5rem 0;
+}
+
+.codes-empty p {
+  margin: 0.25rem 0;
+}
+
+.codes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1.5rem 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.code-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.code-item:hover {
+  border-color: #cbd5e1;
+  background: #f1f5f9;
+}
+
+.code-item.expired {
+  opacity: 0.6;
+  background: #fef2f2;
+  border-color: #fecaca;
+}
+
+.code-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.code-value-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.code-value {
+  font-family: "Monaco", "Menlo", "Courier New", monospace;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a202c;
+  letter-spacing: 0.05em;
+}
+
+.code-status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.expired-badge {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+.code-meta {
+  display: flex;
+  gap: 1rem;
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.code-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.icon-button {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.icon-button:hover:not(:disabled) {
+  background: #f8fafc;
+  color: #1e293b;
+  border-color: #cbd5e1;
+}
+
+.icon-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.icon-button.delete-btn:hover:not(:disabled) {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.icon-button:active {
+  transform: scale(0.95);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .codes-modal {
+    max-width: 100%;
+  }
+
+  .code-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .code-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .code-meta {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

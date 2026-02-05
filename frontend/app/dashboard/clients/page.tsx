@@ -1,7 +1,7 @@
 import getMyClients from "@/lib/getClients";
-import ButtonPrimary from "@/components/Buttons/ButtonPrimary/ButtonPrimary";
-
 import "./style.css";
+import InvitationCodeGenerator from "@/components/Invitation/InvitationCodeGenerator/InvitationCodeGenerator";
+import InvitationCodesModal from "@/components/Invitation/InvitationCodesModal/InvitationCodesModal";
 import ClientsSection from "@/components/Client/ClientsSection/ClientsSection";
 
 export default async function ClientsPage() {
@@ -14,8 +14,11 @@ export default async function ClientsPage() {
           <h1 className="overview-h1">Clients</h1>
           <p className="overview-p">Manage and view your assigned clients.</p>
         </div>
+        <div className="header-actions">
+          <InvitationCodeGenerator />
+          <InvitationCodesModal />
+        </div>
       </header>
-
       <ClientsSection clients={clients} />
     </div>
   );

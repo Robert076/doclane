@@ -2,3 +2,31 @@
   color: var(--text-color-secondary);
   margin: var(--margin-y-10);
 }
+
+.clients-header {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1rem;
+}
+
+.header-actions {
+  align-self: flex-start;
+  display: flex;
+}
+
+.header-actions button {
+  width: auto !important;
+  white-space: nowrap;
+  padding: 20px;
+  margin-right: 10px;
+}
+
+@media (max-width: 768px) {
+  .header-actions {
+    align-self: stretch;
+  }
+  
+  .header-actions button {
+    width: 100% !important;
+  }
+}
