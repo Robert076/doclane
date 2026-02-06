@@ -2,8 +2,8 @@
 import { useState } from "react";
 import { DocumentRequest } from "@/types";
 import Request from "../Request/Request";
+import NotFound from "@/components/NotFound/NotFound";
 import "./RequestsSection.css";
-import EmptyRequestsSection from "./_components/EmptyRequestsSection";
 
 interface RequestsSectionProps {
   requests: DocumentRequest[];
@@ -15,7 +15,12 @@ const RequestsSection: React.FC<RequestsSectionProps> = ({ requests }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   if (requests.length === 0) {
-    return <EmptyRequestsSection />;
+    return (
+      <NotFound
+        text="No document requests found."
+        subtext="Create a request to get started."
+      />
+    );
   }
 
   const totalPages = Math.ceil(requests.length / ITEMS_PER_PAGE);
@@ -53,7 +58,6 @@ const RequestsSection: React.FC<RequestsSectionProps> = ({ requests }) => {
         );
       }
     }
-
     return pages;
   };
 

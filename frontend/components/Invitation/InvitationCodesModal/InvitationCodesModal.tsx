@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import ButtonPrimary from "@/components/Buttons/ButtonPrimary/ButtonPrimary";
+import NotFound from "@/components/NotFound/NotFound";
 import "./InvitationCodesModal.css";
 import { MdClose, MdContentCopy, MdCheck, MdDelete } from "react-icons/md";
 
@@ -54,7 +55,6 @@ const InvitationCodesModal = () => {
         throw new Error("Failed to delete code");
       }
 
-      // Remove from local state
       setCodes(codes.filter((code) => code.id !== id));
     } catch (err) {
       setError("Failed to delete code.");
@@ -119,10 +119,10 @@ const InvitationCodesModal = () => {
                 <p>Loading codes...</p>
               </div>
             ) : unusedCodes.length === 0 ? (
-              <div className="codes-empty">
-                <p>No active invitation codes.</p>
-                <p>Generate one to invite clients.</p>
-              </div>
+              <NotFound
+                text="No active invitation codes."
+                subtext="Generate one to invite clients."
+              />
             ) : (
               <div className="codes-list">
                 {unusedCodes.map((code) => (

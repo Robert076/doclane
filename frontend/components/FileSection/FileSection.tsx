@@ -1,12 +1,11 @@
 "use client";
-
 import { useState } from "react";
 import FileItem from "../FileItem/FileItem";
+import NotFound from "@/components/NotFound/NotFound";
 import "./FileSection.css";
 import SectionTitle from "../SectionTitle/SectionTitle";
 import PaginationCounter from "./_components/PaginationCounter";
 import PaginationFooter from "./_components/PaginationFooter";
-import EmptyFileSection from "./_components/EmptyFileSection";
 import { DocumentFile } from "@/types";
 
 interface FileSectionProps {
@@ -16,14 +15,12 @@ interface FileSectionProps {
 export default function FileSection({ files }: FileSectionProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 3;
-
   const totalPages = Math.ceil(files.length / itemsPerPage);
-
   const startIndex = (currentPage - 1) * itemsPerPage;
   const currentFiles = files.slice(startIndex, startIndex + itemsPerPage);
 
   if (files.length === 0) {
-    return <EmptyFileSection />;
+    return <NotFound text="No documents found." subtext="Upload documents to get started." />;
   }
 
   return (

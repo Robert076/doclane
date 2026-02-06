@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { User } from "@/types";
 import ClientCard from "../ClientCard/ClientCard";
+import NotFound from "@/components/NotFound/NotFound";
 import "./ClientsSection.css";
 
 interface ClientsSectionProps {
@@ -14,11 +15,7 @@ const ClientsSection: React.FC<ClientsSectionProps> = ({ clients }) => {
   const [currentPage, setCurrentPage] = useState(1);
 
   if (clients.length === 0) {
-    return (
-      <div className="clients-empty">
-        <p>No clients found. Start by adding your first client.</p>
-      </div>
-    );
+    return <NotFound text="No clients found. Start by adding your first client." />;
   }
 
   const totalPages = Math.ceil(clients.length / ITEMS_PER_PAGE);
@@ -56,7 +53,6 @@ const ClientsSection: React.FC<ClientsSectionProps> = ({ clients }) => {
         );
       }
     }
-
     return pages;
   };
 
