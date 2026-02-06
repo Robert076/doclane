@@ -1,13 +1,14 @@
 import { Dispatch, SetStateAction } from "react";
-import Input from "../Input/Input";
-import Logo from "../Logo/Logo";
 import "./LoginForm.css";
 
-import SeparatorWithText from "../Separators/SeparatorWithText/SeparatorWithText";
-import Separator from "../Separators/Separator/Separator";
-import ClickableCard from "./ClickableCard/ClickableCard";
+import ClickableCard from "../ClickableCard/ClickableCard";
 import { MdCardGiftcard, MdLock, MdWork } from "react-icons/md";
-import ButtonPrimary from "../Buttons/ButtonPrimary/ButtonPrimary";
+import Separator from "@/components/Separators/Separator/Separator";
+import Logo from "@/components/Logo/Logo";
+import Input from "@/components/Input/Input";
+import ButtonPrimary from "@/components/Buttons/ButtonPrimary/ButtonPrimary";
+import SeparatorWithText from "@/components/Separators/SeparatorWithText/SeparatorWithText";
+import { useRouter } from "next/navigation";
 
 interface LoginFormProps {
   email: string;
@@ -24,6 +25,7 @@ const LoginForm: React.FC<LoginFormProps> = ({
   setPassword,
   handleLogin,
 }) => {
+  const router = useRouter();
   return (
     <div className="login-form">
       <Logo />
@@ -56,7 +58,10 @@ const LoginForm: React.FC<LoginFormProps> = ({
       <ClickableCard
         text="Redeem Invitation"
         icon={<MdCardGiftcard size={20} />}
-        onClick={() => console.log("Clicked!")}
+        onClick={() => {
+          console.log("blabla");
+          router.push("/register-client");
+        }}
       />
 
       <ClickableCard

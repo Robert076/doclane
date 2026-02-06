@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-import LoginForm from "../../components/LoginForm/LoginForm";
 import "./style.css";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import LoginForm from "@/components/Forms/LoginForm/LoginForm";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
