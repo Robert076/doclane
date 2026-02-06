@@ -3,6 +3,7 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/Robert076/doclane/backend/services"
@@ -54,10 +55,7 @@ func RegisterClientHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	profID, err := config.InvitationCodeService.ValidateAndUseInvitationCode(
-		r.Context(),
-		req.InvitationCode,
-	)
+	profID, err := config.InvitationCodeService.ValidateAndUseInvitationCode(r.Context(), req.InvitationCode)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -74,6 +72,10 @@ func RegisterClientHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := config.UserService.AddUser(r.Context(), params)
 	if err != nil {
+		if reactivateErr := config.InvitationCodeService.ReactivateCode(r.Context(), req.InvitationCode); reactivateErr != nil {
+			utils.WriteError(w, errors.ErrBadRequest{Msg: fmt.Sprintf("%v , %v", err, reactivateErr)})
+			return
+		}
 		utils.WriteError(w, err)
 		return
 	}

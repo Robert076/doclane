@@ -163,10 +163,9 @@ func (s *InvitationCodeService) ValidateAndUseInvitationCode(
 		return 0, errors.ErrNotFound{Msg: "Invalid invitation code."}
 	}
 
-	if invCode.UsedByUserID != nil {
+	if invCode.UsedAt != nil {
 		s.logger.Warn("attempted to use already-used invitation code",
 			slog.String("code", code),
-			slog.Int("used_by", *invCode.UsedByUserID),
 		)
 		return 0, errors.ErrBadRequest{Msg: "This invitation code has already been used."}
 	}
@@ -209,7 +208,7 @@ func (s *InvitationCodeService) GetInvitationCodeByCode(
 		return models.InvitationCode{}, errors.ErrNotFound{Msg: "Invalid invitation code."}
 	}
 
-	if invCode.UsedByUserID != nil {
+	if invCode.UsedAt != nil {
 		return models.InvitationCode{}, errors.ErrBadRequest{Msg: "This invitation code has already been used."}
 	}
 
@@ -260,14 +259,6 @@ func (s *InvitationCodeService) DeleteInvitationCode(
 		return errors.ErrForbidden{Msg: "You can only delete your own invitation codes."}
 	}
 
-	if code.UsedByUserID != nil {
-		s.logger.Warn("attempted to delete already-used invitation code",
-			slog.Int("code_id", codeID),
-			slog.Int("used_by", *code.UsedByUserID),
-		)
-		return errors.ErrBadRequest{Msg: "Cannot delete a code that has already been used."}
-	}
-
 	err = s.invitationRepo.InvalidateCode(ctx, codeID)
 	if err != nil {
 		s.logger.Error("failed to delete invitation code",
@@ -280,6 +271,23 @@ func (s *InvitationCodeService) DeleteInvitationCode(
 	s.logger.Info("invitation code deleted successfully",
 		slog.Int("code_id", codeID),
 		slog.Int("professional_id", jwtUserId),
+	)
+
+	return nil
+}
+
+func (s *InvitationCodeService) ReactivateCode(ctx context.Context, code string) error {
+	err := s.invitationRepo.ReactivateCode(ctx, code)
+	if err != nil {
+		s.logger.Error("failed to reactivate invitation code",
+			slog.String("code", code),
+			slog.Any("error", err),
+		)
+		return errors.ErrInternalServerError{Msg: "Failed to reactivate invitation code."}
+	}
+
+	s.logger.Warn("invitation code reactivated due to failed registration",
+		slog.String("code", code),
 	)
 
 	return nil

@@ -22,7 +22,7 @@ func (r *InvitationCodeRepository) GetInvitationCodeByCode(
 	code string,
 ) (models.InvitationCode, error) {
 	query := `
-        SELECT id, code, professional_id, used_by_user_id, used_at, expires_at, created_at
+        SELECT id, code, professional_id, used_at, expires_at, created_at
         FROM invitation_codes
         WHERE code = $1
     `
@@ -32,7 +32,6 @@ func (r *InvitationCodeRepository) GetInvitationCodeByCode(
 		&invCode.ID,
 		&invCode.Code,
 		&invCode.ProfessionalID,
-		&invCode.UsedByUserID,
 		&invCode.UsedAt,
 		&invCode.ExpiresAt,
 		&invCode.CreatedAt,
@@ -53,9 +52,9 @@ func (r *InvitationCodeRepository) GetInvitationCodesByProfessional(
 	professionalID int,
 ) ([]models.InvitationCode, error) {
 	query := `
-        SELECT id, code, professional_id, used_by_user_id, used_at, expires_at, created_at
+        SELECT id, code, professional_id, used_at, expires_at, created_at
         FROM invitation_codes
-        WHERE professional_id = $1
+        WHERE professional_id = $1 AND used_at IS NULL
         ORDER BY created_at DESC
     `
 
@@ -72,7 +71,6 @@ func (r *InvitationCodeRepository) GetInvitationCodesByProfessional(
 			&code.ID,
 			&code.Code,
 			&code.ProfessionalID,
-			&code.UsedByUserID,
 			&code.UsedAt,
 			&code.ExpiresAt,
 			&code.CreatedAt,
@@ -91,7 +89,7 @@ func (r *InvitationCodeRepository) GetInvitationCodeByID(
 	id int,
 ) (models.InvitationCode, error) {
 	query := `
-		SELECT id, code, professional_id, used_by_user_id, used_at, expires_at, created_at
+		SELECT id, code, professional_id, used_at, expires_at, created_at
 		FROM invitation_codes
 		WHERE id = $1
 	`
@@ -101,7 +99,6 @@ func (r *InvitationCodeRepository) GetInvitationCodeByID(
 		&invCode.ID,
 		&invCode.Code,
 		&invCode.ProfessionalID,
-		&invCode.UsedByUserID,
 		&invCode.UsedAt,
 		&invCode.ExpiresAt,
 		&invCode.CreatedAt,
@@ -136,12 +133,32 @@ func (r *InvitationCodeRepository) InvalidateCode(
 	ctx context.Context,
 	id int,
 ) error {
-	query := `
-			DELETE FROM invitation_codes
-			WHERE id = $1
-		`
+	query := `UPDATE invitation_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL`
 
 	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("invitation code not found or already used")
+	}
+
+	return nil
+}
+
+func (r *InvitationCodeRepository) ReactivateCode(
+	ctx context.Context,
+	code string,
+) error {
+	query := `UPDATE invitation_codes SET used_at = NULL WHERE code = $1`
+
+	result, err := r.db.ExecContext(ctx, query, code)
 	if err != nil {
 		return err
 	}

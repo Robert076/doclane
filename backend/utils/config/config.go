@@ -79,6 +79,7 @@ func init() {
 
 	// Initialize Invitation Code Service
 	InvitationCodeService = services.NewInvitationCodeService(invitationRepository, userRepository, Logger)
+
 }
 
 func newS3Client() (*s3.Client, error) {
