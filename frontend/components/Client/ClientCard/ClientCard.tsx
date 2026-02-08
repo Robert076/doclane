@@ -3,13 +3,15 @@ import React from "react";
 import { User } from "@/types";
 import "./ClientCard.css";
 import ButtonPrimary from "@/components/Buttons/ButtonPrimary/ButtonPrimary";
+import HighlightText from "@/components/HighlightText/HighlightText";
 import { useRouter } from "next/navigation";
 
 interface ClientCardProps {
   client: User;
+  searchTerm?: string;
 }
 
-const ClientCard: React.FC<ClientCardProps> = ({ client }) => {
+const ClientCard: React.FC<ClientCardProps> = ({ client, searchTerm }) => {
   const router = useRouter();
 
   const handleAddRequest = () => {
@@ -25,17 +27,20 @@ const ClientCard: React.FC<ClientCardProps> = ({ client }) => {
     });
   };
 
+  const fullName = `${client.first_name} ${client.last_name}`;
+
   return (
     <div className="client-card">
       <h3 className="client-name">
-        {client.first_name} {client.last_name}
+        <HighlightText text={fullName} search={searchTerm} />
       </h3>
-
       <div className="client-body">
         <div className="client-info">
           <p className="client-info-item">
             <span className="client-label">Email:</span>
-            <span className="client-value">{client.email}</span>
+            <span className="client-value">
+              <HighlightText text={client.email} search={searchTerm} />
+            </span>
           </p>
           <p className="client-info-item">
             <span className="client-label">Joined at:</span>
@@ -43,7 +48,6 @@ const ClientCard: React.FC<ClientCardProps> = ({ client }) => {
           </p>
         </div>
       </div>
-
       <div className="client-footer">
         <ButtonPrimary
           text="New Request"

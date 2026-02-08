@@ -1,9 +1,11 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { User } from "@/types";
 import ClientCard from "../ClientCard/ClientCard";
 import NotFound from "@/components/NotFound/NotFound";
 import "./ClientsSection.css";
+import PaginationFooter from "./_components/PaginationFooter";
+import SearchBar from "@/components/SearchBar/SearchBar";
 
 interface ClientsSectionProps {
   clients: User[];
@@ -12,110 +14,54 @@ interface ClientsSectionProps {
 const ITEMS_PER_PAGE = 12;
 
 const ClientsSection: React.FC<ClientsSectionProps> = ({ clients }) => {
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [searchInput, setSearchInput] = useState<string>("");
 
-  if (clients.length === 0) {
-    return <NotFound text="No clients found. Start by adding your first client." />;
-  }
+  const filteredClients = clients.filter((client) => {
+    if (!searchInput) return true;
+    const searchLower = searchInput.toLowerCase().trim();
+
+    const fullName = `${client.first_name || ""} ${client.last_name || ""}`.toLowerCase();
+
+    return (
+      client.first_name?.toLowerCase().includes(searchLower) ||
+      client.last_name?.toLowerCase().includes(searchLower) ||
+      fullName.includes(searchLower) ||
+      client.email?.toLowerCase().includes(searchLower)
+    );
+  });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchInput]);
 
   const totalPages = Math.ceil(clients.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const endIndex = startIndex + ITEMS_PER_PAGE;
-  const currentClients = clients.slice(startIndex, endIndex);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const getPageNumbers = () => {
-    const pages = [];
-    const showEllipsis = totalPages > 7;
-
-    if (!showEllipsis) {
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      if (currentPage <= 3) {
-        pages.push(1, 2, 3, 4, "ellipsis", totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        pages.push(1, "ellipsis", totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
-      } else {
-        pages.push(
-          1,
-          "ellipsis",
-          currentPage - 1,
-          currentPage,
-          currentPage + 1,
-          "ellipsis",
-          totalPages,
-        );
-      }
-    }
-    return pages;
-  };
 
   return (
     <div className="clients-section">
+      <SearchBar
+        value={searchInput}
+        onChange={setSearchInput}
+        placeholder="Search clients..."
+      />
+      {filteredClients.length === 0 && (
+        <NotFound text="No clients found." subtext="Start by adding your first client." />
+      )}
       <div className="clients-grid">
-        {currentClients.map((client) => (
-          <ClientCard key={client.id} client={client} />
-        ))}
+        {filteredClients.length > 0 &&
+          filteredClients.map((client) => (
+            <ClientCard key={client.id} client={client} searchTerm={searchInput} />
+          ))}
       </div>
 
       {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            className="pagination-btn pagination-arrow"
-            onClick={() => handlePageChange(currentPage - 1)}
-            disabled={currentPage === 1}
-            aria-label="Previous page"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path
-                d="M12.5 15L7.5 10L12.5 5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-
-          {getPageNumbers().map((page, index) =>
-            page === "ellipsis" ? (
-              <span key={`ellipsis-${index}`} className="pagination-ellipsis">
-                ...
-              </span>
-            ) : (
-              <button
-                key={page}
-                className={`pagination-btn ${currentPage === page ? "active" : ""}`}
-                onClick={() => handlePageChange(page as number)}
-              >
-                {page}
-              </button>
-            ),
-          )}
-
-          <button
-            className="pagination-btn pagination-arrow"
-            onClick={() => handlePageChange(currentPage + 1)}
-            disabled={currentPage === totalPages}
-            aria-label="Next page"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-              <path
-                d="M7.5 15L12.5 10L7.5 5"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-          </button>
-        </div>
+        <PaginationFooter
+          currentPage={currentPage}
+          totalPages={totalPages}
+          setCurrentPage={setCurrentPage}
+        />
       )}
     </div>
   );

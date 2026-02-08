@@ -2,12 +2,20 @@ import { DocumentRequest } from "@/types";
 import React from "react";
 import HighlightText from "@/components/HighlightText/HighlightText";
 import "./RequestBody.css";
-import { formatDate } from "@/lib/formatDate";
 
 interface RequestBodyProps {
   request: DocumentRequest;
   searchTerm?: string;
 }
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+};
 
 const RequestBody: React.FC<RequestBodyProps> = ({ request, searchTerm }) => {
   return (
