@@ -20,6 +20,7 @@ export interface DocumentRequest {
   title: string;
   description?: string | null;
   due_date?: string | null;
+  next_due_at?: string | null;
   status: RequestStatus;
   created_at: string;
   updated_at: string;

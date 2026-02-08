@@ -1,0 +1,4 @@
+.client-view .client-header .overview-p {
+    color: var(--text-color-secondary);
+    margin: var(--margin-y-10);
+}

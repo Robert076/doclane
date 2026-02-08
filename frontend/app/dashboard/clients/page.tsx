@@ -3,6 +3,7 @@ import "./style.css";
 import InvitationCodeGenerator from "@/components/Invitation/InvitationCodeGenerator/InvitationCodeGenerator";
 import InvitationCodesModal from "@/components/Invitation/InvitationCodesModal/InvitationCodesModal";
 import ClientsSection from "@/components/Client/ClientsSection/ClientsSection";
+import SearchBar from "@/components/SearchBar/SearchBar";
 
 export default async function ClientsPage() {
   const clients = await getMyClients();

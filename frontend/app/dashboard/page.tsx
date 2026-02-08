@@ -28,7 +28,7 @@ export default async function DashboardPage() {
           case "PROFESSIONAL":
             return <ProfessionalView user={user} />;
           case "CLIENT":
-            return <ClientView />;
+            return <ClientView user={user} />;
           default:
             return <p>Unknown role.</p>;
         }

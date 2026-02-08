@@ -18,7 +18,7 @@ const PaginationFooter: React.FC<PaginationFooterProps> = ({
         onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
         disabled={currentPage === 1}
       >
-        Anterior
+        Previous
       </button>
 
       <div className="page-dots">
@@ -32,7 +32,7 @@ const PaginationFooter: React.FC<PaginationFooterProps> = ({
         onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
         disabled={currentPage === totalPages}
       >
-        Următor
+        Next
       </button>
     </div>
   );

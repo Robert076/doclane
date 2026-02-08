@@ -1,18 +1,20 @@
 "use client";
 import { useRouter } from "next/navigation";
-import { DocumentRequest, RequestStatus } from "@/types";
+import { DocumentRequest, RequestStatus, User } from "@/types";
 import StatusBadge from "./StatusBadge/StatusBadge";
 import ButtonPrimary from "../Buttons/ButtonPrimary/ButtonPrimary";
 import HighlightText from "../HighlightText/HighlightText";
 import "./Request.css";
-import RequestBody from "./_components/RequestBody";
+import RequestBodyProfessional from "./_components/RequestBodyProfessional";
+import RequestBodyClient from "./_components/RequestBodyClient";
 
 interface RequestProps {
   request: DocumentRequest;
   searchTerm?: string;
+  user: User;
 }
 
-const Request: React.FC<RequestProps> = ({ request, searchTerm }) => {
+const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
   const router = useRouter();
   const isOverdue = request.status === "overdue";
 
@@ -28,7 +30,12 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm }) => {
       <h3 className="request-title">
         <HighlightText text={request.title} search={searchTerm} />
       </h3>
-      <RequestBody request={request} searchTerm={searchTerm} />
+      {user.role === "PROFESSIONAL" && (
+        <RequestBodyProfessional request={request} searchTerm={searchTerm} />
+      )}
+      {user.role === "CLIENT" && (
+        <RequestBodyClient request={request} searchTerm={searchTerm} />
+      )}
       <div className="request-footer">
         <ButtonPrimary
           text="View Details"

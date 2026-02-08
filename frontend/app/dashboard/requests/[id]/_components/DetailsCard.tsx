@@ -28,6 +28,12 @@ export default function DetailsCard({ data }: { data: DocumentRequest }) {
           <p>{formatDate(data.due_date)}</p>
         </div>
       )}
+      {data.next_due_at && !data.due_date && (
+        <div className="info-row">
+          <strong>Next due at:</strong>
+          <p>{formatDate(data.next_due_at)}</p>
+        </div>
+      )}
       {data.description && (
         <div className="info-description">
           <strong>Description:</strong>

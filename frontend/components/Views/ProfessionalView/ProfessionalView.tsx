@@ -1,7 +1,7 @@
 import { User } from "@/types";
-import getDocumentRequests from "@/lib/getDocumentRequests";
 import RequestsSection from "@/components/RequestsSection/RequestsSection";
 import ProfessionalHeader from "./_components/ProfessionalHeader";
+import getDocumentRequests from "@/lib/api/getDocumentRequests";
 
 interface ProfessionalViewProps {
   user: User;
@@ -13,7 +13,7 @@ export default async function ProfessionalView({ user }: ProfessionalViewProps) 
   return (
     <div className="professional-view">
       <ProfessionalHeader user={user} length={requests.length} />
-      <RequestsSection requests={requests} />
+      <RequestsSection user={user} requests={requests} />
     </div>
   );
 }
