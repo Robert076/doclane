@@ -246,6 +246,7 @@ func (service *DocumentService) AddDocumentFile(
 			slog.Int("id", uploadedFile.ID),
 			slog.Any("err", err),
 		)
+		return 0, errors.ErrInternalServerError{Msg: fmt.Sprintf("Error getting uploaded file: %v", err)}
 	}
 
 	if uploadedFile.AuthorRole == "CLIENT" {

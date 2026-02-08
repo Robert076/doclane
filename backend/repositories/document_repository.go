@@ -212,7 +212,7 @@ func (r *DocumentRepository) GetFileByIDExtended(ctx context.Context, id int) (m
         SELECT df.id, df.document_request_id, df.file_name, df.file_path, df.mime_type, df.file_size, df.uploaded_at, df.s3_version_id, df.uploaded_by, u.role
         FROM document_files df 
 		JOIN users u ON u.id = df.uploaded_by
-        WHERE id=$1
+        WHERE df.id=$1
     `
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&f.ID,
