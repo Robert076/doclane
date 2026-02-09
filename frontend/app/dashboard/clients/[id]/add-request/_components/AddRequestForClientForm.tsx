@@ -128,6 +128,7 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
       <form className="add-request-for-client-form" onSubmit={handleSubmit}>
         <Input
           label="Request title"
+          placeholder="Title goes here..."
           value={requestName}
           onChange={(e: any) => setRequestName(e.target.value)}
         />
@@ -135,6 +136,7 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
         <TextArea
           label="Request description"
           value={requestDescription}
+          placeholder="Description goes here..."
           onChange={(e: any) => setRequestDescription(e.target.value)}
         />
 

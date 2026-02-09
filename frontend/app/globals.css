@@ -6,6 +6,7 @@
   --box-shadow-default: 1px 3px 4px rgba(218, 17, 17, 0.05);
   --text-color-secondary: #838383;
   --height-input-and-button: 40px;
+  --font-size-xl: 26px;
   --font-size-m: 16px;
   --font-size-s: 15px;
   --color-primary: #FF5722;
@@ -41,7 +42,6 @@ body {
   padding: 0;
   margin: 0;
   font-family: 'Roboto';
-  transition: all 0.2s ease;
 }
 
 a {

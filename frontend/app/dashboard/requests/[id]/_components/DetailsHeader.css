@@ -9,6 +9,12 @@
   gap: 1.5rem;
 }
 
+.header-main h1 {
+  margin: 0;
+  line-height: 1;
+  font-size: var(--font-size-xl);
+}
+
 .back-link {
   color: #718096;
   text-decoration: none;
@@ -20,4 +26,69 @@
 
 .back-link:hover {
   color: var(--color-primary);
+}
+
+.title-display-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: var(--font-size-xl);
+}
+
+.title-edit-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 3%;
+}
+
+.title-input {
+  flex: 1;
+  font-size: var(--font-size-xl);
+  font-weight: 700;
+  padding: 0;
+  margin: 0;
+  border: none;
+  border-radius: 0;
+  outline: none;
+  background: transparent;
+  line-height: 1;
+}
+
+.icon-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  transition: background-color 0.2s;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.edit-button {
+  color: #6b7280;
+}
+
+.edit-button:hover {
+  background-color: #f3f4f6;
+}
+
+.save-button {
+  color: #10b981;
+}
+
+.save-button:hover {
+  background-color: #d1fae5;
+}
+
+.cancel-button {
+  color: #ef4444;
+}
+
+.cancel-button:hover {
+  background-color: #fee2e2;
 }
