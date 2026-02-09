@@ -20,9 +20,9 @@ func NewDocumentRepository(db *sql.DB) *DocumentRepository {
 func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error) {
 	var id int
 	err := repo.db.QueryRowContext(ctx,
-		`INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_cron, last_uploaded_at, due_date, next_due_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
-		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.IsRecurring, req.RecurrenceCron, req.LastUploadedAt, req.DueDate, req.NextDueAt,
+		`INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_cron, is_scheduled, scheduled_for, last_uploaded_at, due_date, next_due_at)
+		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING id`,
+		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.IsRecurring, req.RecurrenceCron, req.IsScheduled, req.ScheduledFor, req.LastUploadedAt, req.DueDate, req.NextDueAt,
 	).Scan(&id)
 	return id, err
 }
@@ -30,7 +30,7 @@ func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req mode
 func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTORead, error) {
 	var req models.DocumentRequestDTORead
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.last_uploaded_at, u.email, u.first_name, u.last_name as client_email, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for, dr.last_uploaded_at, u.email as client_email, u.first_name, u.last_name, 
                dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
         FROM document_requests dr
         JOIN users u ON dr.client_id = u.id
@@ -44,6 +44,8 @@ func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int)
 		&req.ClientID,
 		&req.IsRecurring,
 		&req.RecurrenceCron,
+		&req.IsScheduled,
+		&req.ScheduledFor,
 		&req.LastUploadedAt,
 		&req.ClientEmail,
 		&req.ClientFirstName,
@@ -64,7 +66,7 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(
 	search *string,
 ) ([]models.DocumentRequestDTORead, error) {
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, 
+        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
                dr.last_uploaded_at, u.email, u.first_name, u.last_name, 
                dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
         FROM document_requests dr
@@ -105,6 +107,8 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(
 			&req.ClientID,
 			&req.IsRecurring,
 			&req.RecurrenceCron,
+			&req.IsScheduled,
+			&req.ScheduledFor,
 			&req.LastUploadedAt,
 			&req.ClientEmail,
 			&req.ClientFirstName,
@@ -130,13 +134,14 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(
 	search *string,
 ) ([]models.DocumentRequestDTORead, error) {
 	query := `
-        SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, 
-               dr.last_uploaded_at, u.email, u.first_name, u.last_name, 
-               dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
-        FROM document_requests dr
-        JOIN users u ON dr.client_id = u.id
-        WHERE dr.client_id=$1
-    `
+		SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
+			dr.last_uploaded_at, u.email, u.first_name, u.last_name, 
+			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at
+		FROM document_requests dr
+		JOIN users u ON dr.client_id = u.id
+		WHERE dr.client_id=$1 
+		AND (dr.is_scheduled = false OR dr.scheduled_for <= NOW())
+	`
 
 	args := []interface{}{clientID}
 	argIndex := 2
@@ -167,6 +172,8 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(
 			&req.ClientID,
 			&req.IsRecurring,
 			&req.RecurrenceCron,
+			&req.IsScheduled,
+			&req.ScheduledFor,
 			&req.LastUploadedAt,
 			&req.ClientEmail,
 			&req.ClientFirstName,

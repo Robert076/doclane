@@ -35,7 +35,10 @@ func (service *DocumentService) AddDocumentRequest(
 	jwtUserId int,
 	dto models.DocumentRequestDTOCreate,
 ) (int, error) {
-	if err := ValidateRequestInput(dto.Title, dto.DueDate); err != nil {
+	if err := ValidateRequestInput(dto); err != nil {
+		service.logger.Warn("document request create failed because it did not pass validations",
+			slog.Int("user_id", jwtUserId),
+			slog.Any("error", err))
 		return 0, err
 	}
 
@@ -59,6 +62,7 @@ func (service *DocumentService) AddDocumentRequest(
 	}
 
 	nextDueAt := ComputeNextDueAt(dto.DueDate, dto.RecurrenceCron)
+
 	req := models.DocumentRequest{
 		ProfessionalID: jwtUserId,
 		DocumentRequestBase: models.DocumentRequestBase{
@@ -67,6 +71,8 @@ func (service *DocumentService) AddDocumentRequest(
 			Description:    dto.Description,
 			IsRecurring:    dto.IsRecurring,
 			RecurrenceCron: dto.RecurrenceCron,
+			IsScheduled:    dto.IsScheduled,
+			ScheduledFor:   dto.ScheduledFor,
 			NextDueAt:      nextDueAt,
 			LastUploadedAt: dto.LastUploadedAt,
 			DueDate:        dto.DueDate,

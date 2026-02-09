@@ -5,18 +5,27 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/google/uuid"
 	"github.com/robfig/cron/v3"
 )
 
-func ValidateRequestInput(title string, dueDate *time.Time) error {
-	if len(title) < 3 || len(title) > 40 {
+func ValidateRequestInput(dto models.DocumentRequestDTOCreate) error {
+	if len(dto.Title) < 3 || len(dto.Title) > 40 {
 		return errors.ErrBadRequest{Msg: "Title must be between 3 and 40 characters."}
 	}
 
-	if dueDate != nil && dueDate.Before(time.Now()) {
+	if dto.DueDate != nil && dto.DueDate.Before(time.Now()) {
 		return errors.ErrBadRequest{Msg: "Due date cannot be in the past."}
+	}
+
+	if dto.IsRecurring == true && dto.RecurrenceCron == nil {
+		return errors.ErrUnprocessableContent{Msg: "A request that is marked as recurring (is_recurring = true) should have a recurrence_cron field that is not null."}
+	}
+
+	if dto.IsScheduled == true && dto.ScheduledFor == nil {
+		return errors.ErrUnprocessableContent{Msg: "A request that is marked as scheduled (is_scheduled = true) should have a scheduled_for field that is not null."}
 	}
 
 	return nil
