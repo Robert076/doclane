@@ -11,6 +11,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 8px;
   transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s, filter 0.2s;
   outline: none;
 }
@@ -47,7 +48,12 @@
 }
 
 .button-primary--ghost {
-  background-color: transparent;
+  background-color: #fff;
   color: var(--color-primary);
   border: 1px solid var(--color-primary);
+}
+
+.button-icon {
+  font-size: 1.2em;
+  flex-shrink: 0;
 }
