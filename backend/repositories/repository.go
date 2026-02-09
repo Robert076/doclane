@@ -20,6 +20,7 @@ type IDocumentRepository interface {
 	GetDocumentRequestsByProfessional(ctx context.Context, professionalID int, search *string) ([]models.DocumentRequestDTORead, error)
 	GetDocumentRequestsByClient(ctx context.Context, clientID int, search *string) ([]models.DocumentRequestDTORead, error)
 	AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error)
+	UpdateDocumentRequestTitle(ctx context.Context, id int, newTitle string) error
 
 	AddDocumentFile(ctx context.Context, file models.DocumentFile) (int, error)
 	GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFileDTORead, error)

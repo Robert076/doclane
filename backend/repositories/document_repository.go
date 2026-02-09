@@ -192,6 +192,14 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(
 	return requests, rows.Err()
 }
 
+func (r *DocumentRepository) UpdateDocumentRequestTitle(ctx context.Context, id int, newTitle string) error {
+	query := `
+		UPDATE document_requests SET title=$1 WHERE id=$2
+	`
+	_, err := r.db.ExecContext(ctx, query, newTitle, id)
+	return err
+}
+
 func (r *DocumentRepository) GetFileByID(ctx context.Context, id int) (models.DocumentFile, error) {
 	var f models.DocumentFile
 	query := `
@@ -323,9 +331,5 @@ func (r *DocumentRepository) SetFileUploaded(ctx context.Context, id int) error 
 	`
 
 	_, err := r.db.ExecContext(ctx, query, id)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }

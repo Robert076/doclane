@@ -12,7 +12,7 @@ import (
 )
 
 func ValidateRequestInput(dto models.DocumentRequestDTOCreate) error {
-	if len(dto.Title) < 3 || len(dto.Title) > 40 {
+	if len(dto.Title) < 3 || len(dto.Title) > 30 {
 		return errors.ErrBadRequest{Msg: "Title must be between 3 and 40 characters."}
 	}
 
@@ -102,4 +102,12 @@ func generateS3Key(fileName string, requestID int) string {
 	s3Key := fmt.Sprintf("requests/%d/%s-%s", requestID, uniqueID, cleanFileName)
 
 	return s3Key
+}
+
+func ValidatePatchDTO(dto models.DocumentRequestDTOPatch) error {
+	if len(dto.Title) < 3 || len(dto.Title) > 30 {
+		return errors.ErrBadRequest{Msg: "New title is too short or too long. Minimum 3 characters, maximum 30 characters."}
+	}
+
+	return nil
 }

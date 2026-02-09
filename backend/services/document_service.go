@@ -177,6 +177,56 @@ func (service *DocumentService) getDocumentRequestsByRole(
 	return reqs, nil
 }
 
+func (service *DocumentService) PatchDocumentRequest(
+	ctx context.Context,
+	jwtUserID int,
+	requestID int,
+	updatedDTO models.DocumentRequestDTOPatch,
+) error {
+	if err := ValidatePatchDTO(updatedDTO); err != nil {
+		service.logger.Warn("patch validation failed",
+			slog.Int("user_id", jwtUserID),
+			slog.Int("request_id", requestID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	req, err := service.documentRepo.GetDocumentRequestByID(ctx, requestID)
+	if err != nil {
+		service.logger.Error("failed to get document request for patch",
+			slog.Int("request_id", requestID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	if req.ProfessionalID != jwtUserID {
+		service.logger.Warn("unauthorized patch attempt",
+			slog.Int("user_id", jwtUserID),
+			slog.Int("request_id", requestID),
+			slog.Int("actual_professional_id", req.ProfessionalID),
+		)
+		return errors.ErrForbidden{Msg: "Forbidden."}
+	}
+
+	if err := service.documentRepo.UpdateDocumentRequestTitle(ctx, requestID, updatedDTO.Title); err != nil {
+		service.logger.Error("failed to update document request title",
+			slog.Int("request_id", requestID),
+			slog.String("new_title", updatedDTO.Title),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	service.logger.Info("document request patched successfully",
+		slog.Int("request_id", requestID),
+		slog.String("new_title", updatedDTO.Title),
+	)
+
+	return nil
+}
+
 func (service *DocumentService) AddDocumentFile(
 	ctx context.Context,
 	jwtUserId int,

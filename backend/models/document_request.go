@@ -35,6 +35,10 @@ type DocumentRequestDTOCreate struct {
 	DocumentRequestBase
 }
 
+type DocumentRequestDTOPatch struct {
+	Title string `json:"title"`
+}
+
 type DocumentFile struct {
 	ID                int       `db:"id" json:"id"`
 	DocumentRequestID int       `db:"document_request_id" json:"document_request_id"`
