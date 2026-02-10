@@ -1,13 +1,3 @@
-variable "project" {}
-
-resource "aws_s3_bucket" "this" {
-  bucket = var.project
-
-  tags = {
-    Project = var.project
-  }
-}
-
 resource "aws_iam_policy" "s3_policy" {
   name = "${var.project}-policy"
 
@@ -34,12 +24,4 @@ resource "aws_iam_policy" "s3_policy" {
       }
     ]
   })
-}
-
-output "bucket_name" {
-  value = aws_s3_bucket.this.bucket
-}
-
-output "s3_policy_arn" {
-  value = aws_iam_policy.s3_policy.arn
 }
