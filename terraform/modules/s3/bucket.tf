@@ -1,19 +1,15 @@
 variable "project" {}
-variable "env" {}
-variable "account_id" {}
 
 resource "aws_s3_bucket" "this" {
-  bucket = "${var.project}-${var.env}-${var.account_id}"
+  bucket = var.project
 
   tags = {
-    Project     = var.project
-    Environment = var.env
+    Project = var.project
   }
 }
 
 resource "aws_iam_policy" "s3_policy" {
-  name        = "${var.project}-${var.env}-policy"
-  description = "S3 CRUD policy for ${var.env}"
+  name = "${var.project}-policy"
 
   policy = jsonencode({
     Version = "2012-10-17"
