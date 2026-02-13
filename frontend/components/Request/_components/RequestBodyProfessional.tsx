@@ -1,40 +1,30 @@
 import { DocumentRequest } from "@/types";
 import React from "react";
-import HighlightText from "@/components/HighlightText/HighlightText";
 import "./RequestBody.css";
+import RequestInfoItem from "./RequestInfoItem";
 
 interface RequestBodyProps {
-  request: DocumentRequest;
-  searchTerm?: string;
+        request: DocumentRequest;
+        searchTerm?: string;
 }
 
 const RequestBody: React.FC<RequestBodyProps> = ({ request, searchTerm }) => {
-  const isScheduledFuture =
-    request.is_scheduled &&
-    request.scheduled_for &&
-    new Date(request.scheduled_for) > new Date();
-
-  return (
-    <div className="request-body">
-      <div className="request-info">
-        <p className="request-info-item">
-          <span className="request-label">Client email:</span>
-          <span className="request-value">
-            <HighlightText text={request.client_email} search={searchTerm} />
-          </span>
-        </p>
-        <p className="request-info-item">
-          <span className="request-label">Client name:</span>
-          <span className="request-value">
-            <HighlightText
-              text={`${request.client_first_name} ${request.client_last_name}`}
-              search={searchTerm}
-            />
-          </span>
-        </p>
-      </div>
-    </div>
-  );
+        return (
+                <div className="request-body">
+                        <div className="request-info">
+                                {RequestInfoItem(
+                                        searchTerm,
+                                        "Client email:",
+                                        request.client_email,
+                                )}
+                                {RequestInfoItem(
+                                        searchTerm,
+                                        "Client name:",
+                                        `${request.client_first_name} ${request.client_last_name}`,
+                                )}
+                        </div>
+                </div>
+        );
 };
 
 export default RequestBody;

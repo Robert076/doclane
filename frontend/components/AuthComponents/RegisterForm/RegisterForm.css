@@ -1,0 +1,20 @@
+.register-form {
+    width: 500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    background-color: white;
+    border: var(--border-default);
+    border-radius: var(--border-radius-default);
+    box-shadow: var(--box-shadow-default);
+    padding-top: 30px;
+}
+
+.register-form .register-form-error {
+    color: red;
+    font-size: 0.875rem;
+    text-align: left;
+    width: 80%;
+    margin: 0rem 0 0.45rem 0;
+}
