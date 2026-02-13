@@ -174,3 +174,26 @@ func (r *InvitationCodeRepository) ReactivateCode(
 
 	return nil
 }
+
+func (r *InvitationCodeRepository) DeleteCode(
+	ctx context.Context,
+	id int,
+) error {
+	query := `DELETE FROM invitation_codes WHERE id = $1`
+
+	result, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("invitation code not found or already used")
+	}
+
+	return nil
+}

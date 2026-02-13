@@ -139,7 +139,22 @@ func (s *InvitationCodeService) GetInvitationCodesByProfessional(
 			slog.Int("professional_id", jwtUserId),
 			slog.Any("error", err),
 		)
-		return nil, err
+		return nil, errors.ErrInternalServerError{Msg: fmt.Sprintf("Could not fetch codes. %v", err)}
+	}
+
+	for _, code := range codes {
+		if code.ExpiresAt.Before(time.Now()) {
+			err := s.invitationRepo.DeleteCode(ctx, code.ID)
+			if err != nil {
+				s.logger.Error("failed to delete expired code",
+					slog.Int("code_id", code.ID),
+					slog.Int("professional_id", code.ProfessionalID),
+					slog.Any("error", err),
+				)
+
+				return nil, errors.ErrInternalServerError{Msg: fmt.Sprintf("Could not delete expired token. %v", err)}
+			}
+		}
 	}
 
 	s.logger.Info("invitation codes retrieved successfully",

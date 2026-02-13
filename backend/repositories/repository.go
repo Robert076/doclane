@@ -36,4 +36,5 @@ type IInvitationCodeRepository interface {
 	CreateInvitationCode(ctx context.Context, code string, professionalID int, expiresAt *time.Time) error
 	InvalidateCode(ctx context.Context, id int) error
 	ReactivateCode(ctx context.Context, code string) error
+	DeleteCode(ctx context.Context, id int) error
 }
