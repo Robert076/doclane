@@ -36,11 +36,10 @@ export default function FileItem({ file }: FileItemProps) {
       if (result.success && result.data?.url) {
         window.open(result.data.url, "_blank", "noopener,noreferrer");
       } else {
-        throw new Error(result.msg || "Eroare la generarea link-ului");
+        throw new Error(result.msg || "Error generating the link");
       }
     } catch (error) {
       console.error("Error fetching file URL:", error);
-      alert("Nu s-a putut deschide fișierul. Verifică dacă backend-ul rulează.");
     } finally {
       setIsRequesting(false);
     }

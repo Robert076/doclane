@@ -191,7 +191,7 @@ func (repo *UserRepository) GetUsersByProfessionalID(
 	query := `
         SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
         FROM users
-        WHERE professional_id = $1
+        WHERE professional_id = $1 AND is_active = true;
     `
 
 	args := []interface{}{professionalID}

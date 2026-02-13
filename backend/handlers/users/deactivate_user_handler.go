@@ -8,6 +8,7 @@ import (
 	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/config"
+	"github.com/go-chi/chi/v5"
 )
 
 func DeactivateUserHandler(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +18,7 @@ func DeactivateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id := r.URL.Query().Get("id")
+	id := chi.URLParam(r, "id")
 	if id == "" {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: "You must provide an user id for deactivation."})
 		return
