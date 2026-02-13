@@ -70,7 +70,11 @@ const RequestsSection: React.FC<RequestsSectionProps> = ({ requests, user }) => 
       />
 
       {filteredRequests.length === 0 ? (
-        <NotFound text="No requests found." subtext="Try adjusting your search terms." />
+        <NotFound
+          text="No requests found."
+          subtext="Try adjusting your search terms."
+          background="#fff"
+        />
       ) : (
         <>
           <div className="requests-grid">

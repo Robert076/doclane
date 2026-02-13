@@ -2,18 +2,17 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import RegisterClientForm from "@/components/Forms/RegisterForm/RegisterClientForm";
+import RegisterProfessionalForm from "@/components/Forms/RegisterForm/RegisterProfessionalForm";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [invitationCode, setInvitationCode] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const router = useRouter();
 
   const handleRegister = async () => {
-    const registerPromise = fetch("/api/backend/auth/register/client", {
+    const registerPromise = fetch("/api/backend/auth/register/professional", {
       method: "POST",
       credentials: "include",
       headers: {
@@ -22,7 +21,6 @@ const LoginPage = () => {
       body: JSON.stringify({
         email,
         password,
-        invitation_code: invitationCode,
         first_name: firstName,
         last_name: lastName,
       }),
@@ -48,13 +46,11 @@ const LoginPage = () => {
   return (
     <div className="register-page-wrapper">
       <div className="register-page">
-        <RegisterClientForm
+        <RegisterProfessionalForm
           email={email}
           setEmail={setEmail}
           password={password}
           setPassword={setPassword}
-          invitationCode={invitationCode}
-          setInvitationCode={setInvitationCode}
           firstName={firstName}
           setFirstName={setFirstName}
           lastName={lastName}

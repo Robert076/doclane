@@ -5,7 +5,12 @@ export default function middleware(request: NextRequest) {
   const token = request.cookies.get("auth_cookie")?.value;
   const { pathname } = request.nextUrl;
 
-  if (!token && pathname !== "/login" && pathname !== "/register-client") {
+  if (
+    !token &&
+    pathname !== "/login" &&
+    pathname !== "/register-client" &&
+    pathname !== "/register-professional"
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("callbackUrl", pathname);

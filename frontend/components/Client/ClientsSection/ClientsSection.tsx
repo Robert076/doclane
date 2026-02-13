@@ -41,13 +41,19 @@ const ClientsSection: React.FC<ClientsSectionProps> = ({ clients }) => {
 
   return (
     <div className="clients-section">
-      <SearchBar
-        value={searchInput}
-        onChange={setSearchInput}
-        placeholder="Search clients..."
-      />
+      {filteredClients.length > 0 && (
+        <SearchBar
+          value={searchInput}
+          onChange={setSearchInput}
+          placeholder="Search clients..."
+        />
+      )}
       {filteredClients.length === 0 && (
-        <NotFound text="No clients found." subtext="Start by adding your first client." />
+        <NotFound
+          text="No clients found."
+          subtext="Start by adding your first client."
+          background="#fff"
+        />
       )}
       <div className="clients-grid">
         {filteredClients.length > 0 &&

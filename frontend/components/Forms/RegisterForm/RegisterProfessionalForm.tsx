@@ -10,13 +10,11 @@ import SeparatorWithText from "@/components/Separators/SeparatorWithText/Separat
 import ClickableCard from "../ClickableCard/ClickableCard";
 import { useRouter } from "next/navigation";
 
-interface RegisterClientFormProps {
+interface RegisterProfessionalFormProps {
   email: string;
   setEmail: Dispatch<SetStateAction<string>>;
   password: string;
   setPassword: Dispatch<SetStateAction<string>>;
-  invitationCode: string;
-  setInvitationCode: Dispatch<SetStateAction<string>>;
   firstName: string;
   setFirstName: Dispatch<SetStateAction<string>>;
   lastName: string;
@@ -24,13 +22,11 @@ interface RegisterClientFormProps {
   handleRegister: () => void;
 }
 
-const RegisterClientForm: React.FC<RegisterClientFormProps> = ({
+const RegisterProfessionalForm: React.FC<RegisterProfessionalFormProps> = ({
   email,
   setEmail,
   password,
   setPassword,
-  invitationCode,
-  setInvitationCode,
   firstName,
   setFirstName,
   lastName,
@@ -50,10 +46,9 @@ const RegisterClientForm: React.FC<RegisterClientFormProps> = ({
       isValidEmail(email) &&
       firstName.trim().length >= 3 &&
       lastName.trim().length >= 3 &&
-      password.length > 0 &&
-      invitationCode.trim().length > 0
+      password.length > 0
     );
-  }, [email, firstName, lastName, password, invitationCode]);
+  }, [email, firstName, lastName, password]);
 
   const handleSubmit = () => {
     if (!isFormValid) {
@@ -108,15 +103,6 @@ const RegisterClientForm: React.FC<RegisterClientFormProps> = ({
       {showErrors && lastName.trim().length < 3 && (
         <p className="register-form-error">Last name must be at least 3 characters</p>
       )}
-      <Input
-        label="Invitation code:"
-        placeholder="Your invitation code here"
-        value={invitationCode}
-        onChange={(e: any) => setInvitationCode(e.target.value)}
-      />
-      {showErrors && invitationCode.trim().length === 0 && (
-        <p className="register-form-error">Invitation code is required</p>
-      )}
       <ButtonPrimary text="Sign up" onClick={handleSubmit} />
       <SeparatorWithText text="Already have an account?" />
       <ClickableCard
@@ -134,4 +120,4 @@ const RegisterClientForm: React.FC<RegisterClientFormProps> = ({
   );
 };
 
-export default RegisterClientForm;
+export default RegisterProfessionalForm;

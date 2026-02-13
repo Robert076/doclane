@@ -23,7 +23,6 @@ export const SIDEBAR_CONFIG: Record<string, NavItem[]> = {
   ],
   CLIENT: [
     { label: "My Portal", href: "/dashboard", icon: MdHome },
-    { label: "Documents", href: "/dashboard/documents", icon: MdFolder },
-    { label: "Professional", href: "/dashboard/my-pro", icon: MdPerson },
+    { label: "Settings", href: "/dashboard/settings", icon: MdSettings },
   ],
 };

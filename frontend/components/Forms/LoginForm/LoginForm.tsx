@@ -59,7 +59,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
         text="Redeem Invitation"
         icon={<MdCardGiftcard size={20} />}
         onClick={() => {
-          console.log("blabla");
           router.push("/register-client");
         }}
       />
@@ -67,7 +66,9 @@ const LoginForm: React.FC<LoginFormProps> = ({
       <ClickableCard
         text="Join as a Professional"
         icon={<MdWork size={20} />}
-        onClick={() => console.log("Sign up as Professional clicked")}
+        onClick={() => {
+          router.push("/register-professional");
+        }}
       />
 
       <div className="login-form-footer">
