@@ -14,9 +14,23 @@ interface RequestProps {
   user: User;
 }
 
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+};
+
 const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
   const router = useRouter();
   const isOverdue = request.status === "overdue";
+
+  const isScheduledFuture =
+    request.is_scheduled &&
+    request.scheduled_for &&
+    new Date(request.scheduled_for) > new Date();
 
   const handleViewDetails = () => {
     router.push(`/dashboard/requests/${request.id}`);
@@ -26,6 +40,14 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
     <div className={`document-request-card ${isOverdue ? "is-overdue" : ""}`}>
       <div className="request-header">
         <StatusBadge status={request.status as RequestStatus} />
+        {isScheduledFuture && (
+          <span
+            className="scheduled-badge"
+            title={`Scheduled for ${formatDate(request.scheduled_for!)}`}
+          >
+            SCHEDULED
+          </span>
+        )}
       </div>
       <h3 className="request-title">
         <HighlightText text={request.title} search={searchTerm} />

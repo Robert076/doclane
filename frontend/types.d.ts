@@ -20,6 +20,8 @@ export interface DocumentRequest {
   title: string;
   description?: string | null;
   due_date?: string | null;
+  is_scheduled: boolean;
+  scheduled_for?: string | null;
   next_due_at?: string | null;
   status: RequestStatus;
   created_at: string;

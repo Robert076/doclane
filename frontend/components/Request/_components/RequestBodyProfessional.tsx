@@ -9,6 +9,11 @@ interface RequestBodyProps {
 }
 
 const RequestBody: React.FC<RequestBodyProps> = ({ request, searchTerm }) => {
+  const isScheduledFuture =
+    request.is_scheduled &&
+    request.scheduled_for &&
+    new Date(request.scheduled_for) > new Date();
+
   return (
     <div className="request-body">
       <div className="request-info">
