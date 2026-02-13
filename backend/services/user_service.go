@@ -209,6 +209,32 @@ func (service *UserService) Login(ctx context.Context, params LoginParams) (mode
 	return user, nil
 }
 
+func (service *UserService) DeactivateUser(ctx context.Context, jwtUserID int, id int) error {
+	u, err := service.repo.GetUserByID(ctx, id)
+	if err != nil {
+		return errors.ErrBadRequest{Msg: "Invalid user received."}
+	}
+
+	if u.ProfessionalID == nil {
+		return errors.ErrBadRequest{Msg: "Invalid account deactivation attempted."}
+	}
+
+	idInt, err := strconv.Atoi(*u.ProfessionalID)
+	if err != nil {
+		return errors.ErrBadRequest{Msg: "Invalid ID received. "}
+	}
+
+	if jwtUserID != idInt {
+		return errors.ErrForbidden{Msg: "You cannot deactivate an account of someone who is not your client."}
+	}
+
+	if err := service.repo.DeactivateUser(ctx, id); err != nil {
+		return errors.ErrInternalServerError{Msg: fmt.Sprintf("Error deactivating user: %v", err)}
+	}
+
+	return nil
+}
+
 func (service *UserService) ValidateUserForRegister(ctx context.Context, email, password, role, firstName, lastName string) error {
 	if _, err := mail.ParseAddress(email); err != nil {
 		return errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid email received: %s", email)}

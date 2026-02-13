@@ -18,6 +18,8 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, searchTerm }) => {
     router.push(`/dashboard/clients/${client.id}/add-request`);
   };
 
+  const handleDeactivateClient = () => {};
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString("en-US", {
@@ -54,6 +56,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, searchTerm }) => {
           variant="ghost"
           fullWidth={true}
           onClick={handleAddRequest}
+        />
+        <ButtonPrimary
+          text="Deactivate thier account"
+          variant="ghost"
+          fullWidth={true}
+          onClick={handleDeactivateClient}
         />
       </div>
     </div>

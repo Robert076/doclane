@@ -265,3 +265,11 @@ func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int,
 
 	return id, nil
 }
+
+func (repo *UserRepository) DeactivateUser(ctx context.Context, id int) error {
+	_, err := repo.db.ExecContext(ctx,
+		`UPDATE users SET is_active=false WHERE id=$1`,
+		id,
+	)
+	return err
+}

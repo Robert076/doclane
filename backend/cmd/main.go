@@ -56,6 +56,7 @@ func main() {
 			r.Get("/", user_handler.GetUsersHandler)
 			r.Get("/me", user_handler.GetCurrentUserHandler)
 			r.Get("/my-clients", user_handler.GetClientsByProfessionalHandler)
+			r.Post("/deactivate/{id}", user_handler.DeactivateUserHandler)
 		})
 
 		r.Route("/document-requests", func(r chi.Router) {
