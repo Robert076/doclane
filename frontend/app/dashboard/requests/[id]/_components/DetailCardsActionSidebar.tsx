@@ -1,11 +1,12 @@
 "use client";
 
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import UploadDocumentButton from "@/components/Buttons/UploadDocumentButton/UploadDocumentButton";
+
 import "./DetailCardsActionSidebar.css";
 import SectionTitle from "@/components/SectionTitle/SectionTitle";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import UploadDocumentButton from "@/components/ButtonComponents/UploadDocumentButton/UploadDocumentButton";
 
 export default function DetailCardsActionSidebar({ id }: { id: string }) {
         const router = useRouter();

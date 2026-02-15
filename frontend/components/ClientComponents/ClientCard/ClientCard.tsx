@@ -41,13 +41,14 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, searchTerm }) => {
                 }
         };
 
-        const fullName = `${client.first_name} ${client.last_name}`;
-
         return (
                 <>
                         <div className="client-card">
                                 <h3 className="client-name">
-                                        <HighlightText text={fullName} search={searchTerm} />
+                                        <HighlightText
+                                                text={`${client.first_name} ${client.last_name}`}
+                                                search={searchTerm}
+                                        />
                                 </h3>
                                 <div className="client-body">
                                         <div className="client-info">
@@ -83,7 +84,7 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, searchTerm }) => {
                                 isOpen={isDeactivateModalOpen}
                                 onClose={() => setIsDeactivateModalOpen(false)}
                                 onConfirm={handleDeactivateConfirm}
-                                clientName={fullName}
+                                clientName={`${client.first_name} ${client.last_name}`}
                         />
                 </>
         );
