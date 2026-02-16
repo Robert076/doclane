@@ -2,6 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { logger } from "../logger";
+import { UserRole } from "@/types";
 
 interface APIResponse {
         success: boolean;
@@ -10,12 +11,21 @@ interface APIResponse {
         data?: any;
 }
 
+interface HTTPOptions {
+        method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
+        body?: any;
+        revalidate?: string; // path to revalidate after success
+}
+
 const BACKEND_URL = process.env.BACKEND_URL!;
 
 export async function doclaneHTTPHelper(
-        fetchUrl: string,
-        method: string,
+        endpoint: string,
+        options: HTTPOptions,
 ): Promise<APIResponse> {
+        const { method = "GET", body, revalidate } = options;
+        const fetchUrl = `${BACKEND_URL}${endpoint}`;
+
         try {
                 const cookieStore = await cookies();
                 const authCookie = cookieStore.get("auth_cookie");
@@ -24,22 +34,32 @@ export async function doclaneHTTPHelper(
                         credentials: "include",
                         headers: {
                                 Authorization: `Bearer ${authCookie?.value}`,
+                                ...(body && { "Content-Type": "application/json" }),
                         },
+                        ...(body && { body: JSON.stringify(body) }),
                 });
 
                 const resultData = await response.json();
 
                 if (!response.ok) {
-                        const errorData = await response.json();
-                        logger.error(`Error during HTTP call: ${errorData}`);
+                        logger.error(
+                                `Error during ${method} ${fetchUrl}: ${resultData.message || resultData.error}`,
+                        );
                         return {
                                 success: false,
-                                error: errorData,
-                                message: resultData.message,
+                                error:
+                                        resultData.error ||
+                                        resultData.message ||
+                                        "Request failed",
+                                message: resultData.message || "Request failed",
                         };
                 }
 
                 logger.info(`${method} ${fetchUrl} call successful`);
+
+                if (revalidate) {
+                        revalidatePath(revalidate);
+                }
 
                 return {
                         success: true,
@@ -57,47 +77,41 @@ export async function doclaneHTTPHelper(
 }
 
 export async function deactivateUser(userId: number): Promise<APIResponse> {
-        const fetchUrl = `${BACKEND_URL}/users/deactivate/${userId}`;
-        const method = "POST";
-
-        const result = await doclaneHTTPHelper(fetchUrl, method);
-        if (result.success === false) {
-                return {
-                        success: false,
-                        message:
-                                "Error occured when trying to deactivate user: " +
-                                result.message,
-                        error: result.error,
-                };
-        }
-
-        revalidatePath("/dashboard/clients");
-        return {
-                success: true,
-                message: "User deactivated successfully.",
-        };
+        return doclaneHTTPHelper(`/users/deactivate/${userId}`, {
+                method: "POST",
+                revalidate: "/dashboard/clients",
+        });
 }
 
 export async function presignDocumentURL(
         requestId: number,
         fileId: number,
 ): Promise<APIResponse> {
-        const fetchUrl = `${BACKEND_URL}/document-requests/${requestId}/files/${fileId}/presign`;
-        const method = "GET";
+        return doclaneHTTPHelper(`/document-requests/${requestId}/files/${fileId}/presign`, {
+                method: "GET",
+        });
+}
 
-        const result = await doclaneHTTPHelper(fetchUrl, method);
-        if (result.success === false) {
-                return {
-                        success: false,
-                        message:
-                                "Error occured when trying to presign file: " + result.message,
-                        error: result.error,
-                };
-        }
+export async function logout(): Promise<APIResponse> {
+        // logout does not use the backend since it's redundant
+        const cookieStore = await cookies();
+        cookieStore.delete("auth_cookie");
+        revalidatePath("/");
 
         return {
                 success: true,
-                message: result.message,
-                data: result.data,
+                message: "Logged out successfully",
         };
+}
+
+export async function getDocumentRequests(role: UserRole): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/document-requests/${role.toLowerCase()}/documents`, {
+                method: "GET",
+        });
+}
+
+export async function getCurrentUser(): Promise<APIResponse> {
+        return doclaneHTTPHelper("/users/me", {
+                method: "GET",
+        });
 }

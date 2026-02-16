@@ -2,9 +2,9 @@ import { Dispatch, SetStateAction } from "react";
 import "./LoginForm.css";
 
 import ClickableCard from "../ClickableCard/ClickableCard";
-import Input from "@/components/Input/Input";
+import Input from "@/components/InputComponents/Input";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import SeparatorWithText from "@/components/Separators/SeparatorWithText/SeparatorWithText";
+import SeparatorWithText from "@/components/OtherComponents/Separators/SeparatorWithText/SeparatorWithText";
 import LoginFormFooter from "../LoginFormFooter/LoginFormFooter";
 import LoginFormHeader from "../LoginFormHeader/LoginFormHeader";
 import { MdCardGiftcard, MdWork } from "react-icons/md";

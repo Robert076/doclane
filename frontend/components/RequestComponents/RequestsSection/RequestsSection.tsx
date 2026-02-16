@@ -1,11 +1,11 @@
 "use client";
 import { useState, useEffect } from "react";
 import { DocumentRequest, User } from "@/types";
-import Request from "../Request/Request";
-import NotFound from "@/components/NotFound/NotFound";
+import Request from "@/components/RequestComponents/RequestCard/RequestCard";
+import NotFound from "@/components/OtherComponents/NotFound/NotFound";
+import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
+import PaginationFooter from "@/components/ClientComponents/ClientsSection/_components/PaginationFooter";
 import "./RequestsSection.css";
-import SearchBar from "../SearchBar/SearchBar";
-import PaginationFooter from "../ClientComponents/ClientsSection/_components/PaginationFooter";
 
 interface RequestsSectionProps {
         requests: DocumentRequest[];

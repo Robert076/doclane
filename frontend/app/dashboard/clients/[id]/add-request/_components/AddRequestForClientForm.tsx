@@ -1,15 +1,15 @@
 "use client";
 
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import Input from "@/components/Input/Input";
-import TextArea from "@/components/Input/TextArea";
+import Input from "@/components/InputComponents/Input";
+import TextArea from "@/components/InputComponents/TextArea";
 import { useState } from "react";
 import "./AddRequestForClientForm.css";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import CronInput from "./CronInput";
 import { RecurrenceUnit } from "@/types";
-import RadioInput from "@/components/Input/RadioInput";
+import RadioInput from "@/components/InputComponents/RadioInput";
 import DeadlineInput from "./DeadlineInput";
 import { MdCalendarMonth } from "react-icons/md";
 import ScheduleModal from "./ScheduleModal";

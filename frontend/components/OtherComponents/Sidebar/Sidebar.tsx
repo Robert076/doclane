@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useUser } from "@/context/UserContext";
-import { SIDEBAR_CONFIG } from "@/config/nav";
-import { logout } from "@/lib/logout";
+import { SIDEBAR_CONFIG } from "@/lib/nav";
+import { logout } from "@/lib/api/api";
 
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import Separator from "../Separators/Separator/Separator";
+import Separator from "@/components/OtherComponents/Separators/Separator/Separator";
 import "./Sidebar.css";
-import Logo from "../Logo/Logo";
+import Logo from "@/components/OtherComponents/Logo/Logo";
 
 export default function Sidebar() {
         const pathname = usePathname();

@@ -4,6 +4,7 @@ import "./FileItem.css";
 import { DocumentFile } from "@/types";
 import { presignDocumentURL } from "@/lib/api/api";
 import toast from "react-hot-toast";
+import { formatDate } from "@/lib/client/formatDate";
 
 interface FileItemProps {
         file: DocumentFile;
@@ -34,6 +35,7 @@ export default function FileItem({ file }: FileItemProps) {
                                 window.open(result.data.url, "_blank", "noopener,noreferrer");
                                 toast.success(result.message);
                         } else {
+                                toast.error(result.message);
                                 throw new Error(result.message || "Error generating the link");
                         }
                 } catch (error) {
@@ -56,12 +58,8 @@ export default function FileItem({ file }: FileItemProps) {
                                 <div className="file-metadata">
                                         <span>{formatFileSize(file.file_size)}</span>
                                         <span className="metadata-separator">•</span>
-                                        <span>
-                                                {new Date(file.uploaded_at).toLocaleDateString(
-                                                        "ro-RO",
-                                                )}
-                                        </span>
-                                        {file.uploaded_by ? (
+                                        <span>{formatDate(file.uploaded_at)}</span>
+                                        {file.uploaded_by && (
                                                 <>
                                                         <span className="metadata-separator">
                                                                 •
@@ -73,8 +71,6 @@ export default function FileItem({ file }: FileItemProps) {
                                                                         file.uploaded_by_last_name}
                                                         </span>
                                                 </>
-                                        ) : (
-                                                <></>
                                         )}
                                 </div>
                         </div>

@@ -2,11 +2,11 @@
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import "./RegisterForm.css";
 import { MdLogin, MdLock } from "react-icons/md";
-import Separator from "@/components/Separators/Separator/Separator";
-import Logo from "@/components/Logo/Logo";
-import Input from "@/components/Input/Input";
+import Separator from "@/components/OtherComponents/Separators/Separator/Separator";
+import Logo from "@/components/OtherComponents/Logo/Logo";
+import Input from "@/components/InputComponents/Input";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import SeparatorWithText from "@/components/Separators/SeparatorWithText/SeparatorWithText";
+import SeparatorWithText from "@/components/OtherComponents/Separators/SeparatorWithText/SeparatorWithText";
 import ClickableCard from "../ClickableCard/ClickableCard";
 import { useRouter } from "next/navigation";
 import LoginFormFooter from "../LoginFormFooter/LoginFormFooter";

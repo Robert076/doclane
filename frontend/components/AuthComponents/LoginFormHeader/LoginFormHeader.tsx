@@ -1,5 +1,5 @@
-import Logo from "@/components/Logo/Logo";
-import Separator from "@/components/Separators/Separator/Separator";
+import Logo from "@/components/OtherComponents/Logo/Logo";
+import Separator from "@/components/OtherComponents/Separators/Separator/Separator";
 import "./LoginFormHeader.css";
 
 interface LoginFormHeaderProps {

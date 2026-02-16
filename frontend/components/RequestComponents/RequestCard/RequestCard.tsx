@@ -1,12 +1,12 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { DocumentRequest, RequestStatus, User } from "@/types";
-import StatusBadge from "./StatusBadge/StatusBadge";
+import StatusBadge from "../StatusBadge/StatusBadge";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import HighlightText from "../HighlightText/HighlightText";
-import "./Request.css";
-import RequestBodyProfessional from "./_components/RequestBodyProfessional";
-import RequestBodyClient from "./_components/RequestBodyClient";
+import HighlightText from "../../HighlightText/HighlightText";
+import "./RequestCard.css";
+import RequestBodyProfessional from "../_components/RequestBodyProfessional";
+import RequestBodyClient from "../_components/RequestBodyClient";
 import { formatDate } from "@/lib/client/formatDate";
 
 interface RequestProps {
