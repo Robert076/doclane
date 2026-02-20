@@ -54,6 +54,8 @@ func main() {
 
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", user_handler.GetUsersHandler)
+			r.Get("/{id}", user_handler.GetUserByIDHandler)
+			r.Post("/notify/{id}", user_handler.NotifyUserHandler)
 			r.Get("/me", user_handler.GetCurrentUserHandler)
 			r.Get("/my-clients", user_handler.GetClientsByProfessionalHandler)
 			r.Post("/deactivate/{id}", user_handler.DeactivateUserHandler)
@@ -66,6 +68,7 @@ func main() {
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", document_handler.GetDocumentRequestByIDHandler)
 				r.Patch("/", document_handler.PatchDocumentRequestHandler)
+				r.Post("/deactivate", document_handler.CloseDocumentRequestHandler)
 				r.Route("/files", func(r chi.Router) {
 					r.Get("/", document_handler.GetFilesByRequestHandler)
 					r.Post("/", document_handler.AddDocumentHandler)

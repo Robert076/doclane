@@ -3,7 +3,6 @@ package utils
 import (
 	"context"
 	"errors"
-	"strconv"
 	"time"
 
 	"github.com/Robert076/doclane/backend/models"
@@ -16,14 +15,14 @@ type contextKey string
 const ClaimsKey contextKey = "jwtClaims"
 
 type CustomClaims struct {
-	UserID         string `json:"user_id"`
+	UserID         int    `json:"user_id"`
 	Role           string `json:"role"`
-	ProfessionalID string `json:"professional_id,omitempty"`
+	ProfessionalID int    `json:"professional_id,omitempty"`
 	jwt.StandardClaims
 }
 
 func GenerateJWT(user models.User) (string, error) {
-	profID := ""
+	profID := -1
 	if user.ProfessionalID != nil {
 		profID = *user.ProfessionalID
 	}
@@ -76,10 +75,6 @@ func GetUserIDFromContext(ctx context.Context) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	uidInt, err := strconv.Atoi(claims.UserID)
-	if err != nil {
-		return 0, err
-	}
 
-	return uidInt, nil
+	return claims.UserID, nil
 }

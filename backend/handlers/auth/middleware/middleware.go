@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	"strconv"
 
 	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/Robert076/doclane/backend/utils"
@@ -14,14 +13,27 @@ import (
 
 func AuthGuard(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		jwtToken, err := r.Cookie("auth_cookie")
-		if err != nil {
-			utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
-			return
+		// first check Bearer token, then cookie if that token is not present.
+		var tokenString string
+
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "" {
+			if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+				tokenString = authHeader[7:]
+			}
+		}
+
+		if tokenString == "" {
+			jwtCookie, err := r.Cookie("auth_cookie")
+			if err != nil {
+				utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
+				return
+			}
+			tokenString = jwtCookie.Value
 		}
 
 		claims := &utils.CustomClaims{}
-		token, err := jwt.ParseWithClaims(jwtToken.Value, claims, func(t *jwt.Token) (interface{}, error) {
+		token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
 			return []byte(config.JWTSecret), nil
 		})
 
@@ -48,20 +60,10 @@ func MustBeActive(next http.Handler) http.Handler {
 			return
 		}
 
-		uid, err := strconv.Atoi(claims.UserID)
-		if err != nil {
-			config.Logger.Error("failed to parse user id from claims",
-				slog.String("user_id_raw", claims.UserID),
-				slog.Any("error", err),
-			)
-			utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
-			return
-		}
-
-		user, err := config.UserService.GetUserByID(r.Context(), uid)
+		user, err := config.UserService.GetUserByID(r.Context(), claims.UserID)
 		if err != nil {
 			config.Logger.Error("database error in MustBeActive check",
-				slog.Int("user_id", uid),
+				slog.Int("user_id", claims.UserID),
 				slog.Any("error", err),
 			)
 			utils.WriteError(w, errors.ErrForbidden{Msg: "Access denied."})
@@ -70,7 +72,7 @@ func MustBeActive(next http.Handler) http.Handler {
 
 		if !user.IsActive {
 			config.Logger.Warn("deactivated user attempt to access protected route",
-				slog.Int("user_id", uid),
+				slog.Int("user_id", claims.UserID),
 				slog.String("email", user.Email),
 			)
 			utils.WriteError(w, errors.ErrForbidden{Msg: "Your account is deactivated."})

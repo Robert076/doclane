@@ -129,3 +129,16 @@ func IsForbidden(err error) bool {
 	_, ok := err.(ErrForbidden)
 	return ok
 }
+
+type ErrTooManyRequests struct {
+	Msg string
+}
+
+func (e ErrTooManyRequests) Error() string {
+	return e.Msg
+}
+
+func IsTooManyRequests(err error) bool {
+	_, ok := err.(ErrTooManyRequests)
+	return ok
+}

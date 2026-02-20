@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"net/mail"
-	"strconv"
 	"time"
 
 	"github.com/Robert076/doclane/backend/models"
@@ -53,7 +52,7 @@ func (service *UserService) GetUserByID(ctx context.Context, id int) (models.Use
 	if err != nil {
 		if errors.IsNotFound(err) {
 			service.logger.Warn("user not found", slog.Int("user_id", id))
-			return models.User{}, errors.ErrNotFound{Msg: fmt.Sprintf("User with ID %d not found", id)}
+			return models.User{}, errors.ErrNotFound{Msg: "User not found"}
 		}
 
 		service.logger.Error("failed to fetch user by id",
@@ -162,8 +161,7 @@ func (service *UserService) AddUser(ctx context.Context, params CreateUserParams
 	}
 
 	if params.ProfessionalID != nil {
-		profIdStr := strconv.Itoa(*params.ProfessionalID)
-		user.ProfessionalID = &profIdStr
+		user.ProfessionalID = params.ProfessionalID
 	}
 
 	id, err := service.repo.AddUser(ctx, user)
@@ -183,6 +181,50 @@ func (service *UserService) AddUser(ctx context.Context, params CreateUserParams
 	return id, nil
 }
 
+func (service *UserService) NotifyUser(ctx context.Context, jwtUserID int, id int) error {
+	user, err := service.repo.GetUserByID(ctx, id)
+	if err != nil {
+		service.logger.Error("error retrieving user when trying to notify",
+			slog.Int("user_id", id),
+			slog.Any("error", err),
+		)
+		return errors.ErrInternalServerError{Msg: "Could not retrieve user"}
+	}
+
+	if user.ProfessionalID == nil {
+		service.logger.Warn("notification attempt was rejected because user is not client",
+			slog.Int("user_id", id),
+			slog.Int("jwt_user_id", jwtUserID),
+		)
+		return errors.ErrBadRequest{Msg: "This user cannot be notified"}
+	}
+
+	if *user.ProfessionalID != jwtUserID {
+		service.logger.Warn("notification attempt was rejected due to insufficient permissions",
+			slog.Int("user_id", id),
+			slog.Int("jwt_user_id", jwtUserID),
+		)
+		return errors.ErrForbidden{Msg: "You are not allowed to notify this user."}
+	}
+
+	if user.LastNotified != nil {
+		if (*user.LastNotified).After(time.Now().Add(time.Minute * -5)) {
+			return errors.ErrTooManyRequests{Msg: fmt.Sprintf("%s %s has already been notified in the last 5 minutes.", user.FirstName, user.LastName)}
+		}
+	}
+
+	if err := service.repo.NotifyUser(ctx, id, time.Now()); err != nil {
+		service.logger.Error("notification attempt failed with db error",
+			slog.Int("user_id", id),
+			slog.Any("error", err),
+		)
+
+		return errors.ErrInternalServerError{Msg: "Something went wrong"}
+	}
+
+	return nil
+}
+
 func (service *UserService) Login(ctx context.Context, params LoginParams) (models.User, error) {
 	service.logger.Info("login attempt", slog.String("email", params.Email))
 
@@ -200,12 +242,7 @@ func (service *UserService) Login(ctx context.Context, params LoginParams) (mode
 		return models.User{}, errors.ErrUnauthorized{Msg: "Invalid email or password."}
 	}
 
-	uid, err := strconv.Atoi(user.ID)
-	if err != nil {
-		return models.User{}, errors.ErrBadRequest{Msg: fmt.Sprintf("Invalid user id %s", user.ID)}
-	}
-
-	service.logger.Info("successful login", slog.Int("user_id", uid), slog.String("email", params.Email))
+	service.logger.Info("successful login", slog.Int("user_id", user.ID), slog.String("email", params.Email))
 	return user, nil
 }
 
@@ -219,12 +256,7 @@ func (service *UserService) DeactivateUser(ctx context.Context, jwtUserID int, i
 		return errors.ErrBadRequest{Msg: "Invalid account deactivation attempted."}
 	}
 
-	idInt, err := strconv.Atoi(*u.ProfessionalID)
-	if err != nil {
-		return errors.ErrBadRequest{Msg: "Invalid ID received. "}
-	}
-
-	if jwtUserID != idInt {
+	if jwtUserID != *u.ProfessionalID {
 		return errors.ErrForbidden{Msg: "You cannot deactivate an account of someone who is not your client."}
 	}
 

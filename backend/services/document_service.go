@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/Robert076/doclane/backend/models"
@@ -52,8 +51,7 @@ func (service *DocumentService) AddDocumentRequest(
 		return 0, errors.ErrNotFound{Msg: "Client not found."}
 	}
 
-	jwtUserIdStr := strconv.Itoa(jwtUserId)
-	if client.ProfessionalID == nil || *client.ProfessionalID != jwtUserIdStr {
+	if client.ProfessionalID == nil || *client.ProfessionalID != jwtUserId {
 		service.logger.Warn("unauthorized attempt to add request to unassigned client",
 			slog.Int("professional_id", jwtUserId),
 			slog.Int("client_id", dto.ClientID),
@@ -223,6 +221,27 @@ func (service *DocumentService) PatchDocumentRequest(
 		slog.Int("request_id", requestID),
 		slog.String("new_title", updatedDTO.Title),
 	)
+
+	return nil
+}
+
+func (service *DocumentService) CloseRequest(
+	ctx context.Context,
+	jwtUserID int,
+	requestID int,
+) error {
+	req, err := service.documentRepo.GetDocumentRequestByID(ctx, requestID)
+	if err != nil {
+		return err
+	}
+
+	if req.ProfessionalID != jwtUserID {
+		return errors.ErrForbidden{Msg: "You are not allowed to close this request."}
+	}
+
+	if err := service.documentRepo.CloseDocumentRequest(ctx, requestID); err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -25,6 +25,8 @@ func WriteError(w http.ResponseWriter, err error) {
 		WriteJSONSafe(w, http.StatusConflict, types.APIResponse{Success: false, Err: err.Error()})
 	case errors.ErrUnprocessableContent:
 		WriteJSONSafe(w, http.StatusUnprocessableEntity, types.APIResponse{Success: false, Err: err.Error()})
+	case errors.ErrTooManyRequests:
+		WriteJSONSafe(w, http.StatusTooManyRequests, types.APIResponse{Success: false, Err: err.Error()})
 	case errors.ErrInternalServerError:
 		WriteJSONSafe(w, http.StatusInternalServerError, types.APIResponse{Success: false, Err: err.Error()})
 	case errors.ErrBadGateway:

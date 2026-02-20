@@ -10,6 +10,7 @@ type DocumentRequestBase struct {
 	RecurrenceCron *string    `db:"recurrence_cron" json:"recurrence_cron"`
 	IsScheduled    bool       `db:"is_scheduled" json:"is_scheduled"`
 	ScheduledFor   *string    `db:"scheduled_for" json:"scheduled_for"`
+	IsClosed       bool       `db:"is_closed" json:"is_closed"`
 	LastUploadedAt *time.Time `db:"last_uploaded_at" json:"last_uploaded_at"`
 	NextDueAt      *time.Time `db:"next_due_at" json:"next_due_at"`
 	DueDate        *time.Time `db:"due_date,omitempty" json:"due_date,omitempty"`

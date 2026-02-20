@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/types/errors"
@@ -38,7 +39,7 @@ func (repo *UserRepository) GetUsers(
 	}
 
 	query := `
-        SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
+        SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at
         FROM users
     `
 
@@ -100,12 +101,14 @@ func (repo *UserRepository) GetUsers(
 			&user.Role,
 			&user.ProfessionalID,
 			&user.IsActive,
+			&user.LastNotified,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)
 		if err != nil {
 			return nil, err
 		}
+
 		users = append(users, user)
 	}
 
@@ -120,7 +123,7 @@ func (repo *UserRepository) GetUserByID(ctx context.Context, id int) (models.Use
 	var user models.User
 
 	err := repo.db.QueryRowContext(ctx,
-		`SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
+		`SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at
 		FROM users
 		WHERE id = $1`,
 		id,
@@ -133,6 +136,7 @@ func (repo *UserRepository) GetUserByID(ctx context.Context, id int) (models.Use
 		&user.Role,
 		&user.ProfessionalID,
 		&user.IsActive,
+		&user.LastNotified,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -152,7 +156,7 @@ func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (m
 	var user models.User
 
 	err := repo.db.QueryRowContext(ctx,
-		`SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
+		`SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at
 			FROM users
 			WHERE email = $1`,
 		email,
@@ -165,6 +169,7 @@ func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (m
 		&user.Role,
 		&user.ProfessionalID,
 		&user.IsActive,
+		&user.LastNotified,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
@@ -189,7 +194,7 @@ func (repo *UserRepository) GetUsersByProfessionalID(
 	users := []models.User{}
 
 	query := `
-        SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at
+        SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at
         FROM users
         WHERE professional_id = $1 AND is_active = true;
     `
@@ -225,6 +230,7 @@ func (repo *UserRepository) GetUsersByProfessionalID(
 			&user.Role,
 			&user.ProfessionalID,
 			&user.IsActive,
+			&user.LastNotified,
 			&user.CreatedAt,
 			&user.UpdatedAt,
 		)
@@ -245,7 +251,7 @@ func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int,
 	var id int
 
 	err := repo.db.QueryRowContext(ctx,
-		`INSERT INTO users (email, first_name, last_name, password_hash, role, professional_id, is_active, created_at, updated_at)
+		`INSERT INTO users (email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at)
 				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
 				 RETURNING id`,
 		user.Email,
@@ -255,6 +261,7 @@ func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int,
 		user.Role,
 		user.ProfessionalID,
 		user.IsActive,
+		user.LastNotified,
 		user.CreatedAt,
 		user.UpdatedAt,
 	).Scan(&id)
@@ -266,10 +273,17 @@ func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int,
 	return id, nil
 }
 
-func (repo *UserRepository) DeactivateUser(ctx context.Context, id int) error {
+func (repo *UserRepository) DeactivateUser(ctx context.Context, userId int) error {
 	_, err := repo.db.ExecContext(ctx,
 		`UPDATE users SET is_active=false WHERE id=$1`,
-		id,
+		userId,
 	)
+	return err
+}
+
+func (repo *UserRepository) NotifyUser(ctx context.Context, userId int, time time.Time) error {
+	_, err := repo.db.ExecContext(ctx,
+		`UPDATE users SET last_notified=$1 WHERE id=$2`,
+		time, userId)
 	return err
 }

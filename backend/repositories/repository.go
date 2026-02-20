@@ -13,7 +13,8 @@ type IUserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (models.User, error)
 	GetUsersByProfessionalID(ctx context.Context, professionalID int, limit *int, offset *int) ([]models.User, error)
 	AddUser(ctx context.Context, user models.User) (int, error)
-	DeactivateUser(ctx context.Context, id int) error
+	NotifyUser(ctx context.Context, userId int, time time.Time) error
+	DeactivateUser(ctx context.Context, userId int) error
 }
 
 type IDocumentRepository interface {
@@ -22,6 +23,7 @@ type IDocumentRepository interface {
 	GetDocumentRequestsByClient(ctx context.Context, clientID int, search *string) ([]models.DocumentRequestDTORead, error)
 	AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error)
 	UpdateDocumentRequestTitle(ctx context.Context, id int, newTitle string) error
+	CloseDocumentRequest(ctx context.Context, id int) error
 
 	AddDocumentFile(ctx context.Context, file models.DocumentFile) (int, error)
 	GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFileDTORead, error)
