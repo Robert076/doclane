@@ -8,5 +8,7 @@
   flex: 1;
   background-color: var(--background);
   padding: var(--padding-l);
-  overflow-y: auto;
+  overflow-y: scroll;
+  max-height: 100vh;
+  scroll-behavior: smooth;
 }

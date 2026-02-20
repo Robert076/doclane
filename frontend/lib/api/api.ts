@@ -2,7 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { logger } from "../logger";
-import { UserRole } from "@/types";
+import { DocumentRequest, UserRole } from "@/types";
 
 interface APIResponse {
         success: boolean;
@@ -51,7 +51,10 @@ export async function doclaneHTTPHelper(
                                         resultData.error ||
                                         resultData.message ||
                                         "Request failed",
-                                message: resultData.message || "Request failed",
+                                message:
+                                        resultData.message ||
+                                        resultData.error ||
+                                        "Request failed",
                         };
                 }
 
@@ -113,5 +116,37 @@ export async function getDocumentRequests(role: UserRole): Promise<APIResponse> 
 export async function getCurrentUser(): Promise<APIResponse> {
         return doclaneHTTPHelper("/users/me", {
                 method: "GET",
+        });
+}
+
+export async function getDocumentRequestById(requestId: string): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/document-requests/${requestId}`, {
+                method: "GET",
+        });
+}
+
+export async function getUserById(userId: string): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/users/${userId}`, {
+                method: "GET",
+        });
+}
+
+export async function sendEmail(requestId: number): Promise<APIResponse> {
+        const responseRequest = await getDocumentRequestById(requestId.toString());
+        if (responseRequest.success === false) {
+                return responseRequest;
+        }
+
+        const request: DocumentRequest = responseRequest.data;
+        const response = await doclaneHTTPHelper(`/users/notify/${request.client_id}`, {
+                method: "POST",
+        });
+
+        return response;
+}
+
+export async function closeRequest(requestID: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/document-requests/${requestID}/deactivate`, {
+                method: "POST",
         });
 }

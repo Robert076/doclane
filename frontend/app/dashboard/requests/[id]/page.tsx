@@ -1,11 +1,12 @@
 import { notFound } from "next/navigation";
-import getRequestById from "@/lib/getRequestById";
+
 import getFilesByRequestId from "@/lib/getFilesByRequestId";
 import FileSection from "@/components/FileSectionComponents/FileSection/FileSection";
 import DetailsHeader from "./_components/DetailsHeader/DetailsHeader";
 import DetailsCard from "./_components/DetailsCard/DetailsCard";
 import DetailCardsActionSidebar from "./_components/DetailCardsActionSidebar/DetailCardsActionSidebar";
 import "./style.css";
+import { getDocumentRequestById } from "@/lib/api/api";
 
 interface PageProps {
         params: Promise<{ id: string }>;
@@ -15,7 +16,7 @@ export default async function RequestDetailsPage({ params }: PageProps) {
         const { id } = await params;
 
         const [request, filesResponse] = await Promise.all([
-                getRequestById(id),
+                getDocumentRequestById(id),
                 getFilesByRequestId(id),
         ]);
 

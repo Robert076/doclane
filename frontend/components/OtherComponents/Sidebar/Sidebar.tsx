@@ -50,7 +50,7 @@ export default function Sidebar() {
                         <div className="sidebar-footer">
                                 <div className="sidebar-user-info">
                                         <p className="sidebar-user-email">{user.email}</p>
-                                        <span className="sidebar-user-role">
+                                        <span className="sidebar-user-role text-3xl">
                                                 {user.role.toLowerCase()}
                                         </span>
                                 </div>

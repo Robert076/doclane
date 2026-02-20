@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { User } from "@/types";
 import "./ClientCard.css";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import HighlightText from "@/components/HighlightText/HighlightText";
+import HighlightText from "@/components/OtherComponents/HighlightText/HighlightText";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import DeactivateClientModal from "./_components/DeactivateClientModal";

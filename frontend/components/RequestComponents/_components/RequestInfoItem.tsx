@@ -1,4 +1,4 @@
-import HighlightText from "@/components/HighlightText/HighlightText";
+import HighlightText from "@/components/OtherComponents/HighlightText/HighlightText";
 
 export default function RequestInfoItem(
         searchTerm: string | undefined,

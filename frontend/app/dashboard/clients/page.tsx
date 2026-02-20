@@ -1,7 +1,7 @@
 import getMyClients from "@/lib/getClients";
 import "./style.css";
-import InvitationCodeGenerator from "@/components/Invitation/InvitationCodeGenerator/InvitationCodeGenerator";
-import InvitationCodesModal from "@/components/Invitation/InvitationCodesModal/InvitationCodesModal";
+import InvitationCodeGenerator from "@/components/ClientComponents/Invitation/InvitationCodeGenerator/InvitationCodeGenerator";
+import InvitationCodesModal from "@/components/ClientComponents/Invitation/InvitationCodesModal/InvitationCodesModal";
 import ClientsSection from "@/components/ClientComponents/ClientsSection/ClientsSection";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 

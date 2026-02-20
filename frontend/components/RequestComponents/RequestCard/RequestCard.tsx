@@ -3,11 +3,13 @@ import { useRouter } from "next/navigation";
 import { DocumentRequest, RequestStatus, User } from "@/types";
 import StatusBadge from "../StatusBadge/StatusBadge";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import HighlightText from "../../HighlightText/HighlightText";
+import HighlightText from "../../OtherComponents/HighlightText/HighlightText";
 import "./RequestCard.css";
 import RequestBodyProfessional from "../_components/RequestBodyProfessional";
 import RequestBodyClient from "../_components/RequestBodyClient";
 import { formatDate } from "@/lib/client/formatDate";
+import { closeRequest } from "@/lib/api/api";
+import toast from "react-hot-toast";
 
 interface RequestProps {
         request: DocumentRequest;
@@ -26,6 +28,17 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
 
         const handleViewDetails = () => {
                 router.push(`/dashboard/requests/${request.id}`);
+        };
+
+        const handleCloseRequest = async () => {
+                toast.promise(closeRequest(request.id), {
+                        loading: "Closing request...",
+                        success: (response) => {
+                                if (!response.success) throw new Error(response.message);
+                                return response.message || "Request closed successfully";
+                        },
+                        error: (err) => err.message || "Something went wrong",
+                });
         };
 
         return (
@@ -59,6 +72,12 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
                                         variant="ghost"
                                         fullWidth={true}
                                         onClick={handleViewDetails}
+                                />
+                                <ButtonPrimary
+                                        text="Close request"
+                                        variant="ghost"
+                                        fullWidth={true}
+                                        onClick={handleCloseRequest}
                                 />
                         </div>
                 </div>
