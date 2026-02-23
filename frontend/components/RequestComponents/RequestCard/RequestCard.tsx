@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DocumentRequest, RequestStatus, User } from "@/types";
 import StatusBadge from "../StatusBadge/StatusBadge";
@@ -10,6 +11,7 @@ import RequestBodyClient from "../_components/RequestBodyClient";
 import { formatDate } from "@/lib/client/formatDate";
 import { closeRequest } from "@/lib/api/api";
 import toast from "react-hot-toast";
+import CloseRequestModal from "../_components/CloseRequestModal";
 
 interface RequestProps {
         request: DocumentRequest;
@@ -19,8 +21,9 @@ interface RequestProps {
 
 const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
         const router = useRouter();
-        const isOverdue = request.status === "overdue";
+        const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
+        const isOverdue = request.status === "overdue";
         const isScheduledFuture =
                 request.is_scheduled &&
                 request.scheduled_for &&
@@ -42,45 +45,64 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
         };
 
         return (
-                <div className={`document-request-card ${isOverdue ? "is-overdue" : ""}`}>
-                        <div className="request-header">
-                                <StatusBadge status={request.status as RequestStatus} />
-                                {isScheduledFuture && (
-                                        <span
-                                                className="scheduled-badge"
-                                                title={`Scheduled for ${formatDate(request.scheduled_for!)}`}
-                                        >
-                                                SCHEDULED
-                                        </span>
+                <>
+                        <div
+                                className={`document-request-card ${isOverdue ? "is-overdue" : ""}`}
+                        >
+                                <div className="request-header">
+                                        <StatusBadge
+                                                status={request.status as RequestStatus}
+                                        />
+                                        {isScheduledFuture && (
+                                                <span
+                                                        className="scheduled-badge"
+                                                        title={`Scheduled for ${formatDate(request.scheduled_for!)}`}
+                                                >
+                                                        SCHEDULED
+                                                </span>
+                                        )}
+                                </div>
+                                <h3 className="request-title">
+                                        <HighlightText
+                                                text={request.title}
+                                                search={searchTerm}
+                                        />
+                                </h3>
+                                {user.role === "PROFESSIONAL" && (
+                                        <RequestBodyProfessional
+                                                request={request}
+                                                searchTerm={searchTerm}
+                                        />
                                 )}
+                                {user.role === "CLIENT" && (
+                                        <RequestBodyClient
+                                                request={request}
+                                                searchTerm={searchTerm}
+                                        />
+                                )}
+                                <div className="request-footer">
+                                        <ButtonPrimary
+                                                text="View Details"
+                                                variant="ghost"
+                                                fullWidth={true}
+                                                onClick={handleViewDetails}
+                                        />
+                                        <ButtonPrimary
+                                                text="Close Request"
+                                                variant="ghost"
+                                                fullWidth={true}
+                                                onClick={() => setIsCloseModalOpen(true)}
+                                        />
+                                </div>
                         </div>
-                        <h3 className="request-title">
-                                <HighlightText text={request.title} search={searchTerm} />
-                        </h3>
-                        {user.role === "PROFESSIONAL" && (
-                                <RequestBodyProfessional
-                                        request={request}
-                                        searchTerm={searchTerm}
-                                />
-                        )}
-                        {user.role === "CLIENT" && (
-                                <RequestBodyClient request={request} searchTerm={searchTerm} />
-                        )}
-                        <div className="request-footer">
-                                <ButtonPrimary
-                                        text="View Details"
-                                        variant="ghost"
-                                        fullWidth={true}
-                                        onClick={handleViewDetails}
-                                />
-                                <ButtonPrimary
-                                        text="Close request"
-                                        variant="ghost"
-                                        fullWidth={true}
-                                        onClick={handleCloseRequest}
-                                />
-                        </div>
-                </div>
+
+                        <CloseRequestModal
+                                isOpen={isCloseModalOpen}
+                                onClose={() => setIsCloseModalOpen(false)}
+                                onConfirm={handleCloseRequest}
+                                requestTitle={request.title}
+                        />
+                </>
         );
 };
 
