@@ -1,5 +1,4 @@
 "use client";
-
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import Input from "@/components/InputComponents/Input";
 import TextArea from "@/components/InputComponents/TextArea";
@@ -13,6 +12,8 @@ import RadioInput from "@/components/InputComponents/RadioInput";
 import DeadlineInput from "./DeadlineInput";
 import { MdCalendarMonth } from "react-icons/md";
 import ScheduleModal from "./ScheduleModal";
+import ExpectedDocumentsList, { ExpectedDocumentInput } from "./ExpectedDocumentsList";
+import { createDocumentRequest } from "@/lib/api/api";
 
 interface AddRequestForClientFormProps {
         id: string;
@@ -21,114 +22,83 @@ interface AddRequestForClientFormProps {
 const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id }) => {
         const [requestName, setRequestName] = useState("");
         const [requestDescription, setRequestDescription] = useState("");
-
         const [isNoneSelected, setIsNoneSelected] = useState(true);
         const [isRecurring, setIsRecurring] = useState(false);
         const [isDeadline, setIsDeadline] = useState(false);
         const [showScheduleModal, setShowScheduleModal] = useState(false);
         const [scheduledDate, setScheduledDate] = useState("");
-
         const [unit, setUnit] = useState<RecurrenceUnit>("month");
         const [hour, setHour] = useState("09");
         const [minute, setMinute] = useState("00");
         const [dueDate, setDueDate] = useState("");
+        const [expectedDocuments, setExpectedDocuments] = useState<ExpectedDocumentInput[]>([
+                { title: "", description: "" },
+        ]);
         const router = useRouter();
+
+        const validateForm = () => {
+                if (!requestName) {
+                        toast.error("Please fill in the request title");
+                        return false;
+                }
+                if (expectedDocuments.some((doc) => !doc.title)) {
+                        toast.error("Please fill in all expected document titles");
+                        return false;
+                }
+                return true;
+        };
+
+        const buildPayload = (extra?: object) => ({
+                title: requestName,
+                description: requestDescription,
+                client_id: +id,
+                expected_documents: expectedDocuments,
+                ...(isRecurring && buildCron(hour, minute, unit)
+                        ? { recurrence_cron: buildCron(hour, minute, unit) }
+                        : {}),
+                ...(dueDate && isDeadline
+                        ? { due_date: new Date(dueDate).toISOString() }
+                        : {}),
+                ...extra,
+        });
 
         const handleSubmit = async (e: React.FormEvent) => {
                 e.preventDefault();
+                if (!validateForm()) return;
 
-                if (!requestName) return;
-
-                const recurrenceCron = isRecurring ? buildCron(hour, minute, unit) : undefined;
-                const dueDateRFC3339 =
-                        dueDate && isDeadline ? new Date(dueDate).toISOString() : undefined;
-
-                const createRequestPromise = fetch("/api/backend/document-requests", {
-                        method: "POST",
-                        credentials: "include",
-                        headers: {
-                                "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                                title: requestName,
-                                description: requestDescription,
-                                client_id: +id,
-                                ...(recurrenceCron && isRecurring
-                                        ? { recurrence_cron: recurrenceCron }
-                                        : {}),
-                                ...(dueDate && isDeadline ? { due_date: dueDateRFC3339 } : {}),
-                        }),
-                }).then(async (res) => {
-                        if (!res.ok) {
-                                const errorData = await res.json();
-                                throw new Error(errorData.error || "Failed to create request");
-                        }
-                        return res.json();
-                });
-
-                toast.promise(createRequestPromise, {
+                toast.promise(createDocumentRequest(buildPayload()), {
                         loading: "Creating request...",
-                        success: "Request created successfully!",
+                        success: (res) => {
+                                if (!res.success) throw new Error(res.error);
+                                router.push("/dashboard/clients");
+                                return "Request created successfully!";
+                        },
                         error: (err) => `Failed: ${err.message}`,
-                });
-
-                createRequestPromise.then(() => {
-                        setRequestName("");
-                        setRequestDescription("");
-                        router.push("/dashboard/clients");
                 });
         };
 
         const handleScheduleConfirm = (scheduledDateValue: string) => {
-                if (!requestName) {
-                        toast.error("Please fill in the request title");
-                        return;
-                }
+                if (!validateForm()) return;
 
-                const recurrenceCron = isRecurring ? buildCron(hour, minute, unit) : undefined;
-                const dueDateRFC3339 =
-                        dueDate && isDeadline ? new Date(dueDate).toISOString() : undefined;
-                const scheduledDateRFC3339 = new Date(scheduledDateValue).toISOString();
-
-                const createRequestPromise = fetch("/api/backend/document-requests", {
-                        method: "POST",
-                        credentials: "include",
-                        headers: {
-                                "Content-Type": "application/json",
+                toast.promise(
+                        createDocumentRequest(
+                                buildPayload({
+                                        is_scheduled: true,
+                                        scheduled_for: new Date(
+                                                scheduledDateValue,
+                                        ).toISOString(),
+                                }),
+                        ),
+                        {
+                                loading: "Scheduling request...",
+                                success: (res) => {
+                                        if (!res.success) throw new Error(res.error);
+                                        router.push("/dashboard/clients");
+                                        return "Request scheduled successfully!";
+                                },
+                                error: (err) => `Failed: ${err.message}`,
                         },
-                        body: JSON.stringify({
-                                title: requestName,
-                                description: requestDescription,
-                                client_id: +id,
-                                is_scheduled: true,
-                                scheduled_for: scheduledDateRFC3339,
-                                ...(recurrenceCron && isRecurring
-                                        ? { recurrence_cron: recurrenceCron }
-                                        : {}),
-                                ...(dueDate && isDeadline ? { due_date: dueDateRFC3339 } : {}),
-                        }),
-                }).then(async (res) => {
-                        if (!res.ok) {
-                                const errorData = await res.json();
-                                throw new Error(
-                                        errorData.error || "Failed to schedule request",
-                                );
-                        }
-                        return res.json();
-                });
-
-                toast.promise(createRequestPromise, {
-                        loading: "Scheduling request...",
-                        success: "Request scheduled successfully!",
-                        error: (err) => `Failed: ${err.message}`,
-                });
-
-                createRequestPromise.then(() => {
-                        setRequestName("");
-                        setRequestDescription("");
-                        setScheduledDate("");
-                        router.push("/dashboard/clients");
-                });
+                );
         };
 
         return (
@@ -140,7 +110,6 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                                         value={requestName}
                                         onChange={(e: any) => setRequestName(e.target.value)}
                                 />
-
                                 <TextArea
                                         label="Request description"
                                         value={requestDescription}
@@ -149,7 +118,6 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                                                 setRequestDescription(e.target.value)
                                         }
                                 />
-
                                 <div className="radio-inputs-time">
                                         <RadioInput
                                                 isChecked={isNoneSelected}
@@ -185,7 +153,6 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                                                 label="Deadline"
                                         />
                                 </div>
-
                                 {isRecurring && (
                                         <CronInput
                                                 unit={unit}
@@ -196,15 +163,17 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                                                 setMinute={setMinute}
                                         />
                                 )}
-
                                 {isDeadline && (
                                         <DeadlineInput
                                                 dueDate={dueDate}
                                                 setDueDate={setDueDate}
                                         />
                                 )}
+                                <ExpectedDocumentsList
+                                        documents={expectedDocuments}
+                                        onChange={setExpectedDocuments}
+                                />
                         </form>
-
                         <div className="button-group">
                                 <ButtonPrimary
                                         text="Create request"
@@ -219,7 +188,6 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                                         onClick={() => setShowScheduleModal(true)}
                                 />
                         </div>
-
                         {showScheduleModal && (
                                 <ScheduleModal
                                         onClose={() => setShowScheduleModal(false)}
@@ -235,7 +203,6 @@ export default AddRequestForClientForm;
 const buildCron = (hour: string, minute: string, unit: RecurrenceUnit) => {
         const h = hour || "0";
         const m = minute || "0";
-
         switch (unit) {
                 case "day":
                         return `${m} ${h} * * *`;

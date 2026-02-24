@@ -16,12 +16,11 @@ export default function DetailCardsActionSidebar({ id }: { id: string }) {
                         <SectionTitle text="Actions" />
 
                         <div className="action-buttons">
-                                <UploadDocumentButton requestId={id} />
                                 <ButtonPrimary
                                         text="Send Notification"
                                         fullWidth={true}
                                         onClick={async () => {
-                                                const response = await sendEmail(id);
+                                                const response = await sendEmail(+id);
                                                 if (response.success === true) {
                                                         toast.success(response.message, {
                                                                 duration: 4000,

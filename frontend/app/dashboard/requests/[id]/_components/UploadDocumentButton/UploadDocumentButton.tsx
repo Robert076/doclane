@@ -1,16 +1,18 @@
 "use client";
-
 import { useRef, useState } from "react";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import { useRouter } from "next/navigation";
-import { uploadDocument, ALLOWED_EXTENSIONS } from "@/lib/uploadDocument";
-import { toast } from "react-hot-toast";
 
+import { toast } from "react-hot-toast";
+import { uploadDocument } from "@/lib/api/api";
+
+const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];
 interface Props {
         requestId: string;
+        expectedDocumentId?: number;
 }
 
-export default function UploadDocumentButton({ requestId }: Props) {
+export default function UploadDocumentButton({ requestId, expectedDocumentId }: Props) {
         const fileInputRef = useRef<HTMLInputElement>(null);
         const [isUploading, setIsUploading] = useState(false);
         const router = useRouter();
@@ -24,9 +26,8 @@ export default function UploadDocumentButton({ requestId }: Props) {
                 };
 
                 setIsUploading(true);
-
                 toast.promise(
-                        uploadDocument(requestId, file)
+                        uploadDocument(requestId, file, expectedDocumentId)
                                 .then((res) => {
                                         router.refresh();
                                         setIsUploading(false);
@@ -56,7 +57,7 @@ export default function UploadDocumentButton({ requestId }: Props) {
                                 accept={ALLOWED_EXTENSIONS.join(",")}
                         />
                         <ButtonPrimary
-                                text={isUploading ? "Se încarcă..." : "Upload Document"}
+                                text={isUploading ? "Uploading..." : "Upload"}
                                 variant="primary"
                                 fullWidth
                                 disabled={isUploading}

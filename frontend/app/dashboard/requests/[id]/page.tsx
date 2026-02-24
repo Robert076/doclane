@@ -33,7 +33,13 @@ export default async function RequestDetailsPage({ params }: PageProps) {
                         <div className="details-grid">
                                 <div className="main-content">
                                         <DetailsCard data={data} />
-                                        <FileSection files={files} />
+                                        <FileSection
+                                                files={files}
+                                                expectedDocuments={
+                                                        data.expected_documents || []
+                                                }
+                                                requestId={id}
+                                        />
                                 </div>
                                 <DetailCardsActionSidebar id={id} />
                         </div>

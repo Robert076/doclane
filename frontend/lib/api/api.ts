@@ -14,7 +14,8 @@ interface APIResponse {
 interface HTTPOptions {
         method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
         body?: any;
-        revalidate?: string; // path to revalidate after success
+        formData?: FormData;
+        revalidate?: string;
 }
 
 const BACKEND_URL = process.env.BACKEND_URL!;
@@ -23,20 +24,24 @@ export async function doclaneHTTPHelper(
         endpoint: string,
         options: HTTPOptions,
 ): Promise<APIResponse> {
-        const { method = "GET", body, revalidate } = options;
+        const { method = "GET", body, formData, revalidate } = options;
         const fetchUrl = `${BACKEND_URL}${endpoint}`;
 
         try {
                 const cookieStore = await cookies();
                 const authCookie = cookieStore.get("auth_cookie");
                 const response = await fetch(fetchUrl, {
-                        method: method,
+                        method,
                         credentials: "include",
                         headers: {
                                 Authorization: `Bearer ${authCookie?.value}`,
                                 ...(body && { "Content-Type": "application/json" }),
                         },
-                        ...(body && { body: JSON.stringify(body) }),
+                        ...(formData
+                                ? { body: formData }
+                                : body
+                                  ? { body: JSON.stringify(body) }
+                                  : {}),
                 });
 
                 const resultData = await response.json();
@@ -59,16 +64,9 @@ export async function doclaneHTTPHelper(
                 }
 
                 logger.info(`${method} ${fetchUrl} call successful`);
+                if (revalidate) revalidatePath(revalidate);
 
-                if (revalidate) {
-                        revalidatePath(revalidate);
-                }
-
-                return {
-                        success: true,
-                        message: resultData.message,
-                        data: resultData.data,
-                };
+                return { success: true, message: resultData.message, data: resultData.data };
         } catch (error) {
                 logger.error(`Error during HTTP call: ${error}`);
                 return {
@@ -108,7 +106,7 @@ export async function logout(): Promise<APIResponse> {
 }
 
 export async function getDocumentRequests(role: UserRole): Promise<APIResponse> {
-        return doclaneHTTPHelper(`/document-requests/${role.toLowerCase()}/documents`, {
+        return doclaneHTTPHelper(`/document-requests/${role.toLowerCase()}/my-requests`, {
                 method: "GET",
         });
 }
@@ -148,5 +146,46 @@ export async function sendEmail(requestId: number): Promise<APIResponse> {
 export async function closeRequest(requestID: number): Promise<APIResponse> {
         return doclaneHTTPHelper(`/document-requests/${requestID}/deactivate`, {
                 method: "POST",
+        });
+}
+
+export async function createDocumentRequest(payload: object): Promise<APIResponse> {
+        return doclaneHTTPHelper("/document-requests", {
+                method: "POST",
+                body: payload,
+                revalidate: "/dashboard/requests",
+        });
+}
+
+const MAX_FILE_SIZE = 20 * 1024 * 1024;
+
+export async function uploadDocument(
+        requestId: string,
+        file: File,
+        expectedDocumentId?: number,
+): Promise<APIResponse> {
+        const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];
+
+        if (
+                !ALLOWED_EXTENSIONS.includes(
+                        file.name.substring(file.name.lastIndexOf(".")).toLowerCase(),
+                )
+        ) {
+                throw new Error("File extension is not allowed.");
+        }
+        if (file.size > MAX_FILE_SIZE) {
+                throw new Error("File exceeds the 20MB limit.");
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+        if (expectedDocumentId !== undefined) {
+                formData.append("expected_document_id", expectedDocumentId.toString());
+        }
+
+        return doclaneHTTPHelper(`/document-requests/${requestId}/files`, {
+                method: "POST",
+                formData,
+                revalidate: `/dashboard/requests/${requestId}`,
         });
 }
