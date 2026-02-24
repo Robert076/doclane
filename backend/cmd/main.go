@@ -63,8 +63,8 @@ func main() {
 
 		r.Route("/document-requests", func(r chi.Router) {
 			r.Post("/", document_handler.AddDocumentRequestHandler)
-			r.Get("/professional/documents", document_handler.GetDocumentRequestsByProfessionalHandler)
-			r.Get("/client/documents", document_handler.GetDocumentRequestsByClientHandler)
+			r.Get("/professional/my-requests", document_handler.GetDocumentRequestsByProfessionalHandler)
+			r.Get("/client/my-requests", document_handler.GetDocumentRequestsByClientHandler)
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", document_handler.GetDocumentRequestByIDHandler)
 				r.Patch("/", document_handler.PatchDocumentRequestHandler)

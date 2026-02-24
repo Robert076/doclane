@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/Robert076/doclane/backend/models"
@@ -22,6 +23,7 @@ type IDocumentRepository interface {
 	GetDocumentRequestsByProfessional(ctx context.Context, professionalID int, search *string) ([]models.DocumentRequestDTORead, error)
 	GetDocumentRequestsByClient(ctx context.Context, clientID int, search *string) ([]models.DocumentRequestDTORead, error)
 	AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error)
+	AddDocumentRequestWithTx(ctx context.Context, req models.DocumentRequest, transaction *sql.Tx) (int, error)
 	UpdateDocumentRequestTitle(ctx context.Context, id int, newTitle string) error
 	CloseDocumentRequest(ctx context.Context, id int) error
 
@@ -40,4 +42,15 @@ type IInvitationCodeRepository interface {
 	InvalidateCode(ctx context.Context, id int) error
 	ReactivateCode(ctx context.Context, code string) error
 	DeleteCode(ctx context.Context, id int) error
+}
+
+type IExpectedDocumentRepository interface {
+	GetExpectedDocumentsByRequest(ctx context.Context, requestId int) ([]models.ExpectedDocument, error)
+	AddExpectedDocumentToRequest(ctx context.Context, requestId int, expectedDocument models.ExpectedDocument) (int, error)
+	DeleteExpectedDocumentFromRequest(ctx context.Context, requestId int, expectedDocumentId int) error
+	AddExpectedDocumentToRequestWithTx(ctx context.Context, tx *sql.Tx, ed models.ExpectedDocument) error
+}
+
+type ITxManager interface {
+	WithTx(ctx context.Context, fn func(tx *sql.Tx) error) error
 }

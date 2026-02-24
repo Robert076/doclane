@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"io"
 	"log/slog"
@@ -14,18 +15,22 @@ import (
 )
 
 type DocumentService struct {
-	documentRepo repositories.IDocumentRepository
-	userRepo     repositories.IUserRepository
-	logger       *slog.Logger
-	fileStorage  *FileStorageService
+	documentRepo    repositories.IDocumentRepository
+	userRepo        repositories.IUserRepository
+	expectedDocRepo repositories.IExpectedDocumentRepository
+	txManager       repositories.ITxManager
+	logger          *slog.Logger
+	fileStorage     *FileStorageService
 }
 
-func NewDocumentService(documentRepo repositories.IDocumentRepository, userRepo repositories.IUserRepository, logger *slog.Logger, fileStorage *FileStorageService) *DocumentService {
+func NewDocumentService(documentRepo repositories.IDocumentRepository, userRepo repositories.IUserRepository, expectedDocRepo repositories.IExpectedDocumentRepository, txManager repositories.ITxManager, logger *slog.Logger, fileStorage *FileStorageService) *DocumentService {
 	return &DocumentService{
-		documentRepo: documentRepo,
-		userRepo:     userRepo,
-		logger:       logger,
-		fileStorage:  fileStorage,
+		documentRepo:    documentRepo,
+		userRepo:        userRepo,
+		expectedDocRepo: expectedDocRepo,
+		txManager:       txManager,
+		logger:          logger,
+		fileStorage:     fileStorage,
 	}
 }
 
@@ -79,7 +84,23 @@ func (service *DocumentService) AddDocumentRequest(
 		UpdatedAt: time.Now(),
 	}
 
-	id, err := service.documentRepo.AddDocumentRequest(ctx, req)
+	var id int
+	err = service.txManager.WithTx(ctx, func(tx *sql.Tx) error {
+		var txErr error
+		id, txErr = service.documentRepo.AddDocumentRequestWithTx(ctx, req, tx)
+		if txErr != nil {
+			return txErr
+		}
+
+		for _, ed := range dto.ExpectedDocuments {
+			ed.DocumentRequestID = id
+			ed.IsUploaded = false
+			if txErr = service.expectedDocRepo.AddExpectedDocumentToRequestWithTx(ctx, tx, ed); txErr != nil {
+				return txErr
+			}
+		}
+		return nil
+	})
 	if err != nil {
 		service.logger.Error("failed to create document request",
 			slog.Any("error", err),
@@ -89,7 +110,10 @@ func (service *DocumentService) AddDocumentRequest(
 		return 0, err
 	}
 
-	service.logger.Info("document request created", slog.Int("request_id", id))
+	service.logger.Info("document request created",
+		slog.Int("request_id", id),
+		slog.Int("expected_documents", len(dto.ExpectedDocuments)),
+	)
 	return id, nil
 }
 
@@ -114,6 +138,16 @@ func (service *DocumentService) GetDocumentRequestByID(
 		)
 		return models.DocumentRequestDTORead{}, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to access document request with id %v", jwtUserId, req.ID)}
 	}
+
+	expectedDocs, err := service.expectedDocRepo.GetExpectedDocumentsByRequest(ctx, id)
+	if err != nil {
+		service.logger.Error("failed to get expected documents for request",
+			slog.Int("request_id", id),
+			slog.Any("error", err),
+		)
+		return models.DocumentRequestDTORead{}, err
+	}
+	req.ExpectedDocuments = expectedDocs
 
 	req.Status = ComputeStatus(req.LastUploadedAt, req.NextDueAt)
 
@@ -250,6 +284,7 @@ func (service *DocumentService) AddDocumentFile(
 	ctx context.Context,
 	jwtUserId int,
 	requestID int,
+	expectedDocID int,
 	fileName string,
 	fileSize int64,
 	contentType string,
@@ -287,14 +322,15 @@ func (service *DocumentService) AddDocumentFile(
 	}
 
 	fileModel := models.DocumentFile{
-		DocumentRequestID: requestID,
-		FileName:          cleanFileName,
-		FilePath:          s3Key,
-		MimeType:          &contentType,
-		FileSize:          &fileSize,
-		S3VersionID:       result.VersionId,
-		UploadedAt:        time.Now(),
-		UploadedBy:        &jwtUserId,
+		DocumentRequestID:  requestID,
+		ExpectedDocumentID: expectedDocID,
+		FileName:           cleanFileName,
+		FilePath:           s3Key,
+		MimeType:           &contentType,
+		FileSize:           &fileSize,
+		S3VersionID:        result.VersionId,
+		UploadedAt:         time.Now(),
+		UploadedBy:         &jwtUserId,
 	}
 
 	id, err := service.documentRepo.AddDocumentFile(ctx, fileModel)

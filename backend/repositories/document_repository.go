@@ -19,12 +19,28 @@ func NewDocumentRepository(db *sql.DB) *DocumentRepository {
 
 func (repo *DocumentRepository) AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error) {
 	var id int
+	query := `
+		INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_cron, is_scheduled, scheduled_for, is_closed, last_uploaded_at, due_date, next_due_at)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id
+	`
 	err := repo.db.QueryRowContext(ctx,
-		`INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_cron, is_scheduled, scheduled_for, is_closed, last_uploaded_at, due_date, next_due_at)
-		 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id`,
+		query,
 		req.ProfessionalID, req.ClientID, req.Title, req.Description, req.IsRecurring, req.RecurrenceCron, req.IsScheduled, req.ScheduledFor, req.IsClosed, req.LastUploadedAt, req.DueDate, req.NextDueAt,
 	).Scan(&id)
 	return id, err
+}
+
+func (repo *DocumentRepository) AddDocumentRequestWithTx(ctx context.Context, req models.DocumentRequest, transaction *sql.Tx) (int, error) {
+	var id int
+	query := `
+		INSERT INTO document_requests (professional_id, client_id, title, description, is_recurring, recurrence_cron, is_scheduled, scheduled_for, next_due_at, due_date, created_at, updated_at) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id
+	`
+	err := transaction.QueryRowContext(ctx, query, req.ProfessionalID, req.ClientID, req.Title, req.Description, req.IsRecurring, req.RecurrenceCron, req.IsScheduled, req.ScheduledFor, req.NextDueAt, req.DueDate, req.CreatedAt, req.UpdatedAt).Scan(&id)
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }
 
 func (r *DocumentRepository) GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTORead, error) {
@@ -99,7 +115,7 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(
 	}
 	defer rows.Close()
 
-	var requests []models.DocumentRequestDTORead
+	requests := make([]models.DocumentRequestDTORead, 0)
 	for rows.Next() {
 		var req models.DocumentRequestDTORead
 		err := rows.Scan(
@@ -127,6 +143,7 @@ func (r *DocumentRepository) GetDocumentRequestsByProfessional(
 		}
 		requests = append(requests, req)
 	}
+
 	return requests, rows.Err()
 }
 
@@ -257,7 +274,7 @@ func (r *DocumentRepository) GetFileByIDExtended(ctx context.Context, id int) (m
 
 func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFileDTORead, error) {
 	query := `
-        SELECT df.id, df.document_request_id, df.file_name, df.file_path, df.mime_type, df.file_size, df.uploaded_at, df.s3_version_id, df.uploaded_by, u.first_name, u.last_name
+        SELECT df.id, df.document_request_id, df.expected_document_id, df.file_name, df.file_path, df.mime_type, df.file_size, df.uploaded_at, df.s3_version_id, df.uploaded_by, u.first_name, u.last_name
         FROM document_files df
 		JOIN users u ON u.id = df.uploaded_by
         WHERE document_request_id=$1
@@ -275,6 +292,7 @@ func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID in
 		if err := rows.Scan(
 			&f.ID,
 			&f.DocumentRequestID,
+			&f.ExpectedDocumentID,
 			&f.FileName,
 			&f.FilePath,
 			&f.MimeType,
@@ -295,33 +313,24 @@ func (r *DocumentRepository) GetFilesByRequest(ctx context.Context, requestID in
 
 func (r *DocumentRepository) AddDocumentFile(ctx context.Context, file models.DocumentFile) (int, error) {
 	var id int
-
 	query := `
         INSERT INTO document_files (
-            document_request_id, 
-            file_name, 
-            file_path, 
-            mime_type, 
-            file_size, 
-            s3_version_id, 
+            document_request_id,
+            expected_document_id,
+            file_name,
+            file_path,
+            mime_type,
+            file_size,
+            s3_version_id,
             uploaded_at,
-			uploaded_by
+            uploaded_by
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING id
-		`
-	// ON CONFLICT (document_request_id, file_name)
-	// DO UPDATE SET
-	//     file_path = EXCLUDED.file_path,
-	//     mime_type = EXCLUDED.mime_type,
-	//     file_size = EXCLUDED.file_size,
-	//     s3_version_id = EXCLUDED.s3_version_id,
-	//     uploaded_at = EXCLUDED.uploaded_at
-	// RETURNING id
-
-	err := r.db.QueryRowContext(ctx,
-		query,
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING id
+    `
+	err := r.db.QueryRowContext(ctx, query,
 		file.DocumentRequestID,
+		file.ExpectedDocumentID,
 		file.FileName,
 		file.FilePath,
 		file.MimeType,
@@ -330,7 +339,6 @@ func (r *DocumentRepository) AddDocumentFile(ctx context.Context, file models.Do
 		file.UploadedAt,
 		file.UploadedBy,
 	).Scan(&id)
-
 	return id, err
 }
 

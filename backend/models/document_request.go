@@ -26,14 +26,16 @@ type DocumentRequest struct {
 
 type DocumentRequestDTORead struct {
 	DocumentRequest
-	ClientEmail     string `json:"client_email"`
-	ClientFirstName string `json:"client_first_name"`
-	ClientLastName  string `json:"client_last_name"`
-	Status          string `json:"status"`
+	ClientEmail       string             `json:"client_email"`
+	ClientFirstName   string             `json:"client_first_name"`
+	ClientLastName    string             `json:"client_last_name"`
+	Status            string             `json:"status"`
+	ExpectedDocuments []ExpectedDocument `json:"expected_documents"`
 }
 
 type DocumentRequestDTOCreate struct {
 	DocumentRequestBase
+	ExpectedDocuments []ExpectedDocument `json:"expected_documents"`
 }
 
 type DocumentRequestDTOPatch struct {
@@ -41,15 +43,16 @@ type DocumentRequestDTOPatch struct {
 }
 
 type DocumentFile struct {
-	ID                int       `db:"id" json:"id"`
-	DocumentRequestID int       `db:"document_request_id" json:"document_request_id"`
-	FileName          string    `db:"file_name" json:"file_name"`
-	FilePath          string    `db:"file_path" json:"file_path"`
-	MimeType          *string   `db:"mime_type,omitempty" json:"mime_type,omitempty"`
-	FileSize          *int64    `db:"file_size,omitempty" json:"file_size,omitempty"`
-	UploadedAt        time.Time `db:"uploaded_at" json:"uploaded_at"`
-	S3VersionID       *string   `db:"s3_version_id" json:"s3_version_id"`
-	UploadedBy        *int      `db:"uploaded_by" json:"uploaded_by"`
+	ID                 int       `db:"id" json:"id"`
+	DocumentRequestID  int       `db:"document_request_id" json:"document_request_id"`
+	ExpectedDocumentID int       `db:"expected_document_id" json:"expected_document_id"`
+	FileName           string    `db:"file_name" json:"file_name"`
+	FilePath           string    `db:"file_path" json:"file_path"`
+	MimeType           *string   `db:"mime_type,omitempty" json:"mime_type,omitempty"`
+	FileSize           *int64    `db:"file_size,omitempty" json:"file_size,omitempty"`
+	UploadedAt         time.Time `db:"uploaded_at" json:"uploaded_at"`
+	S3VersionID        *string   `db:"s3_version_id" json:"s3_version_id"`
+	UploadedBy         *int      `db:"uploaded_by" json:"uploaded_by"`
 }
 
 type DocumentFileDTORead struct {

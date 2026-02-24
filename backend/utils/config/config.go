@@ -58,6 +58,8 @@ func init() {
 	userRepository := repositories.NewUserRepository(db)
 	documentRepository := repositories.NewDocumentRepository(db)
 	invitationRepository := repositories.NewInvitationCodeRepository(db)
+	expectedDocRepo := repositories.NewExpectedDocRepository(db)
+	txManager := repositories.NewTxManager(db)
 
 	// Initialize User Service
 	UserService = services.NewUserService(userRepository, Logger)
@@ -75,7 +77,7 @@ func init() {
 
 	// Initialize Document Service
 	fileStorage := services.NewFileStorageService(S3Client, bucketName, Logger)
-	DocumentService = services.NewDocumentService(documentRepository, userRepository, Logger, fileStorage)
+	DocumentService = services.NewDocumentService(documentRepository, userRepository, expectedDocRepo, txManager, Logger, fileStorage)
 
 	// Initialize Invitation Code Service
 	InvitationCodeService = services.NewInvitationCodeService(invitationRepository, userRepository, Logger)

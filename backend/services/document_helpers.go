@@ -28,6 +28,10 @@ func ValidateRequestInput(dto models.DocumentRequestDTOCreate) error {
 		return errors.ErrUnprocessableContent{Msg: "A request that is marked as scheduled (is_scheduled = true) should have a scheduled_for field that is not null."}
 	}
 
+	if len(dto.ExpectedDocuments) == 0 {
+		return errors.ErrUnprocessableContent{Msg: "Must provide at least 1 expected document for a new request."}
+	}
+
 	return nil
 }
 

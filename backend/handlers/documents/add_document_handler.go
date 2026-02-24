@@ -41,16 +41,23 @@ func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
+	expectedDocIDStr := r.FormValue("expected_document_id")
+	expectedDocID, err := strconv.Atoi(expectedDocIDStr)
+	if err != nil {
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid or missing expected_document_id."})
+		return
+	}
+
 	id, err := config.DocumentService.AddDocumentFile(
 		r.Context(),
 		userId,
 		requestID,
+		expectedDocID,
 		header.Filename,
 		header.Size,
 		header.Header.Get("Content-Type"),
 		file,
 	)
-
 	if err != nil {
 		utils.WriteError(w, err)
 		return

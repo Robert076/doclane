@@ -1,6 +1,7 @@
 package document_handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/Robert076/doclane/backend/types"
@@ -29,6 +30,8 @@ func GetDocumentRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Req
 		utils.WriteError(w, err)
 		return
 	}
+
+	log.Println(reqs)
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
