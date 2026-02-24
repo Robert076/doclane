@@ -77,22 +77,36 @@ func ComputeNextDueAt(dueDate *time.Time, cronExpr *string) *time.Time {
 	return &next
 }
 
-func ComputeStatus(lastUploadedAt *time.Time, nextDueAt *time.Time) string {
+func ComputeStatus(lastUploadedAt *time.Time, nextDueAt *time.Time, expectedDocs []models.ExpectedDocument) string {
 	now := time.Now()
 
-	if nextDueAt == nil && lastUploadedAt != nil {
-		return "uploaded"
-	}
+	allUploaded := len(expectedDocs) > 0 && func() bool {
+		for _, ed := range expectedDocs {
+			if !ed.IsUploaded {
+				return false
+			}
+		}
+		return true
+	}()
 
 	if nextDueAt == nil {
+		if allUploaded {
+			return "uploaded"
+		}
+		if lastUploadedAt != nil {
+			return "uploaded"
+		}
 		return "pending"
 	}
 
-	if now.After(*nextDueAt) && lastUploadedAt == nil {
+	if now.After(*nextDueAt) {
+		if allUploaded {
+			return "uploaded"
+		}
 		return "overdue"
 	}
 
-	if lastUploadedAt != nil {
+	if allUploaded {
 		return "uploaded"
 	}
 

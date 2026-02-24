@@ -149,7 +149,7 @@ func (service *DocumentService) GetDocumentRequestByID(
 	}
 	req.ExpectedDocuments = expectedDocs
 
-	req.Status = ComputeStatus(req.LastUploadedAt, req.NextDueAt)
+	req.Status = ComputeStatus(req.LastUploadedAt, req.NextDueAt, req.ExpectedDocuments)
 
 	return req, nil
 }
@@ -159,7 +159,7 @@ func (service *DocumentService) GetDocumentRequestsByProfessional(
 	jwtUserId int,
 	search *string,
 ) ([]models.DocumentRequestDTORead, error) {
-	return service.getDocumentRequestsByRole(ctx, jwtUserId, "PROFESSIONAL", search, service.documentRepo.GetDocumentRequestsByProfessional)
+	return service.getDocumentRequestsByRole(ctx, jwtUserId, "PROFESSIONAL", search, service.documentRepo.GetDocumentRequestsByProfessionalWithExpectedDocs)
 }
 
 func (service *DocumentService) GetDocumentRequestsByClient(
@@ -167,7 +167,7 @@ func (service *DocumentService) GetDocumentRequestsByClient(
 	jwtUserId int,
 	search *string,
 ) ([]models.DocumentRequestDTORead, error) {
-	return service.getDocumentRequestsByRole(ctx, jwtUserId, "CLIENT", search, service.documentRepo.GetDocumentRequestsByClient)
+	return service.getDocumentRequestsByRole(ctx, jwtUserId, "CLIENT", search, service.documentRepo.GetDocumentRequestsByClientWithExpectedDocs)
 }
 
 func (service *DocumentService) getDocumentRequestsByRole(
@@ -203,7 +203,7 @@ func (service *DocumentService) getDocumentRequestsByRole(
 	}
 
 	for i := range reqs {
-		reqs[i].Status = ComputeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt)
+		reqs[i].Status = ComputeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt, reqs[i].ExpectedDocuments)
 	}
 
 	return reqs, nil
@@ -361,8 +361,10 @@ func (service *DocumentService) AddDocumentFile(
 	}
 
 	if uploadedFile.AuthorRole == "CLIENT" {
-		// Maybe the professional uploads an example, the request should not be marked as finished
 		service.documentRepo.SetFileUploaded(ctx, requestID)
+		if expectedDocID != 0 {
+			service.expectedDocRepo.MarkAsUploaded(ctx, expectedDocID)
+		}
 	}
 
 	service.logger.Info("file upload successful", slog.Int("file_id", id))

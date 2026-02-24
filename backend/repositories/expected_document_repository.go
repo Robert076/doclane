@@ -79,6 +79,14 @@ func (r *ExpectedDocumentRepository) GetExpectedDocumentsByRequest(ctx context.C
 	return expectedDocuments, rows.Err()
 }
 
+func (r *ExpectedDocumentRepository) MarkAsUploaded(ctx context.Context, expectedDocumentID int) error {
+	query := `
+		UPDATE expected_documents SET is_uploaded = true WHERE id = $1
+	`
+	_, err := r.db.ExecContext(ctx, query, expectedDocumentID)
+	return err
+}
+
 func (r *ExpectedDocumentRepository) DeleteExpectedDocumentFromRequest(ctx context.Context, requestId int, expectedDocumentId int) error {
 	query := `
 		DELETE FROM expected_documents WHERE id=$1 AND document_request_id=$2

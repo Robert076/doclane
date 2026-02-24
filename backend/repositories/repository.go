@@ -21,7 +21,9 @@ type IUserRepository interface {
 type IDocumentRepository interface {
 	GetDocumentRequestByID(ctx context.Context, id int) (models.DocumentRequestDTORead, error)
 	GetDocumentRequestsByProfessional(ctx context.Context, professionalID int, search *string) ([]models.DocumentRequestDTORead, error)
+	GetDocumentRequestsByProfessionalWithExpectedDocs(ctx context.Context, professionalID int, search *string) ([]models.DocumentRequestDTORead, error)
 	GetDocumentRequestsByClient(ctx context.Context, clientID int, search *string) ([]models.DocumentRequestDTORead, error)
+	GetDocumentRequestsByClientWithExpectedDocs(ctx context.Context, clientID int, search *string) ([]models.DocumentRequestDTORead, error)
 	AddDocumentRequest(ctx context.Context, req models.DocumentRequest) (int, error)
 	AddDocumentRequestWithTx(ctx context.Context, req models.DocumentRequest, transaction *sql.Tx) (int, error)
 	UpdateDocumentRequestTitle(ctx context.Context, id int, newTitle string) error
@@ -47,8 +49,9 @@ type IInvitationCodeRepository interface {
 type IExpectedDocumentRepository interface {
 	GetExpectedDocumentsByRequest(ctx context.Context, requestId int) ([]models.ExpectedDocument, error)
 	AddExpectedDocumentToRequest(ctx context.Context, requestId int, expectedDocument models.ExpectedDocument) (int, error)
-	DeleteExpectedDocumentFromRequest(ctx context.Context, requestId int, expectedDocumentId int) error
 	AddExpectedDocumentToRequestWithTx(ctx context.Context, tx *sql.Tx, ed models.ExpectedDocument) error
+	MarkAsUploaded(ctx context.Context, expectedDocumentID int) error
+	DeleteExpectedDocumentFromRequest(ctx context.Context, requestId int, expectedDocumentId int) error
 }
 
 type ITxManager interface {

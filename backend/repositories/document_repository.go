@@ -352,3 +352,180 @@ func (r *DocumentRepository) SetFileUploaded(ctx context.Context, id int) error 
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
+
+func (r *DocumentRepository) GetDocumentRequestsByProfessionalWithExpectedDocs(
+	ctx context.Context,
+	professionalID int,
+	search *string,
+) ([]models.DocumentRequestDTORead, error) {
+	query := `
+		SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, 
+			   dr.is_scheduled, dr.scheduled_for, dr.is_closed, dr.last_uploaded_at, 
+			   u.email, u.first_name, u.last_name, dr.title, dr.description, 
+			   dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at,
+			   ed.id, ed.document_request_id, ed.title, ed.description, ed.is_uploaded
+		FROM document_requests dr
+		JOIN users u ON dr.client_id = u.id
+		LEFT JOIN expected_documents ed ON ed.document_request_id = dr.id
+		WHERE dr.professional_id=$1
+	`
+
+	args := []interface{}{professionalID}
+	argIndex := 2
+
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` AND (
+			LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(dr.description) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.email) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.last_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.first_name || ' ' || u.last_name) LIKE $` + strconv.Itoa(argIndex) + `
+		)`
+		args = append(args, searchPattern)
+	}
+
+	query += " ORDER BY dr.created_at DESC, ed.id ASC"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	requestMap := make(map[int]*models.DocumentRequestDTORead)
+	requestOrder := make([]int, 0)
+
+	for rows.Next() {
+		var req models.DocumentRequestDTORead
+		var edID *int
+		var edRequestID *int
+		var edTitle *string
+		var edDescription *string
+		var edIsUploaded *bool
+
+		err := rows.Scan(
+			&req.ID, &req.ProfessionalID, &req.ClientID, &req.IsRecurring, &req.RecurrenceCron,
+			&req.IsScheduled, &req.ScheduledFor, &req.IsClosed, &req.LastUploadedAt,
+			&req.ClientEmail, &req.ClientFirstName, &req.ClientLastName,
+			&req.Title, &req.Description, &req.DueDate, &req.NextDueAt,
+			&req.CreatedAt, &req.UpdatedAt,
+			&edID, &edRequestID, &edTitle, &edDescription, &edIsUploaded,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, exists := requestMap[req.ID]; !exists {
+			req.ExpectedDocuments = make([]models.ExpectedDocument, 0)
+			requestMap[req.ID] = &req
+			requestOrder = append(requestOrder, req.ID)
+		}
+
+		if edID != nil {
+			ed := models.ExpectedDocument{
+				ID:                *edID,
+				DocumentRequestID: *edRequestID,
+				Title:             *edTitle,
+				Description:       *edDescription,
+				IsUploaded:        *edIsUploaded,
+			}
+			requestMap[req.ID].ExpectedDocuments = append(requestMap[req.ID].ExpectedDocuments, ed)
+		}
+	}
+
+	requests := make([]models.DocumentRequestDTORead, 0, len(requestOrder))
+	for _, id := range requestOrder {
+		requests = append(requests, *requestMap[id])
+	}
+
+	return requests, rows.Err()
+}
+
+func (r *DocumentRepository) GetDocumentRequestsByClientWithExpectedDocs(
+	ctx context.Context,
+	clientID int,
+	search *string,
+) ([]models.DocumentRequestDTORead, error) {
+	query := `
+		SELECT dr.id, dr.professional_id, dr.client_id, dr.is_recurring, dr.recurrence_cron, 
+			   dr.is_scheduled, dr.scheduled_for, dr.is_closed, dr.last_uploaded_at, 
+			   u.email, u.first_name, u.last_name, dr.title, dr.description, 
+			   dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at,
+			   ed.id, ed.document_request_id, ed.title, ed.description, ed.is_uploaded
+		FROM document_requests dr
+		JOIN users u ON dr.client_id = u.id
+		LEFT JOIN expected_documents ed ON ed.document_request_id = dr.id
+		WHERE dr.client_id=$1
+		AND (dr.is_scheduled = false OR dr.scheduled_for <= NOW())
+	`
+
+	args := []interface{}{clientID}
+	argIndex := 2
+
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` AND (
+			LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(dr.description) LIKE $` + strconv.Itoa(argIndex) + `
+		)`
+		args = append(args, searchPattern)
+	}
+
+	query += " ORDER BY dr.created_at DESC, ed.id ASC"
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	requestMap := make(map[int]*models.DocumentRequestDTORead)
+	requestOrder := make([]int, 0)
+
+	for rows.Next() {
+		var req models.DocumentRequestDTORead
+		var edID *int
+		var edRequestID *int
+		var edTitle *string
+		var edDescription *string
+		var edIsUploaded *bool
+
+		err := rows.Scan(
+			&req.ID, &req.ProfessionalID, &req.ClientID, &req.IsRecurring, &req.RecurrenceCron,
+			&req.IsScheduled, &req.ScheduledFor, &req.IsClosed, &req.LastUploadedAt,
+			&req.ClientEmail, &req.ClientFirstName, &req.ClientLastName,
+			&req.Title, &req.Description, &req.DueDate, &req.NextDueAt,
+			&req.CreatedAt, &req.UpdatedAt,
+			&edID, &edRequestID, &edTitle, &edDescription, &edIsUploaded,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if _, exists := requestMap[req.ID]; !exists {
+			req.ExpectedDocuments = make([]models.ExpectedDocument, 0)
+			requestMap[req.ID] = &req
+			requestOrder = append(requestOrder, req.ID)
+		}
+
+		if edID != nil {
+			ed := models.ExpectedDocument{
+				ID:                *edID,
+				DocumentRequestID: *edRequestID,
+				Title:             *edTitle,
+				Description:       *edDescription,
+				IsUploaded:        *edIsUploaded,
+			}
+			requestMap[req.ID].ExpectedDocuments = append(requestMap[req.ID].ExpectedDocuments, ed)
+		}
+	}
+
+	requests := make([]models.DocumentRequestDTORead, 0, len(requestOrder))
+	for _, id := range requestOrder {
+		requests = append(requests, *requestMap[id])
+	}
+
+	return requests, rows.Err()
+}
