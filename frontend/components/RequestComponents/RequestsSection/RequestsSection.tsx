@@ -6,6 +6,7 @@ import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import PaginationFooter from "@/components/ClientComponents/ClientsSection/_components/PaginationFooter";
 import "./RequestsSection.css";
+import { UI_TEXT } from "@/locales/ro";
 
 interface RequestsSectionProps {
         requests: DocumentRequest[];
@@ -43,14 +44,14 @@ const RequestsSection: React.FC<RequestsSectionProps> = ({ requests, user }) => 
         if (requests.length === 0) {
                 return user.role === "PROFESSIONAL" ? (
                         <NotFound
-                                text="No document requests found."
-                                subtext="Create a request to get started."
+                                text={UI_TEXT.common.notFoundTitleRequests}
+                                subtext={UI_TEXT.common.notFoundSubtitleRequestsProfessional}
                                 background="#fff"
                         />
                 ) : (
                         <NotFound
-                                text="No document requests found."
-                                subtext="Seems like it's your lucky day."
+                                text={UI_TEXT.common.notFoundTitleRequests}
+                                subtext={UI_TEXT.common.notFoundSubtitleRequestsClient}
                                 background="#fff"
                         />
                 );
@@ -66,13 +67,13 @@ const RequestsSection: React.FC<RequestsSectionProps> = ({ requests, user }) => 
                         <SearchBar
                                 value={searchInput}
                                 onChange={setSearchInput}
-                                placeholder="Search requests..."
+                                placeholder={UI_TEXT.common.search}
                         />
 
                         {filteredRequests.length === 0 ? (
                                 <NotFound
-                                        text="No requests found."
-                                        subtext="Try adjusting your search terms."
+                                        text={UI_TEXT.common.notFoundTitleRequests}
+                                        subtext={UI_TEXT.common.searchNotFound}
                                         background="#fff"
                                 />
                         ) : (

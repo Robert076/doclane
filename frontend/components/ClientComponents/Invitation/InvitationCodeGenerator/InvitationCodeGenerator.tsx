@@ -3,6 +3,7 @@ import { useState } from "react";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import "./InvitationCodeGenerator.css";
 import { MdContentCopy, MdCheck, MdClose } from "react-icons/md";
+import { UI_TEXT } from "@/locales/ro";
 
 const InvitationCodeGenerator = () => {
         const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,17 +29,13 @@ const InvitationCodeGenerator = () => {
                         });
 
                         if (!response.ok) {
-                                throw new Error(
-                                        "Failed to generate invitation code. Please make sure you have less than 3 active codes.",
-                                );
+                                throw new Error(UI_TEXT.modals.generateCode.errorMaxCodes);
                         }
 
                         const data = await response.json();
                         setCode(data.data.code);
                 } catch (err) {
-                        setError(
-                                "Failed to generate invitation code. Please make sure you have less than 3 active codes.",
-                        );
+                        setError(UI_TEXT.modals.generateCode.errorMaxCodes);
                         console.error(err);
                 } finally {
                         setIsLoading(false);
@@ -67,7 +64,7 @@ const InvitationCodeGenerator = () => {
         return (
                 <>
                         <ButtonPrimary
-                                text="Add New Client"
+                                text={UI_TEXT.buttons.addClient.normal}
                                 onClick={() => setIsModalOpen(true)}
                         />
 
@@ -88,31 +85,36 @@ const InvitationCodeGenerator = () => {
                                                 {!code ? (
                                                         <>
                                                                 <h2 className="modal-title">
-                                                                        Generate Invitation
-                                                                        Code
+                                                                        {
+                                                                                UI_TEXT.modals
+                                                                                        .generateCode
+                                                                                        .title
+                                                                        }
                                                                 </h2>
                                                                 <p className="modal-description">
-                                                                        This will create a
-                                                                        one-time invitation
-                                                                        code that expires in 7
-                                                                        days. Share this code
-                                                                        with your client so
-                                                                        they can register and
-                                                                        access their document
-                                                                        portal.
+                                                                        {
+                                                                                UI_TEXT.modals
+                                                                                        .generateCode
+                                                                                        .subtitle1
+                                                                        }
                                                                 </p>
                                                                 <p className="modal-note">
-                                                                        Make sure you're ready
-                                                                        to copy and send the
-                                                                        code immediately after
-                                                                        generation.
+                                                                        {
+                                                                                UI_TEXT.modals
+                                                                                        .generateCode
+                                                                                        .subtitle2
+                                                                        }
                                                                 </p>
                                                                 <div className="modal-actions">
                                                                         <ButtonPrimary
                                                                                 text={
                                                                                         isLoading
-                                                                                                ? "Generating..."
-                                                                                                : "Continue"
+                                                                                                ? UI_TEXT
+                                                                                                          .common
+                                                                                                          .loading
+                                                                                                : UI_TEXT
+                                                                                                          .common
+                                                                                                          .continue
                                                                                 }
                                                                                 onClick={
                                                                                         generateCode
@@ -122,7 +124,11 @@ const InvitationCodeGenerator = () => {
                                                                                 }
                                                                         />
                                                                         <ButtonPrimary
-                                                                                text="Cancel"
+                                                                                text={
+                                                                                        UI_TEXT
+                                                                                                .common
+                                                                                                .cancel
+                                                                                }
                                                                                 variant="ghost"
                                                                                 onClick={
                                                                                         closeModal
@@ -133,14 +139,18 @@ const InvitationCodeGenerator = () => {
                                                 ) : (
                                                         <>
                                                                 <h2 className="modal-title">
-                                                                        Invitation Code
-                                                                        Generated
+                                                                        {
+                                                                                UI_TEXT.modals
+                                                                                        .generateCode
+                                                                                        .title
+                                                                        }
                                                                 </h2>
                                                                 <p className="modal-description">
-                                                                        Share this code with
-                                                                        your client. They'll
-                                                                        use it to register on
-                                                                        the platform.
+                                                                        {
+                                                                                UI_TEXT.modals
+                                                                                        .generateCode
+                                                                                        .subtitle3
+                                                                        }
                                                                 </p>
                                                                 <div className="code-box">
                                                                         <span className="code-text">
@@ -169,11 +179,19 @@ const InvitationCodeGenerator = () => {
                                                                         </button>
                                                                 </div>
                                                                 <p className="code-expiry">
-                                                                        Expires in 7 days
+                                                                        {
+                                                                                UI_TEXT.modals
+                                                                                        .generateCode
+                                                                                        .expiryNotice
+                                                                        }
                                                                 </p>
                                                                 <div className="modal-actions">
                                                                         <ButtonPrimary
-                                                                                text="Done"
+                                                                                text={
+                                                                                        UI_TEXT
+                                                                                                .common
+                                                                                                .continue
+                                                                                }
                                                                                 onClick={
                                                                                         closeModal
                                                                                 }

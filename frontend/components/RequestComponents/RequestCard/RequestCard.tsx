@@ -12,6 +12,7 @@ import { formatDate } from "@/lib/client/formatDate";
 import { closeRequest } from "@/lib/api/api";
 import toast from "react-hot-toast";
 import CloseRequestModal from "../_components/CloseRequestModal";
+import { UI_TEXT } from "@/locales/ro";
 
 interface RequestProps {
         request: DocumentRequest;
@@ -56,7 +57,7 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
                                         {isScheduledFuture && (
                                                 <span
                                                         className="scheduled-badge"
-                                                        title={`Scheduled for ${formatDate(request.scheduled_for!)}`}
+                                                        title={`Programată pentru ${formatDate(request.scheduled_for!)}`}
                                                 >
                                                         SCHEDULED
                                                 </span>
@@ -82,13 +83,13 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
                                 )}
                                 <div className="request-footer">
                                         <ButtonPrimary
-                                                text="View Details"
+                                                text={UI_TEXT.request.actions.viewDetails}
                                                 variant="ghost"
                                                 fullWidth={true}
                                                 onClick={handleViewDetails}
                                         />
                                         <ButtonPrimary
-                                                text="Close Request"
+                                                text={UI_TEXT.request.actions.closeRequest}
                                                 variant="ghost"
                                                 fullWidth={true}
                                                 onClick={() => setIsCloseModalOpen(true)}

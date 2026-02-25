@@ -2,6 +2,7 @@
 import React from "react";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import "./CloseRequestModal.css";
+import { UI_TEXT } from "@/locales/ro";
 
 interface CloseRequestModalProps {
         isOpen: boolean;
@@ -30,7 +31,7 @@ const CloseRequestModal: React.FC<CloseRequestModalProps> = ({
                                 onClick={(e) => e.stopPropagation()}
                         >
                                 <div className="close-request-modal-header">
-                                        <h3>Close Request</h3>
+                                        <h3>{UI_TEXT.modals.closeRequest.title}</h3>
                                         <button
                                                 className="close-request-modal-close"
                                                 onClick={onClose}
@@ -40,23 +41,21 @@ const CloseRequestModal: React.FC<CloseRequestModalProps> = ({
                                 </div>
                                 <div className="close-request-modal-body">
                                         <p className="close-request-warning">
-                                                Are you sure you want to close{" "}
+                                                {UI_TEXT.modals.closeRequest.subtitle1}
                                                 <strong>{requestTitle}</strong>?
                                         </p>
                                         <p className="close-request-description">
-                                                This action will mark the request as closed.
-                                                You will still be able to view the documents,
-                                                however your client cannot upload anymore.
+                                                {UI_TEXT.modals.closeRequest.subtitle2}
                                         </p>
                                 </div>
                                 <div className="close-request-modal-footer">
                                         <ButtonPrimary
-                                                text="Cancel"
+                                                text={UI_TEXT.common.cancel}
                                                 variant="ghost"
                                                 onClick={onClose}
                                         />
                                         <ButtonPrimary
-                                                text="Close Request"
+                                                text={UI_TEXT.common.save}
                                                 variant="primary"
                                                 onClick={handleConfirm}
                                         />

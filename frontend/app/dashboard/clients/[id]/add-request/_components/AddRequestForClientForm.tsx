@@ -14,6 +14,7 @@ import { MdCalendarMonth } from "react-icons/md";
 import ScheduleModal from "./ScheduleModal";
 import ExpectedDocumentsList, { ExpectedDocumentInput } from "./ExpectedDocumentsList";
 import { createDocumentRequest } from "@/lib/api/api";
+import { UI_TEXT } from "@/locales/ro";
 
 interface AddRequestForClientFormProps {
         id: string;
@@ -105,15 +106,20 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                 <>
                         <form className="add-request-for-client-form" onSubmit={handleSubmit}>
                                 <Input
-                                        label="Request title"
-                                        placeholder="Title goes here..."
+                                        label={UI_TEXT.request.createForm.title}
+                                        placeholder={
+                                                UI_TEXT.request.createForm.titlePlaceholder
+                                        }
                                         value={requestName}
                                         onChange={(e: any) => setRequestName(e.target.value)}
                                 />
                                 <TextArea
-                                        label="Request description"
+                                        label={UI_TEXT.request.createForm.description}
                                         value={requestDescription}
-                                        placeholder="Description goes here..."
+                                        placeholder={
+                                                UI_TEXT.request.createForm
+                                                        .descriptionPlaceholder
+                                        }
                                         onChange={(e: any) =>
                                                 setRequestDescription(e.target.value)
                                         }
@@ -128,7 +134,10 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                                                         setIsRecurring(false);
                                                         setIsDeadline(false);
                                                 }}
-                                                label="No time constraint"
+                                                label={
+                                                        UI_TEXT.request.createForm.time
+                                                                .noConstraint
+                                                }
                                         />
                                         <RadioInput
                                                 isChecked={isRecurring}
@@ -139,7 +148,10 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                                                         setIsNoneSelected(false);
                                                         setIsDeadline(false);
                                                 }}
-                                                label="Recurring"
+                                                label={
+                                                        UI_TEXT.request.createForm.time
+                                                                .recurring
+                                                }
                                         />
                                         <RadioInput
                                                 isChecked={isDeadline}
@@ -150,7 +162,10 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                                                         setIsRecurring(false);
                                                         setIsNoneSelected(false);
                                                 }}
-                                                label="Deadline"
+                                                label={
+                                                        UI_TEXT.request.createForm.time
+                                                                .deadline
+                                                }
                                         />
                                 </div>
                                 {isRecurring && (
@@ -176,12 +191,12 @@ const AddRequestForClientForm: React.FC<AddRequestForClientFormProps> = ({ id })
                         </form>
                         <div className="button-group">
                                 <ButtonPrimary
-                                        text="Create request"
+                                        text={UI_TEXT.request.createForm.createRequest}
                                         onClick={handleSubmit}
                                         type="button"
                                 />
                                 <ButtonPrimary
-                                        text="Schedule request"
+                                        text={UI_TEXT.request.createForm.scheduleRequest}
                                         variant="ghost"
                                         icon={MdCalendarMonth}
                                         type="button"

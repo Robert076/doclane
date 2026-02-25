@@ -2,22 +2,19 @@
 
 import "./DetailCardsActionSidebar.css";
 import SectionTitle from "@/app/dashboard/requests/[id]/_components/SectionTitle/SectionTitle";
-import { useRouter } from "next/navigation";
-import UploadDocumentButton from "@/app/dashboard/requests/[id]/_components/UploadDocumentButton/UploadDocumentButton";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import { sendEmail } from "@/lib/api/api";
 import toast from "react-hot-toast";
+import { sendEmail } from "@/lib/api/api";
+import { UI_TEXT } from "@/locales/ro";
 
 export default function DetailCardsActionSidebar({ id }: { id: string }) {
-        const router = useRouter();
-
         return (
                 <aside className="details-card actions-sidebar">
-                        <SectionTitle text="Actions" />
+                        <SectionTitle text={UI_TEXT.request.details.actions} />
 
                         <div className="action-buttons">
                                 <ButtonPrimary
-                                        text="Send Notification"
+                                        text={UI_TEXT.buttons.sendNotification.normal}
                                         fullWidth={true}
                                         onClick={async () => {
                                                 const response = await sendEmail(+id);

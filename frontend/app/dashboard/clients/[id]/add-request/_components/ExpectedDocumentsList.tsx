@@ -5,6 +5,7 @@ import TextArea from "@/components/InputComponents/TextArea";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import { MdAdd, MdClose } from "react-icons/md";
 import "./ExpectedDocumentsList.css";
+import { UI_TEXT } from "@/locales/ro";
 
 export interface ExpectedDocumentInput {
         title: string;
@@ -43,10 +44,10 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                 <div className="expected-documents-list">
                         <div className="expected-documents-header">
                                 <label className="expected-documents-label">
-                                        Expected Documents
+                                        {UI_TEXT.request.createForm.expectedDocuments}
                                 </label>
                                 <ButtonPrimary
-                                        text="Add document"
+                                        text={UI_TEXT.request.createForm.addExpectedDocument}
                                         variant="ghost"
                                         icon={MdAdd}
                                         type="button"
@@ -56,7 +57,7 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
 
                         {documents.length === 0 && (
                                 <p className="expected-documents-empty">
-                                        No expected documents added yet.
+                                        {UI_TEXT.request.createForm.expectedDocumentsNotAdded}
                                 </p>
                         )}
 
@@ -75,8 +76,14 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                                                 </button>
                                         </div>
                                         <Input
-                                                label="Title"
-                                                placeholder="e.g. Passport copy"
+                                                label={
+                                                        UI_TEXT.request.createForm
+                                                                .expectedDocumentTitle
+                                                }
+                                                placeholder={
+                                                        UI_TEXT.request.createForm
+                                                                .expectedDocumentTitlePlaceholder
+                                                }
                                                 value={doc.title}
                                                 onChange={(e: any) =>
                                                         handleChange(
@@ -87,8 +94,14 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                                                 }
                                         />
                                         <TextArea
-                                                label="Description"
-                                                placeholder="e.g. Scan of all pages"
+                                                label={
+                                                        UI_TEXT.request.createForm
+                                                                .expectedDocumentDescription
+                                                }
+                                                placeholder={
+                                                        UI_TEXT.request.createForm
+                                                                .expectedDocumentDescriptionPlaceholder
+                                                }
                                                 value={doc.description}
                                                 onChange={(e: any) =>
                                                         handleChange(

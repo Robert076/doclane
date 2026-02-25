@@ -2,6 +2,7 @@ import { DocumentRequest } from "@/types";
 import React from "react";
 import "./RequestBody.css";
 import RequestInfoItem from "./RequestInfoItem";
+import { UI_TEXT } from "@/locales/ro";
 
 interface RequestBodyProps {
         request: DocumentRequest;
@@ -14,12 +15,12 @@ const RequestBody: React.FC<RequestBodyProps> = ({ request, searchTerm }) => {
                         <div className="request-info">
                                 {RequestInfoItem(
                                         searchTerm,
-                                        "Client email:",
+                                        UI_TEXT.request.card.clientEmail,
                                         request.client_email,
                                 )}
                                 {RequestInfoItem(
                                         searchTerm,
-                                        "Client name:",
+                                        UI_TEXT.request.card.clientName,
                                         `${request.client_first_name} ${request.client_last_name}`,
                                 )}
                         </div>

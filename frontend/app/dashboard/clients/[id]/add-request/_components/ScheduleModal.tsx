@@ -4,6 +4,7 @@ import { useState } from "react";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import { MdClose } from "react-icons/md";
 import "./ScheduleModal.css";
+import { UI_TEXT } from "@/locales/ro";
 
 interface ScheduleModalProps {
         onClose: () => void;
@@ -25,7 +26,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ onClose, onConfirm }) => 
                 <div className="modal-overlay" onClick={onClose}>
                         <div className="modal-content" onClick={(e) => e.stopPropagation()}>
                                 <div className="modal-header">
-                                        <h3>Schedule Request</h3>
+                                        <h3>{UI_TEXT.modals.scheduleRequest.title}</h3>
                                         <button className="modal-close" onClick={onClose}>
                                                 <MdClose />
                                         </button>
@@ -33,7 +34,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ onClose, onConfirm }) => 
 
                                 <div className="modal-body">
                                         <label htmlFor="scheduled-date">
-                                                Request will appear on:
+                                                {UI_TEXT.modals.scheduleRequest.subtitle}
                                         </label>
                                         <input
                                                 id="scheduled-date"
@@ -48,13 +49,13 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ onClose, onConfirm }) => 
 
                                 <div className="modal-footer">
                                         <ButtonPrimary
-                                                text="Cancel"
+                                                text={UI_TEXT.common.cancel}
                                                 variant="ghost"
                                                 onClick={onClose}
                                                 type="button"
                                         />
                                         <ButtonPrimary
-                                                text="Schedule"
+                                                text={UI_TEXT.modals.scheduleRequest.schedule}
                                                 onClick={handleConfirm}
                                                 type="button"
                                         />

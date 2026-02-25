@@ -6,6 +6,7 @@ import { DocumentFile, ExpectedDocument } from "@/types";
 import ExpectedDocumentSlot from "../ExpectedDocumentSlot/ExpectedDocumentSlot";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import PaginationFooter from "./_components/PaginationFooter";
+import { UI_TEXT } from "@/locales/ro";
 
 interface FileSectionProps {
         files: DocumentFile[];
@@ -36,7 +37,7 @@ export default function FileSection({
 
         return (
                 <section className="details-card files-section">
-                        <SectionTitle text="Documents" />
+                        <SectionTitle text={UI_TEXT.request.details.files} />
                         <div className="files-stack">
                                 {currentDocs.map((ed) => {
                                         const uploadedFiles = files.filter(

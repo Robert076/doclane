@@ -6,6 +6,7 @@ import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import "./ClientsSection.css";
 import PaginationFooter from "./_components/PaginationFooter";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
+import { UI_TEXT } from "@/locales/ro";
 
 interface ClientsSectionProps {
         clients: User[];
@@ -44,7 +45,7 @@ const ClientsSection: React.FC<ClientsSectionProps> = ({ clients }) => {
                                 <SearchBar
                                         value={searchInput}
                                         onChange={setSearchInput}
-                                        placeholder="Search clients..."
+                                        placeholder={UI_TEXT.common.search}
                                 />
                         )}
                         {clients.length === 0 && (

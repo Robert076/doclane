@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { toast } from "react-hot-toast";
 import { uploadDocument } from "@/lib/api/api";
+import { UI_TEXT } from "@/locales/ro";
 
 const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];
 interface Props {
@@ -57,7 +58,11 @@ export default function UploadDocumentButton({ requestId, expectedDocumentId }: 
                                 accept={ALLOWED_EXTENSIONS.join(",")}
                         />
                         <ButtonPrimary
-                                text={isUploading ? "Uploading..." : "Upload"}
+                                text={
+                                        isUploading
+                                                ? UI_TEXT.buttons.uploadDocument.inProgress
+                                                : UI_TEXT.buttons.uploadDocument.normal
+                                }
                                 variant="primary"
                                 fullWidth
                                 disabled={isUploading}

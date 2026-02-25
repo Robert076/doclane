@@ -10,6 +10,7 @@ import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPri
 import Separator from "@/components/OtherComponents/Separators/Separator/Separator";
 import "./Sidebar.css";
 import Logo from "@/components/OtherComponents/Logo/Logo";
+import { UI_TEXT } from "@/locales/ro";
 
 export default function Sidebar() {
         const pathname = usePathname();
@@ -56,7 +57,7 @@ export default function Sidebar() {
                                 </div>
 
                                 <ButtonPrimary
-                                        text="Log out"
+                                        text={UI_TEXT.sidebar.logout}
                                         variant="primary"
                                         fullWidth={true}
                                         onClick={logout}

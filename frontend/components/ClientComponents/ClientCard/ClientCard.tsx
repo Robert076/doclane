@@ -10,6 +10,7 @@ import DeactivateClientModal from "./_components/DeactivateClientModal";
 import ClientInfoItem from "./ClientInfoItem";
 import { formatDate } from "@/lib/client/formatDate";
 import { deactivateUser } from "@/lib/api/api";
+import { UI_TEXT } from "@/locales/ro";
 
 interface ClientCardProps {
         client: User;
@@ -53,12 +54,12 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, searchTerm }) => {
                                 <div className="client-body">
                                         <div className="client-info">
                                                 {ClientInfoItem(
-                                                        "Email:",
+                                                        UI_TEXT.client.card.clientEmail,
                                                         client.email,
                                                         searchTerm,
                                                 )}
                                                 {ClientInfoItem(
-                                                        "Joined at:",
+                                                        UI_TEXT.client.card.joinedAt,
                                                         formatDate(client.created_at),
                                                         searchTerm,
                                                 )}
@@ -66,13 +67,13 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, searchTerm }) => {
                                 </div>
                                 <div className="client-footer">
                                         <ButtonPrimary
-                                                text="New Request"
+                                                text={UI_TEXT.client.actions.newRequest}
                                                 variant="ghost"
                                                 fullWidth={true}
                                                 onClick={handleAddRequest}
                                         />
                                         <ButtonPrimary
-                                                text="Deactivate their account"
+                                                text={UI_TEXT.client.actions.deactivateAccount}
                                                 variant="ghost"
                                                 fullWidth={true}
                                                 onClick={handleDeactivateClick}

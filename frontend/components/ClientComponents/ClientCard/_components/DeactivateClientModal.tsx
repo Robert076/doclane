@@ -2,6 +2,7 @@
 import React from "react";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import "./DeactivateClientModal.css";
+import { UI_TEXT } from "@/locales/ro";
 
 interface DeactivateClientModalProps {
         isOpen: boolean;
@@ -30,7 +31,7 @@ const DeactivateClientModal: React.FC<DeactivateClientModalProps> = ({
                                 onClick={(e) => e.stopPropagation()}
                         >
                                 <div className="deactivate-modal-header">
-                                        <h3>Deactivate Client Account</h3>
+                                        <h3>{UI_TEXT.modals.deactivateClient.title}</h3>
                                         <button
                                                 className="deactivate-modal-close"
                                                 onClick={onClose}
@@ -40,23 +41,22 @@ const DeactivateClientModal: React.FC<DeactivateClientModalProps> = ({
                                 </div>
                                 <div className="deactivate-modal-body">
                                         <p className="deactivate-warning">
-                                                Are you sure you want to deactivate{" "}
-                                                <strong>{clientName}</strong>'s account?
+                                                {UI_TEXT.modals.deactivateClient.subtitle1(
+                                                        clientName,
+                                                )}
                                         </p>
                                         <p className="deactivate-description">
-                                                This action will prevent them from accessing
-                                                their account. This can be reversed later if
-                                                needed.
+                                                {UI_TEXT.modals.deactivateClient.subtitle2}
                                         </p>
                                 </div>
                                 <div className="deactivate-modal-footer">
                                         <ButtonPrimary
-                                                text="Cancel"
+                                                text={UI_TEXT.common.cancel}
                                                 variant="ghost"
                                                 onClick={onClose}
                                         />
                                         <ButtonPrimary
-                                                text="Deactivate Account"
+                                                text={UI_TEXT.modals.deactivateClient.confirm}
                                                 variant="primary"
                                                 onClick={handleConfirm}
                                         />

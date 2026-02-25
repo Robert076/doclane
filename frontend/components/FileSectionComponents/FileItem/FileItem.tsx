@@ -5,6 +5,7 @@ import { DocumentFile } from "@/types";
 import { presignDocumentURL } from "@/lib/api/api";
 import toast from "react-hot-toast";
 import { formatDate } from "@/lib/client/formatDate";
+import { UI_TEXT } from "@/locales/ro";
 
 interface FileItemProps {
         file: DocumentFile;
@@ -81,7 +82,9 @@ export default function FileItem({ file }: FileItemProps) {
                                         className="view-button"
                                         disabled={isRequesting}
                                 >
-                                        {isRequesting ? "Loading..." : "View file"}
+                                        {isRequesting
+                                                ? UI_TEXT.buttons.viewFile.inProgress
+                                                : UI_TEXT.buttons.viewFile.normal}
                                 </button>
                         </div>
                 </div>

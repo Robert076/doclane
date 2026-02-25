@@ -4,6 +4,7 @@ import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPri
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import "./InvitationCodesModal.css";
 import { MdClose, MdContentCopy, MdCheck, MdDelete } from "react-icons/md";
+import { UI_TEXT } from "@/locales/ro";
 
 interface InvitationCode {
         id: number;
@@ -101,7 +102,7 @@ const InvitationCodesModal = () => {
         return (
                 <>
                         <ButtonPrimary
-                                text="View Invitation Codes"
+                                text={UI_TEXT.buttons.viewInvitationCodes.normal}
                                 variant="primary"
                                 onClick={openModal}
                         />
@@ -121,11 +122,10 @@ const InvitationCodesModal = () => {
                                                 </button>
 
                                                 <h2 className="modal-title">
-                                                        Invitation Codes
+                                                        {UI_TEXT.modals.codesModal.title}
                                                 </h2>
                                                 <p className="modal-description">
-                                                        Your active invitation codes. Share
-                                                        these with clients to invite them.
+                                                        {UI_TEXT.modals.codesModal.subtitle}
                                                 </p>
 
                                                 {isLoading ? (
@@ -161,14 +161,24 @@ const InvitationCodesModal = () => {
                                                                                         </div>
                                                                                         <div className="code-meta">
                                                                                                 <span className="code-date">
-                                                                                                        Created:{" "}
+                                                                                                        {
+                                                                                                                UI_TEXT
+                                                                                                                        .modals
+                                                                                                                        .codesModal
+                                                                                                                        .createdAt
+                                                                                                        }
                                                                                                         {formatDate(
                                                                                                                 code.created_at,
                                                                                                         )}
                                                                                                 </span>
                                                                                                 {code.expires_at && (
                                                                                                         <span className="code-expiry">
-                                                                                                                Expires:{" "}
+                                                                                                                {
+                                                                                                                        UI_TEXT
+                                                                                                                                .modals
+                                                                                                                                .codesModal
+                                                                                                                                .expiresAt
+                                                                                                                }
                                                                                                                 {formatDate(
                                                                                                                         code.expires_at,
                                                                                                                 )}
@@ -234,7 +244,7 @@ const InvitationCodesModal = () => {
 
                                                 <div className="modal-actions">
                                                         <ButtonPrimary
-                                                                text="Close"
+                                                                text={UI_TEXT.common.close}
                                                                 onClick={closeModal}
                                                         />
                                                 </div>
