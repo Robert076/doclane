@@ -21,3 +21,26 @@ variable "project_name" {
   description = "The name of the project, used as a tag and name in various places"
   default     = "doclane"
 }
+
+
+variable "db_username" {
+  type        = string
+  description = "Database admin username"
+  sensitive   = true
+
+  validation {
+    condition     = length(var.db_password) > 0
+    error_message = "Must provide a db username"
+  }
+}
+
+variable "db_password" {
+  type        = string
+  description = "Database admin password"
+  sensitive   = true
+
+  validation {
+    condition     = length(var.db_password) > 0
+    error_message = "Must provide a db password"
+  }
+}

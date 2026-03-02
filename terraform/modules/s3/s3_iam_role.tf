@@ -1,3 +1,7 @@
+variable "lambda_execution_role_arn" {}
+
+data "aws_caller_identity" "current" {}
+
 resource "aws_iam_role" "s3_doclane_role" {
   name        = "s3-doclane-role"
   description = "Role to be assumed when accessing the S3 Doclane bucket. Has the s3_doclane_policy attached"
@@ -10,7 +14,10 @@ resource "aws_iam_role" "s3_doclane_role" {
         Effect = "Allow"
         Sid    = ""
         Principal = {
-          AWS = "arn:aws:iam::659775407830:user/robert-beres"
+          AWS = [
+            "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/robert-beres",
+            var.lambda_execution_role_arn
+          ]
         }
       }
     ]
