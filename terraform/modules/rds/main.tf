@@ -1,7 +1,6 @@
 variable "project" {}
 variable "vpc_id" {}
 variable "private_subnet_ids" {}
-variable "lambda_sg_id" {}
 variable "db_username" {}
 variable "db_password" {}
 variable "db_name" {}
@@ -18,13 +17,6 @@ resource "aws_db_subnet_group" "this" {
 resource "aws_security_group" "rds" {
   name   = "${var.project}-rds-sg"
   vpc_id = var.vpc_id
-
-  ingress {
-    from_port       = 5432
-    to_port         = 5432
-    protocol        = "tcp"
-    security_groups = [var.lambda_sg_id]
-  }
 
   egress {
     from_port   = 0

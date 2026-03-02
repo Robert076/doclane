@@ -29,7 +29,7 @@ variable "db_username" {
   sensitive   = true
 
   validation {
-    condition     = length(var.db_password) > 0
+    condition     = length(var.db_username) > 0
     error_message = "Must provide a db username"
   }
 }
@@ -43,4 +43,16 @@ variable "db_password" {
     condition     = length(var.db_password) > 0
     error_message = "Must provide a db password"
   }
+}
+
+variable "jwt_secret" {
+  type        = string
+  description = "Secret key for JWT authentication"
+  sensitive   = true
+}
+
+variable "allowed_origin" {
+  type        = string
+  description = "CORS allowed origin for the API"
+  default     = "*"
 }
