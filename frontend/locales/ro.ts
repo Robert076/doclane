@@ -11,6 +11,7 @@ export const UI_TEXT = {
                 searchNotFound:
                         "Nu am găsit nimic să se potrivească cu căutarea dumneavoastră.",
                 save: "Salvează",
+                back: "← Înapoi",
                 cancel: "Anulează",
                 close: "Închide",
                 continue: "Continuă",
@@ -28,9 +29,11 @@ export const UI_TEXT = {
         },
         dashboard: {
                 professional: {
-                        header: (name: string) => `Bine ai revenit, ${name}`,
-                        subheader: (activeRequestsCount: number) =>
+                        headerDocumentRequests: (name: string) => `Bine ai revenit, ${name}`,
+                        subheaderDocumentRequests: (activeRequestsCount: number) =>
                                 `Ai ${activeRequestsCount} dosare în lucru.`,
+                        headerClients: "Lista solicitanților",
+                        subheaderClients: "Administrează si gestionează solicitanții tăi.",
                 },
         },
         request: {
@@ -70,6 +73,8 @@ export const UI_TEXT = {
                         addExpectedDocument: "Adaugă document",
                         createRequest: "Crează dosar",
                         scheduleRequest: "Programează dosar",
+                        exampleFile: "Document exemplu",
+                        uploadExample: "Încarcă un exemplu",
                 },
         },
         client: {
@@ -120,6 +125,15 @@ export const UI_TEXT = {
                                 `Eşti sigur că vrei să dezactivezi contul solicitantului ${text}?`,
                         subtitle2: "Această acțiune îi va interzice accesul la cont. Acțiunea este reversibilă.",
                         confirm: "Dezactivează",
+                },
+                rejectDocument: {
+                        title: "Refuză documentul",
+                        subtitle1: (text: string) =>
+                                `Ești sigur că vrei să refuzi documentul ${text}? Solicitantul va vedea motivul și va putea reîncărca documentul.`,
+                        reasonLabel: "Motiv refuz:",
+                        reasonPlaceholder: "Introdu motivul aici...",
+                        reasonRequired: "Motivul este obligatoriu.",
+                        confirm: "Confirmă refuzul",
                 },
         },
         buttons: {

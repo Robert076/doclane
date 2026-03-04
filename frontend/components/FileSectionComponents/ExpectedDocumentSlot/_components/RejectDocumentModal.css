@@ -1,0 +1,93 @@
+.reject-document-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.reject-document-modal-content {
+  background: white;
+  padding: 0;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.reject-document-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.reject-document-modal-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  /* Matches CloseRequestModal — no special color on the title */
+}
+
+.reject-document-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #6b7280;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.reject-document-modal-close:hover {
+  background-color: #f3f4f6;
+}
+
+
+.reject-document-modal-body {
+  padding: 24px;
+}
+
+.reject-document-warning {
+  margin: 0 0 16px 0;
+  font-size: 1rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.reject-document-warning strong {
+  color: #111827;
+  font-weight: 600;
+}
+
+.reject-document-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.reject-error {
+  color: #ef4444;
+  font-size: 0.875rem;
+}
+
+.reject-document-modal-footer {
+  display: flex;
+  flex-direction: column;
+  padding: 16px 24px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.reject-document-modal-footer > * {
+  width: 100%;
+}

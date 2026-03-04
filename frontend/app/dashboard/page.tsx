@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import ClientView from "@/components/ViewComponents/ClientView/ClientView";
 import ProfessionalView from "@/components/ViewComponents/ProfessionalView/ProfessionalView";
 import { getCurrentUser } from "@/lib/api/api";

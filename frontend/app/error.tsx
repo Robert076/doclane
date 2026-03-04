@@ -16,32 +16,17 @@ export default function GlobalError({
         }, [error]);
 
         return (
-                <div className="error-page-wrapper">
-                        <div className="error-page">
-                                <h1 className="error-title">Oops! Something went wrong...</h1>
+                <div className="error-page">
+                        <img src="/error.jpg" alt="" height={150} />
+                        <h1 className="error-title">Oops! Something went wrong...</h1>
 
-                                <p className="error-message">
-                                        {error.message ||
-                                                "An error appeared in the system. And we don't know what went wrong."}
-                                </p>
+                        <p className="error-message">
+                                {error.message ||
+                                        "An error appeared in the system. And we don't know what went wrong."}
+                        </p>
 
-                                <div style={{ marginTop: "1rem" }}>
-                                        <span className="error-status-code">
-                                                Status: {extractStatusCode(error.message)}
-                                        </span>
-                                </div>
-
-                                {error.digest && (
-                                        <span className="error-digest">
-                                                Error ID: {error.digest}
-                                        </span>
-                                )}
-
-                                <ButtonPrimary
-                                        text="Try again"
-                                        onClick={() => reset()}
-                                        fullWidth
-                                />
+                        <div className="button-wrapper">
+                                <ButtonPrimary text="Try again" onClick={() => reset()} />
                         </div>
                 </div>
         );

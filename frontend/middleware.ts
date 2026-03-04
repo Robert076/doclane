@@ -2,36 +2,36 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export default function middleware(request: NextRequest) {
-  const token = request.cookies.get("auth_cookie")?.value;
-  const { pathname } = request.nextUrl;
+        const token = request.cookies.get("auth_cookie")?.value;
+        const { pathname } = request.nextUrl;
 
-  if (
-    !token &&
-    pathname !== "/login" &&
-    pathname !== "/register-client" &&
-    pathname !== "/register-professional"
-  ) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(url);
-  }
+        if (
+                !token &&
+                pathname !== "/login" &&
+                pathname !== "/register-client" &&
+                pathname !== "/register-professional"
+        ) {
+                const url = request.nextUrl.clone();
+                url.pathname = "/login";
+                url.searchParams.set("callbackUrl", pathname);
+                return NextResponse.redirect(url);
+        }
 
-  if (token && pathname === "/login") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
+        if (token && pathname === "/login") {
+                const url = request.nextUrl.clone();
+                url.pathname = "/dashboard";
+                return NextResponse.redirect(url);
+        }
 
-  if (token && pathname === "/") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
-  }
+        if (token && pathname === "/") {
+                const url = request.nextUrl.clone();
+                url.pathname = "/dashboard";
+                return NextResponse.redirect(url);
+        }
 
-  return NextResponse.next();
+        return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.[\\w]+$).*)"],
+        matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.[\\w]+$).*)"],
 };

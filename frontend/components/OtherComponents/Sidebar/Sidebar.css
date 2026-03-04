@@ -9,7 +9,6 @@
   top: 0;
   border-right: var(--border-default);
   box-shadow: var(--box-shadow-default);
-  height: 100vh;
 }
 
 .sidebar-nav {
@@ -23,8 +22,7 @@
   display: flex;
   align-items: center;
   gap: var(--gap-10);
-  text-decoration: none; 
-  
+  text-decoration: none;
   color: var(--text-color-secondary);
   padding: var(--padding-sidebar-link);
   border-radius: var(--border-radius-default);
@@ -74,4 +72,84 @@
   color: #718096;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* ── Hamburger button ─────────────────────────────────── */
+.sidebar-hamburger {
+  display: none; /* hidden on desktop */
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 200;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  width: 40px;
+  height: 40px;
+  background: white;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  box-shadow: var(--box-shadow-default);
+  cursor: pointer;
+  padding: 0;
+}
+
+.hamburger-bar {
+  display: block;
+  width: 20px;
+  height: 2px;
+  background: var(--text-color-secondary);
+  border-radius: 2px;
+  transition: all 0.25s ease-in-out;
+  transform-origin: center;
+}
+
+/* Animate bars into an X when open */
+.hamburger-bar.open:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+.hamburger-bar.open:nth-child(2) {
+  opacity: 0;
+  transform: scaleX(0);
+}
+.hamburger-bar.open:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ── Overlay ──────────────────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 150;
+  backdrop-filter: blur(2px);
+}
+
+/* ── Mobile breakpoint ────────────────────────────────── */
+@media (max-width: 768px) {
+  .sidebar-hamburger {
+    display: flex;
+  }
+
+  .sidebar-overlay {
+    display: block;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 160;
+    height: 100vh;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+    box-shadow: none;
+  }
+
+  .sidebar--open {
+    transform: translateX(0);
+    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.12);
+  }
 }

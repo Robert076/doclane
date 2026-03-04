@@ -1,11 +1,10 @@
 "use client";
-
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { SIDEBAR_CONFIG } from "@/lib/nav";
 import { logout } from "@/lib/api/api";
-
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import Separator from "@/components/OtherComponents/Separators/Separator/Separator";
 import "./Sidebar.css";
@@ -15,54 +14,92 @@ import { UI_TEXT } from "@/locales/ro";
 export default function Sidebar() {
         const pathname = usePathname();
         const user = useUser();
-
         const links = SIDEBAR_CONFIG[user.role] || [];
+        const [isOpen, setIsOpen] = useState(false);
+
+        // Close sidebar on route change (mobile)
+        useEffect(() => {
+                setIsOpen(false);
+        }, [pathname]);
+
+        // Prevent body scroll when sidebar is open on mobile
+        useEffect(() => {
+                if (isOpen) {
+                        document.body.style.overflow = "hidden";
+                } else {
+                        document.body.style.overflow = "";
+                }
+                return () => {
+                        document.body.style.overflow = "";
+                };
+        }, [isOpen]);
 
         return (
-                <aside className="sidebar">
-                        <Logo />
-                        <Separator />
+                <>
+                        {/* Hamburger button — only visible on mobile */}
+                        <button
+                                className="sidebar-hamburger"
+                                onClick={() => setIsOpen((prev) => !prev)}
+                                aria-label={isOpen ? "Close menu" : "Open menu"}
+                                aria-expanded={isOpen}
+                        >
+                                <span className={`hamburger-bar ${isOpen ? "open" : ""}`} />
+                                <span className={`hamburger-bar ${isOpen ? "open" : ""}`} />
+                                <span className={`hamburger-bar ${isOpen ? "open" : ""}`} />
+                        </button>
 
-                        <nav className="sidebar-nav">
-                                {links.map((link) => {
-                                        const isActive = pathname === link.href;
-                                        const Icon = link.icon;
-
-                                        return (
-                                                <Link
-                                                        key={link.href}
-                                                        href={link.href}
-                                                        className={`sidebar-link ${isActive ? "active" : ""}`}
-                                                >
-                                                        {Icon && (
-                                                                <Icon
-                                                                        size={20}
-                                                                        className="sidebar-link-icon"
-                                                                />
-                                                        )}
-                                                        <span className="sidebar-link-label">
-                                                                {link.label}
-                                                        </span>
-                                                </Link>
-                                        );
-                                })}
-                        </nav>
-
-                        <div className="sidebar-footer">
-                                <div className="sidebar-user-info">
-                                        <p className="sidebar-user-email">{user.email}</p>
-                                        <span className="sidebar-user-role text-3xl">
-                                                {user.role.toLowerCase()}
-                                        </span>
-                                </div>
-
-                                <ButtonPrimary
-                                        text={UI_TEXT.sidebar.logout}
-                                        variant="primary"
-                                        fullWidth={true}
-                                        onClick={logout}
+                        {/* Overlay — only visible on mobile when sidebar is open */}
+                        {isOpen && (
+                                <div
+                                        className="sidebar-overlay"
+                                        onClick={() => setIsOpen(false)}
+                                        aria-hidden="true"
                                 />
-                        </div>
-                </aside>
+                        )}
+
+                        <aside className={`sidebar ${isOpen ? "sidebar--open" : ""}`}>
+                                <Logo />
+                                <Separator />
+                                <nav className="sidebar-nav">
+                                        {links.map((link) => {
+                                                const isActive = pathname === link.href;
+                                                const Icon = link.icon;
+                                                return (
+                                                        <Link
+                                                                key={link.href}
+                                                                href={link.href}
+                                                                className={`sidebar-link ${isActive ? "active" : ""}`}
+                                                        >
+                                                                {Icon && (
+                                                                        <Icon
+                                                                                size={20}
+                                                                                className="sidebar-link-icon"
+                                                                        />
+                                                                )}
+                                                                <span className="sidebar-link-label">
+                                                                        {link.label}
+                                                                </span>
+                                                        </Link>
+                                                );
+                                        })}
+                                </nav>
+                                <div className="sidebar-footer">
+                                        <div className="sidebar-user-info">
+                                                <p className="sidebar-user-email">
+                                                        {user.email}
+                                                </p>
+                                                <span className="sidebar-user-role text-3xl">
+                                                        {user.role.toLowerCase()}
+                                                </span>
+                                        </div>
+                                        <ButtonPrimary
+                                                text={UI_TEXT.sidebar.logout}
+                                                variant="primary"
+                                                fullWidth={true}
+                                                onClick={logout}
+                                        />
+                                </div>
+                        </aside>
+                </>
         );
 }

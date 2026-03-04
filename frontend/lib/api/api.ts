@@ -2,14 +2,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { logger } from "../logger";
-import { DocumentRequest, UserRole } from "@/types";
-
-interface APIResponse {
-        success: boolean;
-        message: string;
-        error?: string;
-        data?: any;
-}
+import { APIResponse, DocumentRequest, UserRole } from "@/types";
 
 interface HTTPOptions {
         method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -144,18 +137,187 @@ export async function sendEmail(requestId: number): Promise<APIResponse> {
 }
 
 export async function closeRequest(requestID: number): Promise<APIResponse> {
-        return doclaneHTTPHelper(`/document-requests/${requestID}/deactivate`, {
+        return doclaneHTTPHelper(`/document-requests/${requestID}/archive`, {
                 method: "POST",
+                revalidate: "/dashboard",
         });
 }
 
-export async function createDocumentRequest(payload: object): Promise<APIResponse> {
+export async function archiveTemplate(id: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/templates/${id}/archive`, {
+                method: "POST",
+                revalidate: "/dashboard/templates",
+        });
+}
+
+export async function unarchiveTemplate(id: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/templates/${id}/unarchive`, {
+                method: "POST",
+                revalidate: "/dashboard/templates",
+        });
+}
+
+export async function createDocumentRequest(payload: {
+        title: string;
+        description?: string;
+        client_id: number;
+        is_recurring?: boolean;
+        recurrence_cron?: string;
+        is_scheduled?: boolean;
+        scheduled_for?: string;
+        due_date?: string;
+        expected_documents: Array<{
+                title: string;
+                description: string;
+                exampleFile?: File;
+                exampleFileName?: string;
+                ExampleMimeType?: string;
+        }>;
+}): Promise<APIResponse> {
+        const hasExamples = payload.expected_documents.some((ed) => ed.exampleFile);
+
+        if (hasExamples) {
+                const formData = new FormData();
+                formData.append("title", payload.title);
+                if (payload.description) formData.append("description", payload.description);
+                formData.append("client_id", payload.client_id.toString());
+                if (payload.is_recurring) formData.append("is_recurring", "true");
+                if (payload.recurrence_cron)
+                        formData.append("recurrence_cron", payload.recurrence_cron);
+                if (payload.is_scheduled) formData.append("is_scheduled", "true");
+                if (payload.scheduled_for)
+                        formData.append("scheduled_for", payload.scheduled_for);
+                if (payload.due_date) formData.append("due_date", payload.due_date);
+
+                payload.expected_documents.forEach((ed, i) => {
+                        formData.append(`expected_documents[${i}][title]`, ed.title);
+                        formData.append(
+                                `expected_documents[${i}][description]`,
+                                ed.description,
+                        );
+                        if (ed.exampleFile) {
+                                formData.append(
+                                        `expected_documents[${i}][example_file]`,
+                                        ed.exampleFile,
+                                );
+                        }
+                });
+
+                return doclaneHTTPHelper("/document-requests", {
+                        method: "POST",
+                        formData,
+                        revalidate: "/dashboard/requests",
+                });
+        }
+
         return doclaneHTTPHelper("/document-requests", {
                 method: "POST",
                 body: payload,
                 revalidate: "/dashboard/requests",
         });
 }
+
+export async function login(email: string, password: string) {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/login`, {
+                method: "POST",
+                headers: {
+                        "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ email, password }),
+        });
+
+        return res.json();
+}
+
+export async function presignExampleURL(expectedDocID: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(
+                `/document-requests/expected-documents/${expectedDocID}/presign-example`,
+                { method: "GET" },
+        );
+}
+
+export async function presignTemplateExample(
+        templateID: number,
+        docID: number,
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(
+                `/templates/${templateID}/expected-documents/${docID}/presign-example`,
+                { method: "GET" },
+        );
+}
+
+export async function getDocumentRequestTemplateByID(id: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/templates/${id}`, { method: "GET" });
+}
+
+export async function getClientsByProfessional(): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/users/my-clients`, { method: "GET" });
+}
+
+// const loginPromise = fetch("/api/backend/auth/login", {
+//                         method: "POST",
+//                         credentials: "include",
+//                         headers: {
+//                                 "Content-Type": "application/json",
+//                         },
+//                         body: JSON.stringify({ email, password }),
+//                 }).then(async (res) => {
+//                         if (!res.ok) {
+//                                 const errorData = await res.json();
+//                                 throw new Error(errorData.error || "Login failed");
+//                         }
+//                         return res.json();
+//                 });
+
+//                 toast.promise(loginPromise, {
+//                         loading: "Logging in...",
+//                         success: "Login successful!",
+//                         error: (err) => `Login failed: ${err.message}`,
+//                 });
+
+//                 loginPromise.then((_) => {
+//                         router.push("/dashboard");
+//                 });
+
+export async function signUpClient(
+        email: string,
+        password: string,
+        invitationCode: string,
+        firstName: string,
+        lastName: string,
+) {
+        return doclaneHTTPHelper("/auth/register/client", {
+                method: "POST",
+                body: {
+                        email,
+                        password,
+                        invitationCode,
+                        firstName,
+                        lastName,
+                },
+        });
+}
+
+// fetch("/api/backend/auth/register/client", {
+//                         method: "POST",
+//                         credentials: "include",
+//                         headers: {
+//                                 "Content-Type": "application/json",
+//                         },
+//                         body: JSON.stringify({
+//                                 email,
+//                                 password,
+//                                 invitation_code: invitationCode,
+//                                 first_name: firstName,
+//                                 last_name: lastName,
+//                         }),
+//                 }).then(async (res) => {
+//                         if (!res.ok) {
+//                                 const errorData = await res.json();
+//                                 throw new Error(errorData.error || "Sign up failed");
+//                         }
+//                         return res.json();
+//                 });
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
@@ -187,5 +349,101 @@ export async function uploadDocument(
                 method: "POST",
                 formData,
                 revalidate: `/dashboard/requests/${requestId}`,
+        });
+}
+
+export async function updateExpectedDocumentStatus(
+        expectedDocumentId: number,
+        status: "approved" | "rejected" | "uploaded" | "pending",
+        requestId: string,
+        rejectionReason?: string,
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(
+                `/document-requests/expected-documents/${expectedDocumentId}/status`,
+                {
+                        method: "PATCH",
+                        body: {
+                                status,
+                                ...(rejectionReason && { rejection_reason: rejectionReason }),
+                        },
+                        revalidate: `/dashboard/requests/${requestId}`,
+                },
+        );
+}
+
+export async function getTemplates(): Promise<APIResponse> {
+        return doclaneHTTPHelper("/templates", {
+                method: "GET",
+        });
+}
+
+export async function getTemplateByID(templateID: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/templates/${templateID}`, {
+                method: "GET",
+        });
+}
+
+export async function createTemplate(payload: object): Promise<APIResponse> {
+        return doclaneHTTPHelper("/templates", {
+                method: "POST",
+                body: payload,
+                revalidate: "/dashboard/templates",
+        });
+}
+
+export async function addExpectedDocumentTemplate(
+        templateID: number,
+        title: string,
+        description: string,
+        exampleFile?: File,
+): Promise<APIResponse> {
+        const formData = new FormData();
+        formData.append("title", title);
+        formData.append("description", description);
+        if (exampleFile) {
+                formData.append("example_file", exampleFile);
+        }
+
+        return doclaneHTTPHelper(`/templates/${templateID}/expected-documents`, {
+                method: "POST",
+                formData,
+                revalidate: `/dashboard/templates/${templateID}`,
+        });
+}
+
+export async function getExpectedDocumentTemplatesByTemplate(
+        templateID: number,
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/templates/${templateID}/expected-documents`, {
+                method: "GET",
+        });
+}
+
+export async function deleteExpectedDocumentTemplate(
+        templateID: number,
+        expectedDocTemplateID: number,
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(
+                `/templates/${templateID}/expected-documents/${expectedDocTemplateID}`,
+                {
+                        method: "DELETE",
+                        revalidate: `/dashboard/templates/${templateID}`,
+                },
+        );
+}
+
+export async function instantiateTemplate(
+        templateID: number,
+        payload: {
+                client_id: number;
+                is_scheduled: boolean;
+                scheduled_for?: string;
+                due_date?: string;
+        },
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/templates/${templateID}/instantiate`, {
+                method: "POST",
+                body: payload,
+                revalidate: "/dashboard/requests",
         });
 }

@@ -11,12 +11,14 @@ const ProfessionalHeader: React.FC<ProfessionalHeaderProps> = ({ user, length })
         return (
                 <header className="professional-header">
                         <h1 className="overview-h1">
-                                {UI_TEXT.dashboard.professional.header(
+                                {UI_TEXT.dashboard.professional.headerDocumentRequests(
                                         `${user.first_name} ${user.last_name}`,
                                 )}
                         </h1>
                         <p className="overview-p">
-                                {UI_TEXT.dashboard.professional.subheader(length)}
+                                {UI_TEXT.dashboard.professional.subheaderDocumentRequests(
+                                        length,
+                                )}
                         </p>
                 </header>
         );

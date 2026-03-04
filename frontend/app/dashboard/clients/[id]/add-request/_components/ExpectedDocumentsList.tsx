@@ -3,13 +3,14 @@ import { useState } from "react";
 import Input from "@/components/InputComponents/Input";
 import TextArea from "@/components/InputComponents/TextArea";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import { MdAdd, MdClose } from "react-icons/md";
+import { MdAdd, MdClose, MdUploadFile } from "react-icons/md";
 import "./ExpectedDocumentsList.css";
 import { UI_TEXT } from "@/locales/ro";
 
 export interface ExpectedDocumentInput {
         title: string;
         description: string;
+        exampleFile?: File;
 }
 
 interface ExpectedDocumentsListProps {
@@ -36,6 +37,13 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
         ) => {
                 const updated = documents.map((doc, i) =>
                         i === index ? { ...doc, [field]: value } : doc,
+                );
+                onChange(updated);
+        };
+
+        const handleExampleFileChange = (index: number, file: File | undefined) => {
+                const updated = documents.map((doc, i) =>
+                        i === index ? { ...doc, exampleFile: file } : doc,
                 );
                 onChange(updated);
         };
@@ -113,6 +121,63 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                                                 minHeight={200}
                                                 maxHeight={200}
                                         />
+                                        <div className="expected-document-example">
+                                                <label className="expected-document-example-label">
+                                                        {
+                                                                UI_TEXT.request.createForm
+                                                                        .exampleFile
+                                                        }{" "}
+                                                        (optional)
+                                                </label>
+                                                {doc.exampleFile ? (
+                                                        <div className="expected-document-example-preview">
+                                                                <span className="expected-document-example-name">
+                                                                        {doc.exampleFile.name}
+                                                                </span>
+                                                                <button
+                                                                        type="button"
+                                                                        className="expected-document-remove"
+                                                                        onClick={() =>
+                                                                                handleExampleFileChange(
+                                                                                        index,
+                                                                                        undefined,
+                                                                                )
+                                                                        }
+                                                                >
+                                                                        <MdClose />
+                                                                </button>
+                                                        </div>
+                                                ) : (
+                                                        <label className="expected-document-example-upload">
+                                                                <MdUploadFile />
+                                                                <span>
+                                                                        {
+                                                                                UI_TEXT.request
+                                                                                        .createForm
+                                                                                        .uploadExample
+                                                                        }
+                                                                </span>
+                                                                <input
+                                                                        type="file"
+                                                                        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+                                                                        style={{
+                                                                                display: "none",
+                                                                        }}
+                                                                        onChange={(e) => {
+                                                                                const file =
+                                                                                        e
+                                                                                                .target
+                                                                                                .files?.[0];
+                                                                                if (file)
+                                                                                        handleExampleFileChange(
+                                                                                                index,
+                                                                                                file,
+                                                                                        );
+                                                                        }}
+                                                                />
+                                                        </label>
+                                                )}
+                                        </div>
                                 </div>
                         ))}
                 </div>

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import "./InvitationCodeGenerator.css";
-import { MdContentCopy, MdCheck, MdClose } from "react-icons/md";
+import { MdContentCopy, MdCheck, MdClose, MdAdd } from "react-icons/md";
 import { UI_TEXT } from "@/locales/ro";
 
 const InvitationCodeGenerator = () => {
@@ -65,6 +65,7 @@ const InvitationCodeGenerator = () => {
                 <>
                         <ButtonPrimary
                                 text={UI_TEXT.buttons.addClient.normal}
+                                icon={MdAdd}
                                 onClick={() => setIsModalOpen(true)}
                         />
 

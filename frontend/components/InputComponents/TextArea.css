@@ -40,3 +40,8 @@ textarea:focus {
     background: transparent;
     height: 100%;
 }
+
+.textarea-wrapper--full-width,
+.textarea-wrapper--full-width textarea {
+  width: 100%;
+}

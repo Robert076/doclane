@@ -7,6 +7,7 @@ interface TextAreaProps {
         placeholder?: string;
         minHeight?: number;
         maxHeight?: number;
+        fullWidth?: boolean;
 }
 
 const TextArea: React.FC<TextAreaProps> = ({
@@ -16,9 +17,12 @@ const TextArea: React.FC<TextAreaProps> = ({
         placeholder,
         minHeight,
         maxHeight,
+        fullWidth,
 }) => {
         return (
-                <div className="textarea-wrapper">
+                <div
+                        className={`textarea-wrapper${fullWidth ? " textarea-wrapper--full-width" : ""}`}
+                >
                         {label && <label>{label}</label>}
                         <textarea
                                 value={value}

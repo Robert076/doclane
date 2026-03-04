@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { DocumentRequest, User } from "@/types";
-import Request from "@/components/RequestComponents/RequestCard/RequestCard";
+import Request from "@/components/CardComponents/RequestCard/RequestCard";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import PaginationFooter from "@/components/ClientComponents/ClientsSection/_components/PaginationFooter";
@@ -20,6 +20,7 @@ const RequestsSection: React.FC<RequestsSectionProps> = ({ requests, user }) => 
         const [searchInput, setSearchInput] = useState<string>("");
 
         const filteredRequests = requests.filter((req) => {
+                if (req.is_closed) return false;
                 if (!searchInput) return true;
                 const searchLower = searchInput.toLowerCase().trim();
 

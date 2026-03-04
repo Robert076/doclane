@@ -1,0 +1,8 @@
+.button-group .button{
+    margin-top: 20px;
+}
+
+.radio-inputs-time {
+    display: flex;
+    gap: 20px;
+}

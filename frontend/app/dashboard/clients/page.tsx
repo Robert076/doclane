@@ -3,7 +3,7 @@ import "./style.css";
 import InvitationCodeGenerator from "@/components/ClientComponents/Invitation/InvitationCodeGenerator/InvitationCodeGenerator";
 import InvitationCodesModal from "@/components/ClientComponents/Invitation/InvitationCodesModal/InvitationCodesModal";
 import ClientsSection from "@/components/ClientComponents/ClientsSection/ClientsSection";
-import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
+import { UI_TEXT } from "@/locales/ro";
 
 export default async function ClientsPage() {
         const clients = await getMyClients();
@@ -12,9 +12,14 @@ export default async function ClientsPage() {
                 <div className="clients-container">
                         <header className="clients-header">
                                 <div>
-                                        <h1 className="overview-h1">Clients</h1>
+                                        <h1 className="overview-h1">
+                                                {UI_TEXT.dashboard.professional.headerClients}
+                                        </h1>
                                         <p className="overview-p">
-                                                Manage and view your assigned clients.
+                                                {
+                                                        UI_TEXT.dashboard.professional
+                                                                .subheaderClients
+                                                }
                                         </p>
                                 </div>
                                 <div className="header-actions">

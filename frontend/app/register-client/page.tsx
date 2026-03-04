@@ -3,6 +3,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import RegisterClientForm from "@/components/AuthComponents/RegisterForm/RegisterClientForm";
+import { signUpClient } from "@/lib/api/api";
 
 const LoginPage = () => {
         const [email, setEmail] = useState("");
@@ -13,36 +14,23 @@ const LoginPage = () => {
         const router = useRouter();
 
         const handleRegister = async () => {
-                const registerPromise = fetch("/api/backend/auth/register/client", {
-                        method: "POST",
-                        credentials: "include",
-                        headers: {
-                                "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({
-                                email,
-                                password,
-                                invitation_code: invitationCode,
-                                first_name: firstName,
-                                last_name: lastName,
-                        }),
-                }).then(async (res) => {
-                        if (!res.ok) {
-                                const errorData = await res.json();
-                                throw new Error(errorData.error || "Sign up failed");
-                        }
-                        return res.json();
-                });
+                const loadingToastID = toast.loading("Signing up...");
 
-                toast.promise(registerPromise, {
-                        loading: "Signing up...",
-                        success: "Sign up successful!",
-                        error: (err) => `Sign up failed: ${err.message}`,
-                });
+                const response = await signUpClient(
+                        email,
+                        password,
+                        invitationCode,
+                        firstName,
+                        lastName,
+                );
 
-                registerPromise.then((_) => {
-                        router.push("/login");
-                });
+                toast.dismiss(loadingToastID);
+                if (response.success) {
+                        toast.success("Signed up successfully!");
+                        router.push("/dashboard");
+                } else {
+                        toast.error("Failed to sign up: " + response.message);
+                }
         };
 
         return (

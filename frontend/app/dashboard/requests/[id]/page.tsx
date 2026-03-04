@@ -5,7 +5,6 @@ import FileSection from "@/components/FileSectionComponents/FileSection/FileSect
 import DetailsHeader from "./_components/DetailsHeader/DetailsHeader";
 import DetailsCard from "./_components/DetailsCard/DetailsCard";
 import DetailCardsActionSidebar from "./_components/DetailCardsActionSidebar/DetailCardsActionSidebar";
-import "./style.css";
 import { getDocumentRequestById } from "@/lib/api/api";
 
 interface PageProps {

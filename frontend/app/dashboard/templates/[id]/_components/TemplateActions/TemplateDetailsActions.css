@@ -1,0 +1,13 @@
+.template-actions {
+  background: white;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  padding: var(--padding-details-card);
+  box-shadow: var(--box-shadow-default);
+}
+
+.template-actions .template-actions-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

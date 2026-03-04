@@ -1,3 +1,10 @@
+export interface APIResponse {
+        success: boolean;
+        message: string;
+        error?: string;
+        data?: any;
+}
+
 export interface User {
         id: string;
         email: string;
@@ -20,12 +27,39 @@ export interface DocumentRequest {
         title: string;
         description?: string | null;
         due_date?: string | null;
+        is_recurring: boolean;
+        recurrence_cron?: string | null;
         is_scheduled: boolean;
         scheduled_for?: string | null;
         next_due_at?: string | null;
+        last_uploaded_at?: string | null;
+        is_closed: boolean;
+        template_id?: number | null;
         status: RequestStatus;
         created_at: string;
         updated_at: string;
+        expected_documents: ExpectedDocument[];
+}
+
+export interface DocumentRequestTemplate {
+        id: number;
+        title: string;
+        description?: string | null;
+        is_recurring: boolean;
+        recurrence_cron?: string | null;
+        created_by: number;
+        created_at: string;
+        updated_at: string;
+        is_closed: boolean;
+}
+
+export interface ExpectedDocumentTemplate {
+        id: number;
+        document_request_template_id: number;
+        title: string;
+        description: string;
+        example_file_path?: string | null;
+        example_mime_type?: string | null;
 }
 
 export interface DocumentFile {
@@ -48,7 +82,10 @@ export interface ExpectedDocument {
         document_request_id: number;
         title: string;
         description: string;
-        is_uploaded: boolean;
+        status: ExpectedDocumentStatus;
+        rejection_reason: string;
+        example_file_path?: string | null;
+        example_mime_type?: string | null;
 }
 
 export type RequestStatus = "pending" | "uploaded" | "overdue";
@@ -61,4 +98,6 @@ export interface ApiResponse<T> {
 
 export const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];
 
-type RecurrenceUnit = "day" | "week" | "month" | "year";
+export type RecurrenceUnit = "day" | "week" | "month" | "year";
+
+export type ExpectedDocumentStatus = "approved" | "rejected" | "uploaded" | "pending";
