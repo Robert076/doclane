@@ -82,7 +82,7 @@ func ComputeStatus(lastUploadedAt *time.Time, nextDueAt *time.Time, expectedDocs
 
 	allUploaded := len(expectedDocs) > 0 && func() bool {
 		for _, ed := range expectedDocs {
-			if !ed.IsUploaded {
+			if ed.Status != "uploaded" || ed.Status != "accepted" {
 				return false
 			}
 		}
@@ -122,9 +122,33 @@ func generateS3Key(fileName string, requestID int) string {
 	return s3Key
 }
 
+func generateExampleS3Key(fileName string) string {
+	cleanFileName := filepath.Base(fileName)
+	uniqueID := uuid.New().String()
+	return fmt.Sprintf("examples/%s-%s", uniqueID, cleanFileName)
+}
+
 func ValidatePatchDTO(dto models.DocumentRequestDTOPatch) error {
 	if len(dto.Title) < 3 || len(dto.Title) > 30 {
 		return errors.ErrBadRequest{Msg: "New title is too short or too long. Minimum 3 characters, maximum 30 characters."}
+	}
+
+	return nil
+}
+
+func ValidateTemplateInput(template models.DocumentRequestTemplate) error {
+	if len(template.Title) < 3 || len(template.Title) > 30 {
+		return errors.ErrBadRequest{Msg: "Title must be between 3 and 30 characters."}
+	}
+
+	if template.IsRecurring && (template.RecurrenceCron == nil || *template.RecurrenceCron == "") {
+		return errors.ErrUnprocessableContent{Msg: "A template marked as recurring must have a recurrence_cron field."}
+	}
+
+	if template.RecurrenceCron != nil && *template.RecurrenceCron != "" {
+		if _, err := cron.ParseStandard(*template.RecurrenceCron); err != nil {
+			return errors.ErrBadRequest{Msg: "Invalid recurrence_cron format."}
+		}
 	}
 
 	return nil

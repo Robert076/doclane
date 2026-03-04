@@ -22,6 +22,7 @@ type DocumentRequest struct {
 	ProfessionalID int       `db:"professional_id" json:"professional_id"`
 	CreatedAt      time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt      time.Time `db:"updated_at" json:"updated_at"`
+	TemplateID     *int      `db:"template_id" json:"template_id"`
 }
 
 type DocumentRequestDTORead struct {
@@ -30,11 +31,6 @@ type DocumentRequestDTORead struct {
 	ClientFirstName   string             `json:"client_first_name"`
 	ClientLastName    string             `json:"client_last_name"`
 	Status            string             `json:"status"`
-	ExpectedDocuments []ExpectedDocument `json:"expected_documents"`
-}
-
-type DocumentRequestDTOCreate struct {
-	DocumentRequestBase
 	ExpectedDocuments []ExpectedDocument `json:"expected_documents"`
 }
 
@@ -64,4 +60,9 @@ type DocumentFileDTORead struct {
 type DocumentFileDTOExtended struct {
 	DocumentFile
 	AuthorRole string
+}
+
+type DocumentRequestDTOCreate struct {
+	DocumentRequestBase
+	ExpectedDocuments []ExpectedDocumentInput
 }

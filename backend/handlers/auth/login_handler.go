@@ -43,6 +43,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		SameSite: http.SameSiteLaxMode,
 		Secure:   false,
+		HttpOnly: true,
 		Expires:  time.Now().Add(time.Hour * 24),
 	})
 

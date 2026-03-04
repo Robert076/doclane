@@ -3,20 +3,24 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/Robert076/doclane/backend/handlers/auth"
 	auth_middleware "github.com/Robert076/doclane/backend/handlers/auth/middleware"
 	document_handler "github.com/Robert076/doclane/backend/handlers/documents"
 	invitation_handler "github.com/Robert076/doclane/backend/handlers/invitation"
+	template_handler "github.com/Robert076/doclane/backend/handlers/templates"
 	user_handler "github.com/Robert076/doclane/backend/handlers/users"
+	"github.com/aws/aws-lambda-go/lambda"
+	chiadapter "github.com/awslabs/aws-lambda-go-api-proxy/chi"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/cors"
 )
 
-func main() {
-	r := chi.NewRouter() // hello world ci
+func buildRouter() http.Handler {
+	r := chi.NewRouter()
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:3000"},
@@ -24,7 +28,6 @@ func main() {
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
 	})
-	handler := corsHandler.Handler(r)
 
 	r.Use(middleware.RequestID)
 	r.Use(middleware.RealIP)
@@ -65,15 +68,37 @@ func main() {
 			r.Post("/", document_handler.AddDocumentRequestHandler)
 			r.Get("/professional/my-requests", document_handler.GetDocumentRequestsByProfessionalHandler)
 			r.Get("/client/my-requests", document_handler.GetDocumentRequestsByClientHandler)
+			r.Patch("/expected-documents/{id}/status", document_handler.PatchExpectedDocumentStatusHandler)
+			r.Get("/expected-documents/{id}/presign-example", document_handler.GetExamplePresignedURLHandler)
+
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", document_handler.GetDocumentRequestByIDHandler)
 				r.Patch("/", document_handler.PatchDocumentRequestHandler)
-				r.Post("/deactivate", document_handler.CloseDocumentRequestHandler)
+				r.Post("/archive", document_handler.CloseDocumentRequestHandler)
+
 				r.Route("/files", func(r chi.Router) {
 					r.Get("/", document_handler.GetFilesByRequestHandler)
 					r.Post("/", document_handler.AddDocumentHandler)
 					r.Get("/{fileId}/presign", document_handler.GetFilePresignedURLHandler)
 				})
+			})
+
+		})
+
+		r.Route("/templates", func(r chi.Router) {
+			r.Post("/", template_handler.AddTemplateHandler)
+			r.Get("/", template_handler.GetTemplatesByProfessionalHandler)
+			r.Route("/{id}", func(r chi.Router) {
+				r.Get("/", template_handler.GetTemplateByIDHandler)
+				r.Post("/instantiate", template_handler.InstantiateTemplateHandler)
+				r.Route("/expected-documents", func(r chi.Router) {
+					r.Get("/", template_handler.GetExpectedDocumentTemplatesByTemplateIDHandler)
+					r.Post("/", template_handler.AddExpectedDocumentTemplateHandler)
+					r.Delete("/{expectedDocId}", template_handler.DeleteExpectedDocumentTemplateHandler)
+					r.Get("/{expectedDocId}/presign-example", template_handler.PresignExampleHandler)
+				})
+				r.Post("/archive", template_handler.CloseTemplateHandler)
+				r.Post("/unarchive", template_handler.ReopenTemplateHandler)
 			})
 		})
 
@@ -84,7 +109,16 @@ func main() {
 		})
 	})
 
-	if err := http.ListenAndServe(":8080", handler); err != nil {
-		log.Fatal(err)
+	return corsHandler.Handler(r)
+}
+
+func main() {
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
+		adapter := chiadapter.New(buildRouter().(*chi.Mux))
+		lambda.Start(adapter.ProxyWithContext)
+	} else {
+		if err := http.ListenAndServe(":8080", buildRouter()); err != nil {
+			log.Fatal(err)
+		}
 	}
 }

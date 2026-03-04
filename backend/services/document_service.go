@@ -11,6 +11,7 @@ import (
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
+	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 )
 
@@ -84,29 +85,22 @@ func (service *DocumentService) AddDocumentRequest(
 		UpdatedAt: time.Now(),
 	}
 
-	var id int
-	err = service.txManager.WithTx(ctx, func(tx *sql.Tx) error {
-		var txErr error
-		id, txErr = service.documentRepo.AddDocumentRequestWithTx(ctx, req, tx)
-		if txErr != nil {
-			return txErr
-		}
+	uploadedExamples, err := service.getUploadedExamples(ctx, dto)
+	if err != nil {
+		return 0, err
+	}
 
-		for _, ed := range dto.ExpectedDocuments {
-			ed.DocumentRequestID = id
-			ed.IsUploaded = false
-			if txErr = service.expectedDocRepo.AddExpectedDocumentToRequestWithTx(ctx, tx, ed); txErr != nil {
-				return txErr
-			}
-		}
-		return nil
-	})
+	expectedDocs := getExpectedDocuments(dto, uploadedExamples)
+
+	id, err := service.createDocumentRequestTransaction(ctx, req, expectedDocs)
 	if err != nil {
 		service.logger.Error("failed to create document request",
 			slog.Any("error", err),
 			slog.Int("professional_id", jwtUserId),
 			slog.Int("client_id", dto.ClientID),
 		)
+
+		service.removeUploadedExamples(uploadedExamples)
 		return 0, err
 	}
 
@@ -115,6 +109,102 @@ func (service *DocumentService) AddDocumentRequest(
 		slog.Int("expected_documents", len(dto.ExpectedDocuments)),
 	)
 	return id, nil
+}
+
+func (service *DocumentService) getUploadedExamples(ctx context.Context, dto models.DocumentRequestDTOCreate) ([]types.UploadedExample, error) {
+	uploadedExamples := make([]types.UploadedExample, 0)
+
+	for i, ed := range dto.ExpectedDocuments {
+		if ed.ExampleFile == nil {
+			continue
+		}
+
+		if err := ValidateFileInfo(ed.ExampleFileName, ed.ExampleFileSize); err != nil {
+			for _, uploaded := range uploadedExamples {
+				cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				service.fileStorage.DeleteFile(cleanupCtx, uploaded.S3Key, uploaded.S3VersionID)
+				cancel()
+			}
+			return nil, err
+		}
+
+		s3Key := generateExampleS3Key(ed.ExampleFileName)
+		result, err := service.fileStorage.UploadFile(ctx, s3Key, ed.ExampleFile, ed.ExampleMimeType)
+		if err != nil {
+			service.logger.Error("s3 upload failed for example file",
+				slog.String("key", s3Key),
+				slog.Any("error", err),
+			)
+
+			for _, uploaded := range uploadedExamples {
+				cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				service.fileStorage.DeleteFile(cleanupCtx, uploaded.S3Key, uploaded.S3VersionID)
+				cancel()
+			}
+			return nil, errors.ErrBadGateway{Msg: fmt.Sprintf("Failed to upload example file to S3. %v", err)}
+		}
+
+		uploadedExamples = append(uploadedExamples, types.UploadedExample{
+			Index:       i,
+			S3Key:       s3Key,
+			S3VersionID: result.VersionId,
+			MimeType:    ed.ExampleMimeType,
+		})
+	}
+
+	return uploadedExamples, nil
+}
+
+func getExpectedDocuments(dto models.DocumentRequestDTOCreate, uploadedExamples []types.UploadedExample) []models.ExpectedDocument {
+	expectedDocs := make([]models.ExpectedDocument, len(dto.ExpectedDocuments))
+	for i, ed := range dto.ExpectedDocuments {
+		expectedDocs[i] = models.ExpectedDocument{
+			Title:       ed.Title,
+			Description: ed.Description,
+			Status:      "pending",
+		}
+	}
+	for _, uploaded := range uploadedExamples {
+		expectedDocs[uploaded.Index].ExampleFilePath = &uploaded.S3Key
+		expectedDocs[uploaded.Index].ExampleMimeType = &uploaded.MimeType
+	}
+
+	return expectedDocs
+}
+
+func (service *DocumentService) createDocumentRequestTransaction(ctx context.Context, req models.DocumentRequest, expectedDocs []models.ExpectedDocument) (int, error) {
+	var id int
+	err := service.txManager.WithTx(ctx, func(tx *sql.Tx) error {
+		var txErr error
+		id, txErr = service.documentRepo.AddDocumentRequestWithTx(ctx, req, tx)
+		if txErr != nil {
+			return txErr
+		}
+
+		for _, ed := range expectedDocs {
+			ed.DocumentRequestID = id
+			if txErr = service.expectedDocRepo.AddExpectedDocumentToRequestWithTx(ctx, tx, ed); txErr != nil {
+				return txErr
+			}
+		}
+		return nil
+	})
+
+	return id, err
+}
+
+func (service *DocumentService) removeUploadedExamples(uploadedExamples []types.UploadedExample) {
+	for _, uploaded := range uploadedExamples {
+		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		cleanupErr := service.fileStorage.DeleteFile(cleanupCtx, uploaded.S3Key, uploaded.S3VersionID)
+		cancel()
+		if cleanupErr != nil {
+			service.logger.Error("failed to cleanup example file after transaction failure",
+				slog.String("key", uploaded.S3Key),
+				slog.Any("error", cleanupErr),
+			)
+		}
+	}
 }
 
 func (service *DocumentService) GetDocumentRequestByID(
@@ -363,7 +453,7 @@ func (service *DocumentService) AddDocumentFile(
 	if uploadedFile.AuthorRole == "CLIENT" {
 		service.documentRepo.SetFileUploaded(ctx, requestID)
 		if expectedDocID != 0 {
-			service.expectedDocRepo.MarkAsUploaded(ctx, expectedDocID)
+			service.expectedDocRepo.UpdateExpectedDocumentStatus(ctx, expectedDocID, "uploaded", nil)
 		}
 	}
 
@@ -421,6 +511,40 @@ func (service *DocumentService) GetFilePresignedURL(
 		service.logger.Error("s3 presign failed",
 			slog.Int("file_id", fileID),
 			slog.Any("error", err))
+		return "", err
+	}
+	return presignedURL, nil
+}
+
+func (service *DocumentService) GetExamplePresignedURL(
+	ctx context.Context,
+	jwtUserID int,
+	expectedDocID int,
+) (string, error) {
+	expectedDoc, err := service.expectedDocRepo.GetExpectedDocumentByID(ctx, expectedDocID)
+	if err != nil {
+		return "", errors.ErrNotFound{Msg: "Expected document not found."}
+	}
+
+	if expectedDoc.ExampleFilePath == nil {
+		return "", errors.ErrNotFound{Msg: "This document has no example file."}
+	}
+
+	docReq, err := service.documentRepo.GetDocumentRequestByID(ctx, expectedDoc.DocumentRequestID)
+	if err != nil {
+		return "", errors.ErrNotFound{Msg: "Document request not found."}
+	}
+
+	if docReq.ProfessionalID != jwtUserID && docReq.ClientID != jwtUserID {
+		return "", errors.ErrForbidden{Msg: "No access to this file."}
+	}
+
+	presignedURL, err := service.fileStorage.GeneratePresignedURL(ctx, *expectedDoc.ExampleFilePath, nil, 15*time.Minute)
+	if err != nil {
+		service.logger.Error("s3 presign failed for example file",
+			slog.Int("expected_doc_id", expectedDocID),
+			slog.Any("error", err),
+		)
 		return "", err
 	}
 	return presignedURL, nil

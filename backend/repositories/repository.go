@@ -36,6 +36,21 @@ type IDocumentRepository interface {
 	SetFileUploaded(ctx context.Context, id int) error
 }
 
+type IDocumentRequestTemplateRepository interface {
+	GetDocumentRequestTemplatesByProfessionalID(ctx context.Context, professionalID int) ([]models.DocumentRequestTemplate, error)
+	GetDocumentRequestTemplateByID(ctx context.Context, id int) (models.DocumentRequestTemplate, error)
+	AddDocumentRequestTemplate(ctx context.Context, tmp models.DocumentRequestTemplate) (int, error)
+	CloseDocumentRequestTemplate(ctx context.Context, id int) error
+	ReopenDocumentRequestTemplate(ctx context.Context, id int) error
+}
+
+type IExpectedDocumentTemplateRepository interface {
+	GetByTemplateID(ctx context.Context, templateID int) ([]models.ExpectedDocumentTemplate, error)
+	GetByDocumentID(ctx context.Context, id int) (models.ExpectedDocumentTemplate, error)
+	Add(ctx context.Context, t models.ExpectedDocumentTemplate) (int, error)
+	DeleteByID(ctx context.Context, id int) error
+}
+
 type IInvitationCodeRepository interface {
 	GetInvitationCodeByCode(ctx context.Context, code string) (models.InvitationCode, error)
 	GetInvitationCodeByID(ctx context.Context, id int) (models.InvitationCode, error)
@@ -47,10 +62,11 @@ type IInvitationCodeRepository interface {
 }
 
 type IExpectedDocumentRepository interface {
+	GetExpectedDocumentByID(ctx context.Context, id int) (models.ExpectedDocument, error)
 	GetExpectedDocumentsByRequest(ctx context.Context, requestId int) ([]models.ExpectedDocument, error)
 	AddExpectedDocumentToRequest(ctx context.Context, requestId int, expectedDocument models.ExpectedDocument) (int, error)
 	AddExpectedDocumentToRequestWithTx(ctx context.Context, tx *sql.Tx, ed models.ExpectedDocument) error
-	MarkAsUploaded(ctx context.Context, expectedDocumentID int) error
+	UpdateExpectedDocumentStatus(ctx context.Context, documentID int, status string, rejectionReason *string) error
 	DeleteExpectedDocumentFromRequest(ctx context.Context, requestId int, expectedDocumentId int) error
 }
 

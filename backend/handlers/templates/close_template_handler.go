@@ -1,38 +1,35 @@
-package document_handler
+package template_handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/config"
+	"github.com/go-chi/chi/v5"
 )
 
-func GetDocumentRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
+func CloseTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	q := r.URL.Query()
-	var searchPtr *string
-
-	// search
-	if s := q.Get("search"); s != "" {
-		searchPtr = &s
+	id := chi.URLParam(r, "id")
+	idInt, err := strconv.Atoi(id)
+	if err != nil {
+		utils.WriteError(w, errors.ErrUnprocessableContent{Msg: "Invalid ID received."})
 	}
 
-	reqs, err := config.DocumentService.GetDocumentRequestsByProfessional(r.Context(), jwtUserId, searchPtr)
-	if err != nil {
+	if err := config.DocumentRequestTemplateService.CloseTemplate(r.Context(), jwtUserId, idInt); err != nil {
 		utils.WriteError(w, err)
-		return
 	}
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Professional document requests retrieved successfully.",
-		Data:    reqs,
+		Msg:     "Template closed successfully.",
 	})
 }
