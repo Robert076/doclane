@@ -42,5 +42,5 @@ jobs:
                           run: |
                                   cd backend/cmd && \
                                   aws lambda update-function-code \
-                                    --function-name doclane-backend.zip \
-                                    --zip-file fileb://${{ secrets.ZIP_NAME }}
+                                    --function-name DoclaneBackend \
+                                    --zip-file fileb://doclane-backend.zip
