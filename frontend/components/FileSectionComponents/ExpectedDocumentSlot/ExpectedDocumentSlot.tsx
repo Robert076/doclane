@@ -4,7 +4,7 @@ import "./ExpectedDocumentSlot.css";
 import { DocumentFile, ExpectedDocument, RequestStatus } from "@/types";
 import FileItem from "../FileItem/FileItem";
 import PaginationFooter from "@/components/FileSectionComponents/FileSection/_components/PaginationFooter";
-import StatusBadge from "@/components/RequestComponents/StatusBadge/StatusBadge";
+import StatusBadge from "@/components/Pages/RequestsComponents/StatusBadge";
 import { useUser } from "@/context/UserContext";
 import { useDocumentStatus } from "./_hooks/useDocumentStatus";
 import DocumentSlotActions from "./_components/DocumentSlotActions";

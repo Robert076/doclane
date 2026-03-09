@@ -2,7 +2,14 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { logger } from "../logger";
-import { APIResponse, DocumentRequest, UserRole } from "@/types";
+import {
+        APIResponse,
+        DocumentRequest,
+        DocumentRequestTemplate,
+        ExpectedDocumentTemplate,
+        User,
+        UserRole,
+} from "@/types";
 
 interface HTTPOptions {
         method?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -13,10 +20,10 @@ interface HTTPOptions {
 
 const BACKEND_URL = process.env.BACKEND_URL!;
 
-export async function doclaneHTTPHelper(
+export async function doclaneHTTPHelper<T = unknown>(
         endpoint: string,
         options: HTTPOptions,
-): Promise<APIResponse> {
+): Promise<APIResponse<T>> {
         const { method = "GET", body, formData, revalidate } = options;
         const fetchUrl = `${BACKEND_URL}${endpoint}`;
 
@@ -98,19 +105,23 @@ export async function logout(): Promise<APIResponse> {
         };
 }
 
-export async function getDocumentRequests(role: UserRole): Promise<APIResponse> {
+export async function getDocumentRequests(
+        role: UserRole,
+): Promise<APIResponse<DocumentRequest[]>> {
         return doclaneHTTPHelper(`/document-requests/${role.toLowerCase()}/my-requests`, {
                 method: "GET",
         });
 }
 
-export async function getCurrentUser(): Promise<APIResponse> {
+export async function getCurrentUser(): Promise<APIResponse<User>> {
         return doclaneHTTPHelper("/users/me", {
                 method: "GET",
         });
 }
 
-export async function getDocumentRequestById(requestId: string): Promise<APIResponse> {
+export async function getDocumentRequestById(
+        requestId: string,
+): Promise<APIResponse<DocumentRequest>> {
         return doclaneHTTPHelper(`/document-requests/${requestId}`, {
                 method: "GET",
         });
@@ -124,11 +135,12 @@ export async function getUserById(userId: string): Promise<APIResponse> {
 
 export async function sendEmail(requestId: number): Promise<APIResponse> {
         const responseRequest = await getDocumentRequestById(requestId.toString());
-        if (responseRequest.success === false) {
+        if (responseRequest.success === false || !responseRequest.data) {
                 return responseRequest;
         }
 
-        const request: DocumentRequest = responseRequest.data;
+        const request = responseRequest.data;
+
         const response = await doclaneHTTPHelper(`/users/notify/${request.client_id}`, {
                 method: "POST",
         });
@@ -138,6 +150,13 @@ export async function sendEmail(requestId: number): Promise<APIResponse> {
 
 export async function closeRequest(requestID: number): Promise<APIResponse> {
         return doclaneHTTPHelper(`/document-requests/${requestID}/archive`, {
+                method: "POST",
+                revalidate: "/dashboard",
+        });
+}
+
+export async function reopenRequest(requestID: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/document-requests/${requestID}/unarchive`, {
                 method: "POST",
                 revalidate: "/dashboard",
         });
@@ -246,11 +265,13 @@ export async function presignTemplateExample(
         );
 }
 
-export async function getDocumentRequestTemplateByID(id: number): Promise<APIResponse> {
+export async function getDocumentRequestTemplateByID(
+        id: number,
+): Promise<APIResponse<DocumentRequestTemplate>> {
         return doclaneHTTPHelper(`/templates/${id}`, { method: "GET" });
 }
 
-export async function getClientsByProfessional(): Promise<APIResponse> {
+export async function getClientsByProfessional(): Promise<APIResponse<User[]>> {
         return doclaneHTTPHelper(`/users/my-clients`, { method: "GET" });
 }
 
@@ -371,7 +392,7 @@ export async function updateExpectedDocumentStatus(
         );
 }
 
-export async function getTemplates(): Promise<APIResponse> {
+export async function getTemplates(): Promise<APIResponse<DocumentRequestTemplate[]>> {
         return doclaneHTTPHelper("/templates", {
                 method: "GET",
         });
@@ -383,7 +404,7 @@ export async function getTemplateByID(templateID: number): Promise<APIResponse> 
         });
 }
 
-export async function createTemplate(payload: object): Promise<APIResponse> {
+export async function createTemplate(payload: object): Promise<APIResponse<number>> {
         return doclaneHTTPHelper("/templates", {
                 method: "POST",
                 body: payload,
@@ -413,7 +434,7 @@ export async function addExpectedDocumentTemplate(
 
 export async function getExpectedDocumentTemplatesByTemplate(
         templateID: number,
-): Promise<APIResponse> {
+): Promise<APIResponse<ExpectedDocumentTemplate[]>> {
         return doclaneHTTPHelper(`/templates/${templateID}/expected-documents`, {
                 method: "GET",
         });

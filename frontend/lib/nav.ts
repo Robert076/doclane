@@ -24,7 +24,7 @@ export interface NavItem {
 
 export const SIDEBAR_CONFIG: Record<string, NavItem[]> = {
         PROFESSIONAL: [
-                { label: "Dosare", href: "/dashboard", icon: MdDashboard },
+                { label: "Dosare", href: "/dashboard/requests", icon: MdDashboard },
                 {
                         label: "Dosare arhivate",
                         href: "/dashboard/archived-requests",

@@ -1,8 +1,8 @@
-export interface APIResponse {
+export interface APIResponse<T = unknown> {
         success: boolean;
         message: string;
         error?: string;
-        data?: any;
+        data?: T;
 }
 
 export interface User {

@@ -1,5 +1,11 @@
+import PageHeader from "@/components/PageHeader/PageHeader";
+
 const Settings = () => {
-  return <div>Settings</div>;
+        return (
+                <div>
+                        <PageHeader title="Setări" subtitle="Setările contului tău Doclane." />
+                </div>
+        );
 };
 
 export default Settings;

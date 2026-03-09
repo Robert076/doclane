@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import "./FileSection.css";
-import SectionTitle from "../../../app/dashboard/requests/[id]/_components/SectionTitle/SectionTitle";
+import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import { DocumentFile, ExpectedDocument } from "@/types";
 import ExpectedDocumentSlot from "../ExpectedDocumentSlot/ExpectedDocumentSlot";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";

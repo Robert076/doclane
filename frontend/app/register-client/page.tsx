@@ -27,7 +27,7 @@ const LoginPage = () => {
                 toast.dismiss(loadingToastID);
                 if (response.success) {
                         toast.success("Signed up successfully!");
-                        router.push("/dashboard");
+                        router.push("/dashboard/requests");
                 } else {
                         toast.error("Failed to sign up: " + response.message);
                 }

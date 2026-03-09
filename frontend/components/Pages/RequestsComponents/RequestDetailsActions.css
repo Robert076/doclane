@@ -1,0 +1,11 @@
+.action-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (max-width: 900px) {
+  .actions-sidebar {
+      order: -1; 
+  }
+}

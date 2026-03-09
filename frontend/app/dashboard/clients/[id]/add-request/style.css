@@ -3,3 +3,9 @@
   max-width: var(--request-details-width);
   margin: 0 auto;
 }
+
+
+.add-request-for-client p {
+        margin-top: 0.75rem;
+        color: var(--text-color-secondary);
+}

@@ -1,0 +1,25 @@
+.template-details-expected-documents {
+        background: white;
+        border: var(--border-default);
+        border-radius: var(--border-radius-default);
+        box-shadow: var(--box-shadow-default);
+        padding: var(--padding-l);
+}
+
+.template-expected-document {
+        border: var(--border-default);
+        border-radius: var(--border-radius-default);
+
+        display: flex;
+        justify-content: space-between;
+        padding: 0px 20px;
+        align-items: center;
+        margin-bottom: 15px;
+}
+
+.template-expected-document .view-button-template {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 25%;
+}

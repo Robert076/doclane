@@ -1,0 +1,33 @@
+.archived-templates {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.archived-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+  .requests-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .pagination {
+    gap: 0.25rem;
+  }
+
+  .pagination-btn {
+    min-width: 36px;
+    height: 36px;
+    font-size: 0.813rem;
+  }
+
+  .pagination-ellipsis {
+    min-width: 36px;
+    height: 36px;
+  }
+}

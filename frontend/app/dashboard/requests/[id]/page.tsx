@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 
 import getFilesByRequestId from "@/lib/getFilesByRequestId";
 import FileSection from "@/components/FileSectionComponents/FileSection/FileSection";
-import DetailsHeader from "./_components/DetailsHeader/DetailsHeader";
-import DetailsCard from "./_components/DetailsCard/DetailsCard";
-import DetailCardsActionSidebar from "./_components/DetailCardsActionSidebar/DetailCardsActionSidebar";
+import DetailsCard from "../../../../components/Pages/RequestsComponents/DetailsCard";
+import DetailCardsActionSidebar from "../../../../components/Pages/RequestsComponents/RequestDetailsActions";
 import { getDocumentRequestById } from "@/lib/api/api";
+import RequestDetailsHeader from "../../../../components/Pages/RequestsComponents/RequestDetailsHeader";
 
 interface PageProps {
         params: Promise<{ id: string }>;
@@ -28,7 +28,7 @@ export default async function RequestDetailsPage({ params }: PageProps) {
 
         return (
                 <div className="details-container">
-                        <DetailsHeader data={data} />
+                        <RequestDetailsHeader data={data} />
                         <div className="details-grid">
                                 <div className="main-content">
                                         <DetailsCard data={data} />

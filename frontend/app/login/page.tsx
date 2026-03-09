@@ -33,7 +33,7 @@ const LoginPage = () => {
                 });
 
                 loginPromise.then((_) => {
-                        router.push("/dashboard");
+                        router.push("/dashboard/requests");
                 });
         };
 

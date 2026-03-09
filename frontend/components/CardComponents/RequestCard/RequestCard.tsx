@@ -2,26 +2,26 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { DocumentRequest, RequestStatus, User } from "@/types";
-import StatusBadge from "../../RequestComponents/StatusBadge/StatusBadge";
+import StatusBadge from "../../Pages/RequestsComponents/StatusBadge";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import HighlightText from "../../OtherComponents/HighlightText/HighlightText";
-import RequestBodyProfessional from "../../RequestComponents/_components/RequestBodyProfessional";
-import RequestBodyClient from "../../RequestComponents/_components/RequestBodyClient";
 import { formatDate } from "@/lib/client/formatDate";
-import { closeRequest } from "@/lib/api/api";
-import toast from "react-hot-toast";
-import CloseRequestModal from "../../RequestComponents/_components/CloseRequestModal";
-import { UI_TEXT } from "@/locales/ro";
 import BaseDashboardCard from "@/components/CardComponents/BaseDashboardCard/BaseDashboardCard";
+import { useRequestActions } from "@/hooks/useRequestActions";
+import RequestBodyProfessional from "@/components/Pages/RequestsComponents/RequestBodyProfessional";
+import RequestBodyClient from "@/components/Pages/RequestsComponents/RequestBodyClient";
+import Modal from "@/components/Modals/Modal";
 
 interface RequestProps {
         request: DocumentRequest;
-        searchTerm?: string;
         user: User;
+        searchTerm?: string;
+        archived?: boolean;
 }
 
-const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
+export default function RequestCard({ request, searchTerm, user, archived }: RequestProps) {
         const router = useRouter();
+        const { closeReq, reopenReq } = useRequestActions(request.id);
         const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
         const isOverdue = request.status === "overdue";
@@ -29,21 +29,6 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
                 request.is_scheduled &&
                 request.scheduled_for &&
                 new Date(request.scheduled_for) > new Date();
-
-        const handleViewDetails = () => {
-                router.push(`/dashboard/requests/${request.id}`);
-        };
-
-        const handleCloseRequest = async () => {
-                toast.promise(closeRequest(request.id), {
-                        loading: "Closing request...",
-                        success: (response) => {
-                                if (!response.success) throw new Error(response.message);
-                                return response.message || "Request closed successfully";
-                        },
-                        error: (err) => err.message || "Something went wrong",
-                });
-        };
 
         return (
                 <>
@@ -58,9 +43,7 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
                                                 {isScheduledFuture && (
                                                         <span
                                                                 className="scheduled-badge"
-                                                                title={`Programată pentru ${formatDate(
-                                                                        request.scheduled_for!,
-                                                                )}`}
+                                                                title={`Programată pentru ${formatDate(request.scheduled_for!)}`}
                                                         >
                                                                 SCHEDULED
                                                         </span>
@@ -74,39 +57,25 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
                                         />
                                 }
                                 footer={
-                                        <>
-                                                <ButtonPrimary
-                                                        text={
-                                                                UI_TEXT.request.actions
-                                                                        .viewDetails
-                                                        }
-                                                        variant="ghost"
-                                                        fullWidth={true}
-                                                        onClick={handleViewDetails}
-                                                />
-                                                <ButtonPrimary
-                                                        text={
-                                                                UI_TEXT.request.actions
-                                                                        .closeRequest
-                                                        }
-                                                        variant="ghost"
-                                                        fullWidth={true}
-                                                        onClick={() =>
-                                                                setIsCloseModalOpen(true)
-                                                        }
-                                                />
-                                        </>
+                                        <RequestFooter
+                                                archived={archived}
+                                                onView={() =>
+                                                        router.push(
+                                                                `/dashboard/requests/${request.id}`,
+                                                        )
+                                                }
+                                                onClose={() => setIsCloseModalOpen(true)}
+                                                onReopen={reopenReq}
+                                        />
                                 }
                                 isHighlighted={isOverdue}
                         >
-                                {user.role === "PROFESSIONAL" && (
+                                {user.role === "PROFESSIONAL" ? (
                                         <RequestBodyProfessional
                                                 request={request}
                                                 searchTerm={searchTerm}
                                         />
-                                )}
-
-                                {user.role === "CLIENT" && (
+                                ) : (
                                         <RequestBodyClient
                                                 request={request}
                                                 searchTerm={searchTerm}
@@ -114,14 +83,72 @@ const Request: React.FC<RequestProps> = ({ request, searchTerm, user }) => {
                                 )}
                         </BaseDashboardCard>
 
-                        <CloseRequestModal
+                        <Modal
                                 isOpen={isCloseModalOpen}
                                 onClose={() => setIsCloseModalOpen(false)}
-                                onConfirm={handleCloseRequest}
-                                requestTitle={request.title}
+                                onConfirm={closeReq}
+                                title={"Arhivează dosarul"}
+                        >
+                                <ArchiveRequestContent title={request.title} />
+                        </Modal>
+                </>
+        );
+}
+
+function ArchiveRequestContent({ title }: { title: string }) {
+        return (
+                <>
+                        <p className="modal-text">
+                                Eşti sigur că vrei să arhivezi dosarul <strong>{title}</strong>
+                                ?
+                        </p>
+
+                        <p className="modal-subtext">
+                                Această acțiune va marca dosarul ca arhivat. Solicitantul nu va
+                                mai putea adăuga documente. Acțiunea este reversibilă.
+                        </p>
+                </>
+        );
+}
+
+interface RequestFooterProps {
+        archived?: boolean;
+        onView: () => void;
+        onClose: () => void;
+        onReopen: () => void;
+}
+
+const RequestFooter: React.FC<RequestFooterProps> = ({
+        archived,
+        onView,
+        onClose,
+        onReopen,
+}) => {
+        if (archived) {
+                return (
+                        <ButtonPrimary
+                                text="Redeschide dosar"
+                                variant="ghost"
+                                fullWidth
+                                onClick={onReopen}
+                        />
+                );
+        }
+
+        return (
+                <>
+                        <ButtonPrimary
+                                text="Vezi detalii"
+                                variant="ghost"
+                                fullWidth
+                                onClick={onView}
+                        />
+                        <ButtonPrimary
+                                text="Închide dosar"
+                                variant="ghost"
+                                fullWidth
+                                onClick={onClose}
                         />
                 </>
         );
 };
-
-export default Request;

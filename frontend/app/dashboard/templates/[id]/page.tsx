@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
-import TemplateDetailsHeader from "./_components/DetailsHeader/TemplateDetailsHeader";
+import TemplateDetailsHeader from "../../../../components/Pages/TemplatesComponents/TemplateDetailsHeader";
 import {
         getClientsByProfessional,
         getDocumentRequestTemplateByID,
         getExpectedDocumentTemplatesByTemplate,
 } from "@/lib/api/api";
-import TemplateActions from "./_components/TemplateActions/TemplateDetailsActions";
-import TemplateDetailsSummary from "./_components/DetailsCard/TemplateDetailsSummary";
-import TemplateDetailsExpectedDocuments from "./_components/TemplateDetailsExpectedDocuments/TemplateDetailsExpectedDocuments";
+import TemplateActions from "../../../../components/Pages/TemplatesComponents/TemplateDetailsActions";
+import TemplateDetailsSummary from "../../../../components/Pages/TemplatesComponents/TemplateDetailsSummary";
+import TemplateDetailsExpectedDocuments from "../../../../components/Pages/TemplatesComponents/TemplateDetailsExpectedDocuments";
 
 interface PageProps {
         params: Promise<{ id: string }>;
@@ -22,15 +22,14 @@ export default async function TemplateDetailsPage({ params }: PageProps) {
                         getClientsByProfessional(),
                         getExpectedDocumentTemplatesByTemplate(+id),
                 ]);
-        console.log(templateResponse);
-        console.log(clientsResponse);
-        console.log(expectedDocumentsResponse);
 
         if (
                 !templateResponse ||
                 !clientsResponse ||
                 !templateResponse.data ||
-                !clientsResponse.data
+                !clientsResponse.data ||
+                !expectedDocumentsResponse ||
+                !expectedDocumentsResponse.data
         ) {
                 notFound();
         }

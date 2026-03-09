@@ -1,7 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import UploadDocumentButton from "@/app/dashboard/requests/[id]/_components/UploadDocumentButton/UploadDocumentButton";
+import UploadDocumentButton from "@/components/Pages/RequestsComponents/UploadDocumentButton";
 import RejectDocumentModal from "./RejectDocumentModal";
 import { ExpectedDocumentStatus } from "@/types";
 

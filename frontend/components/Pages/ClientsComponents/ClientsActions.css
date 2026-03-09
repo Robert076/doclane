@@ -1,0 +1,22 @@
+.clients-actions {
+  align-self: flex-start;
+  display: flex;
+}
+
+.clients-actions button {
+  width: auto !important;
+  white-space: nowrap;
+  padding-left: 20px;
+  padding-right: 20px;
+  margin-right: 10px;
+}
+
+@media (max-width: 768px) {
+  .clients-actions {
+    align-self: stretch;
+  }
+  
+  .clients-actions button {
+    width: 100% !important;
+  }
+}
