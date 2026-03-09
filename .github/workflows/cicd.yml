@@ -1,6 +1,8 @@
 name: Push code to Lambda
 on:
         push:
+                branches:
+                        - main
                 paths:
                         - "backend/**"
 
