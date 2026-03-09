@@ -137,6 +137,7 @@ func ValidatePatchDTO(dto models.DocumentRequestDTOPatch) error {
 }
 
 func ValidateTemplateInput(template models.DocumentRequestTemplate) error {
+	fmt.Print(template.Title)
 	if len(template.Title) < 3 || len(template.Title) > 30 {
 		return errors.ErrBadRequest{Msg: "Title must be between 3 and 30 characters."}
 	}

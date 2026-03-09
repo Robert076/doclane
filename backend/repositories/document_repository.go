@@ -215,6 +215,14 @@ func (r *DocumentRepository) GetDocumentRequestsByClient(
 	return requests, rows.Err()
 }
 
+func (r *DocumentRepository) ReopenDocumentRequest(ctx context.Context, id int) error {
+	query := `
+		UPDATE document_requests SET is_closed=false WHERE id=$1
+	`
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
 func (r *DocumentRepository) CloseDocumentRequest(ctx context.Context, id int) error {
 	query := `
 		UPDATE document_requests SET is_closed=true WHERE id=$1

@@ -349,6 +349,27 @@ func (service *DocumentService) PatchDocumentRequest(
 	return nil
 }
 
+func (service *DocumentService) ReopenRequest(
+	ctx context.Context,
+	jwtUserID int,
+	requestID int,
+) error {
+	req, err := service.documentRepo.GetDocumentRequestByID(ctx, requestID)
+	if err != nil {
+		return err
+	}
+
+	if req.ProfessionalID != jwtUserID {
+		return errors.ErrForbidden{Msg: "You are not allowed to close this request."}
+	}
+
+	if err := service.documentRepo.ReopenDocumentRequest(ctx, requestID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (service *DocumentService) CloseRequest(
 	ctx context.Context,
 	jwtUserID int,

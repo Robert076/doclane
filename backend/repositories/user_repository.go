@@ -252,7 +252,7 @@ func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int,
 
 	err := repo.db.QueryRowContext(ctx,
 		`INSERT INTO users (email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at)
-				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 				 RETURNING id`,
 		user.Email,
 		&user.FirstName,

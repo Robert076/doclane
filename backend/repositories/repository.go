@@ -28,6 +28,7 @@ type IDocumentRepository interface {
 	AddDocumentRequestWithTx(ctx context.Context, req models.DocumentRequest, transaction *sql.Tx) (int, error)
 	UpdateDocumentRequestTitle(ctx context.Context, id int, newTitle string) error
 	CloseDocumentRequest(ctx context.Context, id int) error
+	ReopenDocumentRequest(ctx context.Context, id int) error
 
 	AddDocumentFile(ctx context.Context, file models.DocumentFile) (int, error)
 	GetFilesByRequest(ctx context.Context, requestID int) ([]models.DocumentFileDTORead, error)

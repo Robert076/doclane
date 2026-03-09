@@ -19,7 +19,7 @@ import (
 	"github.com/rs/cors"
 )
 
-func buildRouter() http.Handler {
+func buildRouter() (http.Handler, *chi.Mux) {
 	r := chi.NewRouter()
 
 	corsHandler := cors.New(cors.Options{
@@ -75,6 +75,7 @@ func buildRouter() http.Handler {
 				r.Get("/", document_handler.GetDocumentRequestByIDHandler)
 				r.Patch("/", document_handler.PatchDocumentRequestHandler)
 				r.Post("/archive", document_handler.CloseDocumentRequestHandler)
+				r.Post("/unarchive", document_handler.ReopenDocumentRequestHandler)
 
 				r.Route("/files", func(r chi.Router) {
 					r.Get("/", document_handler.GetFilesByRequestHandler)
@@ -109,15 +110,17 @@ func buildRouter() http.Handler {
 		})
 	})
 
-	return corsHandler.Handler(r)
+	return corsHandler.Handler(r), r
 }
 
 func main() {
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
-		adapter := chiadapter.New(buildRouter().(*chi.Mux))
-		lambda.Start(adapter.ProxyWithContext)
+		_, mux := buildRouter()
+		adapter := chiadapter.NewV2(mux)
+		lambda.Start(adapter.ProxyWithContextV2)
 	} else {
-		if err := http.ListenAndServe(":8080", buildRouter()); err != nil {
+		handler, _ := buildRouter()
+		if err := http.ListenAndServe(":8080", handler); err != nil {
 			log.Fatal(err)
 		}
 	}
