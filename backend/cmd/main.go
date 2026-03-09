@@ -20,6 +20,7 @@ import (
 )
 
 func buildRouter() (http.Handler, *chi.Mux) {
+	// hello from lambda
 	r := chi.NewRouter()
 
 	corsHandler := cors.New(cors.Options{
