@@ -20,7 +20,6 @@ import (
 )
 
 func buildRouter() (http.Handler, *chi.Mux) {
-	// Hello World from CD :D
 	r := chi.NewRouter()
 
 	corsHandler := cors.New(cors.Options{
@@ -38,6 +37,13 @@ func buildRouter() (http.Handler, *chi.Mux) {
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
 		_, err := w.Write([]byte("Hello World!"))
+		if err != nil {
+			log.Fatal(err)
+		}
+	})
+
+	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
+		_, err := w.Write([]byte("Stone cold healthy"))
 		if err != nil {
 			log.Fatal(err)
 		}
