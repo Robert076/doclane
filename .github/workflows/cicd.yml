@@ -22,7 +22,6 @@ jobs:
                                   go-version-file: "./backend/go.mod"
                                   token: ${{ github.token }}
                                   cache-dependency-path: "./backend/go.sum"
-                                  architecture: "arm64"
 
                         - name: Install dependencies
                           run: cd backend && go mod download
