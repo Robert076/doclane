@@ -3,8 +3,8 @@ on:
         push:
                 branches:
                         - main
-        paths:
-                - "backend/**"
+                paths:
+                        - "backend/**"
 
 permissions:
         id-token: write
