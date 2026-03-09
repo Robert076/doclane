@@ -47,21 +47,23 @@ It is a document request and workflow platform.
 
 ## ☁️ AWS Deployment
 
-The deployment is done in AWS, and is made up of three distinct environments:
+The deployment is done in AWS, and it is mostly serverless except the database layer. It can handle spikes in load without issues.
 
-- dev
-- staging
-- prod
+## 🛥️ CD to AWS
 
-For better maintainability, scalability and the ability to audit changes to the infrastructure in a version controlled way, I chose to use Terraform for the deployment.
+Code in AWS is never manually updated. Instead, it is updated automatically on pushes to the main branch using Github Actions.
 
-### 🧑🏼‍💻 Dev environment
+### How the backend is updated
 
-The dev environment is used for local testing. It contains only a subset of the services used in prod or staging.
+The backend is updated in the least-privilege principle, and no permanent credentials ever exist.
 
-Since when developing locally we run the frontend and backend on our machine, the only provisioned resources in the AWS cloud are an S3 bucket used for storing documents, a dev IAM role containing policies that adhere to the least-privilege principle, only being able to access the S3 bucket in the dev environment (the role is assumed by the local backend).
+The Github action generates an id token using Github's OIDC, and that signed token (Github signs it with their private key) is then sent to AWS to prove the identity of the runner.
+AWS checks that the signature cryptographically matches by using Github's public key, and confirms that the runner is actually who it pretends to be.
+In AWS, a provider has been created in IAM that has the provider as Github, and type of OIDC. The audience of this provider is sts.amazonaws.com and that means AWS' STS service can now federate an identity and return temporary IAM credentials, which in turn the runner uses to update the Lambda.
 
-> Check out the Terraform configuration files for the dev environment in /terraform/dev
+By doing this, we safely update code on every push to main branch.
+
+-
 
 ## 📄 License
 
