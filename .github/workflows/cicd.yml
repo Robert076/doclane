@@ -30,7 +30,7 @@ jobs:
                           run: cd backend/cmd && GOOS=linux GOARCH=arm64 go build -tags lambda.norpc -o bootstrap main.go
 
                         - name: Zip the Lambda
-                          run: zip ${{ secrets.ZIP_NAME }} bootstrap
+                          run: cd backend/cmd && zip ${{ secrets.ZIP_NAME }} bootstrap
 
                         - name: Configure AWS credentials
                           uses: aws-actions/configure-aws-credentials@v4
@@ -40,6 +40,7 @@ jobs:
 
                         - name: Update Lambda code
                           run: |
+                                  cd backend/cmd && \
                                   aws lambda update-function-code \
                                     --function-name ${{ secrets.AWS_DOCLANE_LAMBDA }} \
                                     --zip-file fileb://${{ secrets.ZIP_NAME }}
