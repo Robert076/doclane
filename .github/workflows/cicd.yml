@@ -43,4 +43,6 @@ jobs:
                                   cd backend/cmd && \
                                   aws lambda update-function-code \
                                     --function-name DoclaneBackend \
-                                    --zip-file fileb://doclane-backend.zip
+                                    --zip-file fileb://doclane-backend.zip \
+                                    --query 'FunctionArn' \
+                                    --output text
