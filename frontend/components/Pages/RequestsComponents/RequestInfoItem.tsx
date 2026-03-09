@@ -1,15 +1,17 @@
 import HighlightText from "@/components/OtherComponents/HighlightText/HighlightText";
 
-export default function RequestInfoItem(
-        searchTerm: string | undefined,
-        label: string,
-        text: string,
-) {
+interface RequestInfoItemProps {
+        label: string;
+        value: string;
+        searchTerm?: string;
+}
+
+export default function RequestInfoItem({ label, value, searchTerm }: RequestInfoItemProps) {
         return (
                 <p className="request-info-item">
                         <span className="request-label">{label}</span>
                         <span className="request-value">
-                                <HighlightText text={text} search={searchTerm} />
+                                <HighlightText text={value} search={searchTerm} />
                         </span>
                 </p>
         );

@@ -1,13 +1,13 @@
 import { notFound } from "next/navigation";
 import TemplateDetailsHeader from "../../../../components/Pages/TemplatesComponents/TemplateDetailsHeader";
-import {
-        getClientsByProfessional,
-        getDocumentRequestTemplateByID,
-        getExpectedDocumentTemplatesByTemplate,
-} from "@/lib/api/api";
 import TemplateActions from "../../../../components/Pages/TemplatesComponents/TemplateDetailsActions";
 import TemplateDetailsSummary from "../../../../components/Pages/TemplatesComponents/TemplateDetailsSummary";
 import TemplateDetailsExpectedDocuments from "../../../../components/Pages/TemplatesComponents/TemplateDetailsExpectedDocuments";
+import {
+        getDocumentRequestTemplateByID,
+        getExpectedDocumentTemplatesByTemplate,
+} from "@/lib/api/templates";
+import { getClientsByProfessional } from "@/lib/api/users";
 
 interface PageProps {
         params: Promise<{ id: string }>;

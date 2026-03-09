@@ -91,9 +91,8 @@ export interface ExpectedDocument {
 export type RequestStatus = "pending" | "uploaded" | "overdue";
 export type UserRole = "CLIENT" | "PROFESSIONAL";
 
-export interface ApiResponse<T> {
-        data: T;
-        error?: string;
+export interface PresignedURL {
+        url: string;
 }
 
 export const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];

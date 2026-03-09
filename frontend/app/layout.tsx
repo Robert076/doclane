@@ -4,26 +4,26 @@ import { Toaster } from "react-hot-toast";
 import "./globals.css";
 
 const roboto = Roboto({
-  variable: "--font-roboto",
-  subsets: ["latin"],
+        variable: "--font-roboto",
+        subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: "Doclane",
-  description: "Your supercharged document sharing platform.",
+        title: "Doclane",
+        description: "Your supercharged document sharing platform.",
 };
 
 export default function RootLayout({
-  children,
+        children,
 }: Readonly<{
-  children: React.ReactNode;
+        children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en">
-      <body className={`${roboto.variable}`}>
-        {children}
-        <Toaster position="bottom-center" reverseOrder={false} />
-      </body>
-    </html>
-  );
+        return (
+                <html lang="en">
+                        <body className={`${roboto.variable}`}>
+                                {children}
+                                <Toaster position="bottom-center" reverseOrder={false} />
+                        </body>
+                </html>
+        );
 }

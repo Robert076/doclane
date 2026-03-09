@@ -1,12 +1,15 @@
 "use client";
-import { useState } from "react";
+
+import { MdAdd, MdClose, MdUploadFile } from "react-icons/md";
+
+// Componente UI
 import Input from "@/components/InputComponents/Input";
 import TextArea from "@/components/InputComponents/TextArea";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import { MdAdd, MdClose, MdUploadFile } from "react-icons/md";
 import "./ExpectedDocumentsList.css";
-import { UI_TEXT } from "@/locales/ro";
 
+// Reutilizăm interfața din requests.ts (dacă ai mutat-o acolo, sau o declari aici dacă vrei)
+// Am extins denumirea să se potrivească
 export interface ExpectedDocumentInput {
         title: string;
         description: string;
@@ -18,10 +21,12 @@ interface ExpectedDocumentsListProps {
         onChange: (documents: ExpectedDocumentInput[]) => void;
 }
 
-const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
+export default function ExpectedDocumentsList({
         documents,
         onChange,
-}) => {
+}: ExpectedDocumentsListProps) {
+        // --- Handlere pentru gestionarea listei ---
+
         const handleAdd = () => {
                 onChange([...documents, { title: "", description: "" }]);
         };
@@ -52,10 +57,10 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                 <div className="expected-documents-list">
                         <div className="expected-documents-header">
                                 <label className="expected-documents-label">
-                                        {UI_TEXT.request.createForm.expectedDocuments}
+                                        Documente necesare
                                 </label>
                                 <ButtonPrimary
-                                        text={UI_TEXT.request.createForm.addExpectedDocument}
+                                        text="Adaugă un document necesar"
                                         variant="ghost"
                                         icon={MdAdd}
                                         type="button"
@@ -63,12 +68,15 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                                 />
                         </div>
 
+                        {/* Stare Goală */}
                         {documents.length === 0 && (
                                 <p className="expected-documents-empty">
-                                        {UI_TEXT.request.createForm.expectedDocumentsNotAdded}
+                                        Nu ai adăugat niciun document necesar. Te rugăm să
+                                        adaugi cel puțin unul.
                                 </p>
                         )}
 
+                        {/* Lista de documente */}
                         {documents.map((doc, index) => (
                                 <div key={index} className="expected-document-item">
                                         <div className="expected-document-item-header">
@@ -79,21 +87,19 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                                                         type="button"
                                                         className="expected-document-remove"
                                                         onClick={() => handleRemove(index)}
+                                                        title="Șterge documentul"
                                                 >
                                                         <MdClose />
                                                 </button>
                                         </div>
+
                                         <Input
-                                                label={
-                                                        UI_TEXT.request.createForm
-                                                                .expectedDocumentTitle
-                                                }
-                                                placeholder={
-                                                        UI_TEXT.request.createForm
-                                                                .expectedDocumentTitlePlaceholder
-                                                }
+                                                label="Titlu document"
+                                                placeholder="Ex: Carte de identitate, Extras de cont..."
                                                 value={doc.title}
-                                                onChange={(e: any) =>
+                                                onChange={(
+                                                        e: React.ChangeEvent<HTMLInputElement>,
+                                                ) =>
                                                         handleChange(
                                                                 index,
                                                                 "title",
@@ -101,34 +107,30 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                                                         )
                                                 }
                                         />
+
                                         <TextArea
-                                                label={
-                                                        UI_TEXT.request.createForm
-                                                                .expectedDocumentDescription
-                                                }
-                                                placeholder={
-                                                        UI_TEXT.request.createForm
-                                                                .expectedDocumentDescriptionPlaceholder
-                                                }
+                                                label="Descriere (opțional)"
+                                                placeholder="Adaugă detalii despre ce informații trebuie să conțină documentul..."
                                                 value={doc.description}
-                                                onChange={(e: any) =>
+                                                onChange={(
+                                                        e: React.ChangeEvent<HTMLTextAreaElement>,
+                                                ) =>
                                                         handleChange(
                                                                 index,
                                                                 "description",
                                                                 e.target.value,
                                                         )
                                                 }
-                                                minHeight={200}
+                                                minHeight={120} // Scăzut puțin pentru a nu lungi formularul aiurea
                                                 maxHeight={200}
                                         />
+
+                                        {/* Secțiunea de Upload Exemplu */}
                                         <div className="expected-document-example">
                                                 <label className="expected-document-example-label">
-                                                        {
-                                                                UI_TEXT.request.createForm
-                                                                        .exampleFile
-                                                        }{" "}
-                                                        (optional)
+                                                        Exemplu de completare (Opțional)
                                                 </label>
+
                                                 {doc.exampleFile ? (
                                                         <div className="expected-document-example-preview">
                                                                 <span className="expected-document-example-name">
@@ -143,6 +145,7 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                                                                                         undefined,
                                                                                 )
                                                                         }
+                                                                        title="Șterge exemplul"
                                                                 >
                                                                         <MdClose />
                                                                 </button>
@@ -150,20 +153,16 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                                                 ) : (
                                                         <label className="expected-document-example-upload">
                                                                 <MdUploadFile />
-                                                                <span>
-                                                                        {
-                                                                                UI_TEXT.request
-                                                                                        .createForm
-                                                                                        .uploadExample
-                                                                        }
-                                                                </span>
+                                                                <span>Încarcă un exemplu</span>
                                                                 <input
                                                                         type="file"
                                                                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                                                                         style={{
                                                                                 display: "none",
                                                                         }}
-                                                                        onChange={(e) => {
+                                                                        onChange={(
+                                                                                e: React.ChangeEvent<HTMLInputElement>,
+                                                                        ) => {
                                                                                 const file =
                                                                                         e
                                                                                                 .target
@@ -182,6 +181,4 @@ const ExpectedDocumentsList: React.FC<ExpectedDocumentsListProps> = ({
                         ))}
                 </div>
         );
-};
-
-export default ExpectedDocumentsList;
+}

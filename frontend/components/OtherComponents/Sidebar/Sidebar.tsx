@@ -4,12 +4,12 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import { SIDEBAR_CONFIG } from "@/lib/nav";
-import { logout } from "@/lib/api/api";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import Separator from "@/components/OtherComponents/Separators/Separator/Separator";
 import "./Sidebar.css";
 import Logo from "@/components/OtherComponents/Logo/Logo";
 import { UI_TEXT } from "@/locales/ro";
+import { logout } from "@/lib/api/auth";
 
 export default function Sidebar() {
         const pathname = usePathname();

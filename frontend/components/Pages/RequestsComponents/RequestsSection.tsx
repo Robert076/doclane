@@ -1,11 +1,11 @@
 "use client";
 
+import { useMemo, useCallback } from "react";
 import { DocumentRequest, User } from "@/types";
 import RequestCard from "@/components/CardComponents/RequestCard/RequestCard";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import PaginationFooter from "@/components/ClientComponents/ClientsSection/_components/PaginationFooter";
-import { UI_TEXT } from "@/locales/ro";
 import { useSearch } from "@/hooks/useSearch";
 import { usePagination } from "@/hooks/usePagination";
 
@@ -17,28 +17,29 @@ interface RequestsSectionProps {
 const ITEMS_PER_PAGE = 8;
 
 export default function RequestsSection({ requests, user }: RequestsSectionProps) {
-        const openRequests = requests.filter((r) => {
-                if (r.is_closed === true) return false;
-                return true;
-        });
-        const searchFn = (req: DocumentRequest, search: string) => {
-                if (req.is_closed) return false;
+        // 1. Memorăm lista dosarelor deschise
+        const openRequests = useMemo(() => {
+                return requests.filter((r) => r.is_closed === false);
+        }, [requests]);
 
-                const fullName =
-                        `${req.client_first_name ?? ""} ${req.client_last_name ?? ""}`.toLowerCase();
+        // 2. Optimizăm funcția de căutare
+        const searchFn = useCallback((req: DocumentRequest, search: string) => {
+                const searchLower = search.toLowerCase();
 
-                return [
+                const searchableText = [
                         req.title,
                         req.description,
                         req.client_first_name,
                         req.client_last_name,
                         req.client_email,
                         req.status,
-                        fullName,
                 ]
                         .filter(Boolean)
-                        .some((field) => field!.toLowerCase().includes(search));
-        };
+                        .join(" ")
+                        .toLowerCase();
+
+                return searchableText.includes(searchLower);
+        }, []);
 
         const { searchInput, setSearchInput, filteredItems } = useSearch(
                 openRequests,
@@ -50,15 +51,16 @@ export default function RequestsSection({ requests, user }: RequestsSectionProps
                 ITEMS_PER_PAGE,
         );
 
+        // Caz 1: Utilizatorul nu are niciun dosar asociat
         if (requests.length === 0) {
+                const isProfessional = user.role === "PROFESSIONAL";
                 return (
                         <NotFound
-                                text={UI_TEXT.common.notFoundTitleRequests}
+                                text="Nu ai niciun dosar deschis"
                                 subtext={
-                                        user.role === "PROFESSIONAL"
-                                                ? UI_TEXT.common
-                                                          .notFoundSubtitleRequestsProfessional
-                                                : UI_TEXT.common.notFoundSubtitleRequestsClient
+                                        isProfessional
+                                                ? "Aici vor apărea dosarele pe care le gestionezi pentru clienții tăi."
+                                                : "Aici vor apărea dosarele pe care profesioniștii le-au deschis pentru tine."
                                 }
                                 background="#fff"
                         />
@@ -73,13 +75,14 @@ export default function RequestsSection({ requests, user }: RequestsSectionProps
                                         setSearchInput(value);
                                         setCurrentPage(1);
                                 }}
-                                placeholder={UI_TEXT.common.search}
+                                placeholder="Caută un dosar..."
                         />
 
+                        {/* Caz 2: Are dosare, dar căutarea nu returnează nimic */}
                         {filteredItems.length === 0 ? (
                                 <NotFound
-                                        text={UI_TEXT.common.notFoundTitleRequests}
-                                        subtext={UI_TEXT.common.searchNotFound}
+                                        text="Nu am găsit niciun dosar"
+                                        subtext="Nu există niciun rezultat care să corespundă căutării tale."
                                         background="#fff"
                                 />
                         ) : (

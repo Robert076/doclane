@@ -1,6 +1,7 @@
 import PageHeader from "@/components/PageHeader/PageHeader";
 import RequestsSection from "@/components/Pages/RequestsComponents/RequestsSection";
-import { getCurrentUser, getDocumentRequests } from "@/lib/api/api";
+import { getDocumentRequests } from "@/lib/api/requests";
+import { getCurrentUser } from "@/lib/api/users";
 import { notFound, redirect } from "next/navigation";
 
 export default async function RequestsPage() {

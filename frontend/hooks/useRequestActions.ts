@@ -1,5 +1,6 @@
+import { closeRequest, reopenRequest } from "@/lib/api/requests";
 import { useState } from "react";
-import { closeRequest, reopenRequest } from "@/lib/api/api";
+
 import toast from "react-hot-toast";
 
 export const useRequestActions = (requestId: number) => {

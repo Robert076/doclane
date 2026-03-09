@@ -3,7 +3,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import RegisterClientForm from "@/components/AuthComponents/RegisterForm/RegisterClientForm";
-import { signUpClient } from "@/lib/api/api";
+import { signUpClient } from "@/lib/api/auth";
 
 const LoginPage = () => {
         const [email, setEmail] = useState("");

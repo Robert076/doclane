@@ -9,8 +9,8 @@ import toast from "react-hot-toast";
 import DeactivateClientModal from "./_components/DeactivateClientModal";
 import ClientInfoItem from "./ClientInfoItem";
 import { formatDate } from "@/lib/client/formatDate";
-import { deactivateUser } from "@/lib/api/api";
 import { UI_TEXT } from "@/locales/ro";
+import { deactivateUser } from "@/lib/api/users";
 
 interface ClientCardProps {
         client: User;

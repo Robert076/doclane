@@ -1,12 +1,14 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useCallback } from "react";
 import { User } from "@/types";
 import ClientCard from "../ClientCard/ClientCard";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
-import "./ClientsSection.css";
 import PaginationFooter from "./_components/PaginationFooter";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
-import { UI_TEXT } from "@/locales/ro";
+import { useSearch } from "@/hooks/useSearch";
+import { usePagination } from "@/hooks/usePagination";
+import "./ClientsSection.css";
 
 interface ClientsSectionProps {
         clients: User[];
@@ -14,74 +16,79 @@ interface ClientsSectionProps {
 
 const ITEMS_PER_PAGE = 12;
 
-const ClientsSection: React.FC<ClientsSectionProps> = ({ clients }) => {
-        const [currentPage, setCurrentPage] = useState<number>(1);
-        const [searchInput, setSearchInput] = useState<string>("");
+export default function ClientsSection({ clients }: ClientsSectionProps) {
+        // 1. Funcția de căutare optimizată (exact ca la dosare)
+        const searchFn = useCallback((client: User, search: string) => {
+                const searchLower = search.toLowerCase();
 
-        const filteredClients = clients.filter((client) => {
-                if (!searchInput) return true;
-                const searchLower = searchInput.toLowerCase().trim();
+                const searchableText = [client.first_name, client.last_name, client.email]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
 
-                const fullName =
-                        `${client.first_name || ""} ${client.last_name || ""}`.toLowerCase();
+                return searchableText.includes(searchLower);
+        }, []);
 
+        // 2. Aplicăm Hook-urile (asta rezolvă bug-urile de randare și paginare)
+        const { searchInput, setSearchInput, filteredItems } = useSearch(clients, searchFn);
+
+        const { currentPage, setCurrentPage, totalPages, paginatedItems } = usePagination(
+                filteredItems,
+                ITEMS_PER_PAGE,
+        );
+
+        // Caz 1: Utilizatorul nu are niciun client în baza de date
+        if (clients.length === 0) {
                 return (
-                        client.first_name?.toLowerCase().includes(searchLower) ||
-                        client.last_name?.toLowerCase().includes(searchLower) ||
-                        fullName.includes(searchLower) ||
-                        client.email?.toLowerCase().includes(searchLower)
+                        <NotFound
+                                text="Nu ai niciun client momentan."
+                                subtext="Începe prin a adăuga primul tău client folosind butonul de mai sus."
+                                background="#fff"
+                        />
                 );
-        });
-
-        useEffect(() => {
-                setCurrentPage(1);
-        }, [searchInput]);
-
-        const totalPages = Math.ceil(clients.length / ITEMS_PER_PAGE);
+        }
 
         return (
                 <div className="clients-section">
-                        {clients.length > 0 && (
-                                <SearchBar
-                                        value={searchInput}
-                                        onChange={setSearchInput}
-                                        placeholder={UI_TEXT.common.search}
-                                />
-                        )}
-                        {clients.length === 0 && (
-                                <NotFound
-                                        text="No clients found."
-                                        subtext="Start by adding your first client."
-                                        background="#fff"
-                                />
-                        )}
-                        {filteredClients.length === 0 && (
-                                <NotFound
-                                        text="No clients matching your search."
-                                        subtext="Try searching for other keywords."
-                                        background="#fff"
-                                />
-                        )}
-                        <div className="clients-grid">
-                                {filteredClients.length > 0 &&
-                                        filteredClients.map((client) => (
-                                                <ClientCard
-                                                        key={client.id}
-                                                        client={client}
-                                                        searchTerm={searchInput}
-                                                />
-                                        ))}
-                        </div>
+                        <SearchBar
+                                value={searchInput}
+                                onChange={(value) => {
+                                        setSearchInput(value);
+                                        setCurrentPage(1); // Resetăm pagina automat la căutare
+                                }}
+                                placeholder="Caută un client (nume, email)..."
+                        />
 
-                        {totalPages > 1 && (
-                                <PaginationFooter
-                                        currentPage={currentPage}
-                                        totalPages={totalPages}
-                                        setCurrentPage={setCurrentPage}
+                        {/* Caz 2: Are clienți, dar n-a găsit nimic la căutare */}
+                        {filteredItems.length === 0 ? (
+                                <NotFound
+                                        text="Nu am găsit niciun client."
+                                        subtext="Nu există niciun rezultat care să corespundă căutării tale."
+                                        background="#fff"
                                 />
+                        ) : (
+                                <>
+                                        <div className="clients-grid">
+                                                {/* Randăm DOAR elementele paginii curente */}
+                                                {paginatedItems.map((client) => (
+                                                        <ClientCard
+                                                                key={client.id}
+                                                                client={client}
+                                                                searchTerm={searchInput}
+                                                        />
+                                                ))}
+                                        </div>
+
+                                        {/* Afișăm paginarea doar dacă avem mai mult de o pagină */}
+                                        {totalPages > 1 && (
+                                                <PaginationFooter
+                                                        currentPage={currentPage}
+                                                        totalPages={totalPages}
+                                                        setCurrentPage={setCurrentPage}
+                                                />
+                                        )}
+                                </>
                         )}
                 </div>
         );
-};
-
-export default ClientsSection;
+}

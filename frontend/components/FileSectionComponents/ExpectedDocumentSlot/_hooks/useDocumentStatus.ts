@@ -1,5 +1,5 @@
+import { updateExpectedDocumentStatus } from "@/lib/api/requests";
 import { useState } from "react";
-import { updateExpectedDocumentStatus } from "@/lib/api/api";
 
 type DocumentStatus = "approved" | "rejected" | "uploaded" | "pending";
 

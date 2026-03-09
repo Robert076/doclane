@@ -1,8 +1,8 @@
-import { getTemplates } from "@/lib/api/api";
 import { notFound } from "next/navigation";
 import { DocumentRequestTemplate } from "@/types";
 import ArchivedTemplatesSection from "@/components/Pages/ArchivedTemplatesComponents/ArchivedTemplatesSection";
 import PageHeader from "@/components/PageHeader/PageHeader";
+import { getTemplates } from "@/lib/api/templates";
 
 const ArchivedTemplates = async () => {
         const templateResponse = await getTemplates();

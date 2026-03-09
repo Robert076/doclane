@@ -12,7 +12,7 @@ import RadioInput from "@/components/InputComponents/RadioInput";
 import ExpectedDocumentsList, {
         ExpectedDocumentInput,
 } from "@/components/Pages/ClientsComponents/ExpectedDocumentsList";
-import { createTemplate, addExpectedDocumentTemplate } from "@/lib/api/api";
+import { addExpectedDocumentTemplate, createTemplate } from "@/lib/api/templates";
 
 const CreateTemplateForm = () => {
         const [title, setTitle] = useState("");

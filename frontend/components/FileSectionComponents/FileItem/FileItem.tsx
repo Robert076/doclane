@@ -1,46 +1,56 @@
 "use client";
+
 import { useState } from "react";
-import "./FileItem.css";
-import { DocumentFile } from "@/types";
-import { presignDocumentURL } from "@/lib/api/api";
 import toast from "react-hot-toast";
+
+// Tipurile și Utilitarele
+import { DocumentFile } from "@/types";
 import { formatDate } from "@/lib/client/formatDate";
-import { UI_TEXT } from "@/locales/ro";
+import { presignDocumentURL } from "@/lib/api/requests";
+import "./FileItem.css";
 
 interface FileItemProps {
         file: DocumentFile;
 }
 
+// 1. Optimizare: Funcția scoasă în afara componentei pentru a nu fi recreată la fiecare randare
+const formatFileSize = (bytes: number) => {
+        if (!bytes || bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+};
+
 export default function FileItem({ file }: FileItemProps) {
         const [isRequesting, setIsRequesting] = useState(false);
 
-        const formatFileSize = (bytes: number) => {
-                if (!bytes || bytes === 0) return "0 Bytes";
-                const k = 1024;
-                const sizes = ["Bytes", "KB", "MB", "GB"];
-                const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-        };
-
+        // 2. Request standardizat cu Toast de tip loading
         const handleViewFile = async () => {
                 if (isRequesting) return;
 
                 setIsRequesting(true);
+                const loadingToast = toast.loading("Se deschide fișierul...");
+
                 try {
-                        const result = await presignDocumentURL(
+                        const res = await presignDocumentURL(
                                 file.document_request_id,
                                 file.id,
                         );
 
-                        if (result.success && result.data?.url) {
-                                window.open(result.data.url, "_blank", "noopener,noreferrer");
-                                toast.success(result.message);
-                        } else {
-                                toast.error(result.message);
-                                throw new Error(result.message || "Error generating the link");
+                        if (!res.success || !res.data) {
+                                throw new Error(
+                                        res.error ||
+                                                res.message ||
+                                                "Nu s-a putut genera link-ul fișierului.",
+                                );
                         }
-                } catch (error) {
-                        console.error("Error fetching file URL:", error);
+
+                        // Închidem toast-ul de loading și deschidem tab-ul
+                        toast.dismiss(loadingToast);
+                        window.open(res.data.url, "_blank", "noopener,noreferrer");
+                } catch (error: any) {
+                        toast.error(error.message, { id: loadingToast });
                 } finally {
                         setIsRequesting(false);
                 }
@@ -60,16 +70,16 @@ export default function FileItem({ file }: FileItemProps) {
                                         <span>{formatFileSize(file.file_size)}</span>
                                         <span className="metadata-separator">•</span>
                                         <span>{formatDate(file.uploaded_at)}</span>
+
                                         {file.uploaded_by && (
                                                 <>
                                                         <span className="metadata-separator">
                                                                 •
                                                         </span>
                                                         <span>
-                                                                {"Uploaded by " +
-                                                                        file.uploaded_by_first_name +
-                                                                        " " +
-                                                                        file.uploaded_by_last_name}
+                                                                Încărcat de{" "}
+                                                                {file.uploaded_by_first_name}{" "}
+                                                                {file.uploaded_by_last_name}
                                                         </span>
                                                 </>
                                         )}
@@ -82,15 +92,14 @@ export default function FileItem({ file }: FileItemProps) {
                                         className="view-button"
                                         disabled={isRequesting}
                                 >
-                                        {isRequesting
-                                                ? UI_TEXT.buttons.viewFile.inProgress
-                                                : UI_TEXT.buttons.viewFile.normal}
+                                        {isRequesting ? "Se deschide..." : "Vezi fișierul"}
                                 </button>
                         </div>
                 </div>
         );
 }
 
+// Sub-componenta lăsată la fel, își face treaba foarte bine
 function FileIcon({ mimeType }: { mimeType: string }) {
         const isImage = mimeType?.toLowerCase().includes("image");
         const isPDF = mimeType?.toLowerCase().includes("pdf");

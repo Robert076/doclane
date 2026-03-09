@@ -7,9 +7,9 @@ import HighlightText from "@/components/OtherComponents/HighlightText/HighlightT
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/client/formatDate";
 import { UI_TEXT } from "@/locales/ro";
-import { archiveTemplate, unarchiveTemplate } from "@/lib/api/api";
 import toast from "react-hot-toast";
 import BaseDashboardCard from "@/components/CardComponents/BaseDashboardCard/BaseDashboardCard";
+import { archiveTemplate, unarchiveTemplate } from "@/lib/api/templates";
 
 interface TemplateCardProps {
         template: DocumentRequestTemplate;

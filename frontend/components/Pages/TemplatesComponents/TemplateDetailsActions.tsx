@@ -3,11 +3,11 @@ import "./TemplateDetailsActions.css";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import toast from "react-hot-toast";
-import { instantiateTemplate } from "@/lib/api/api";
 import { User } from "@/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AssignClientModal from "./AssignClientModal";
+import { instantiateTemplate } from "@/lib/api/templates";
 
 export default function TemplateActions({ id, clients }: { id: string; clients: User[] }) {
         const [isModalOpen, setIsModalOpen] = useState(false);

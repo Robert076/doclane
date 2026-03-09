@@ -1,11 +1,11 @@
 "use client";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import { presignTemplateExample } from "@/lib/api/api";
 import { ExpectedDocumentTemplate } from "@/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import "./TemplateDetailsExpectedDocuments.css";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
+import { presignTemplateExample } from "@/lib/api/templates";
 
 export default function TemplateDetailsExpectedDocuments({
         documents,
@@ -24,7 +24,7 @@ export default function TemplateDetailsExpectedDocuments({
                                 toast.error("Nu s-a putut deschide exemplul.");
                                 return;
                         }
-                        window.open(res.data, "_blank");
+                        window.open(res.data?.url, "_blank");
                 } catch {
                         toast.error("Nu s-a putut deschide exemplul.");
                 } finally {

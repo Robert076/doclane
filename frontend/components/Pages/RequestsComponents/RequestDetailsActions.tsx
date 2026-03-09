@@ -3,9 +3,9 @@
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import toast from "react-hot-toast";
-import { sendEmail } from "@/lib/api/api";
 import { UI_TEXT } from "@/locales/ro";
 import "./RequestDetailsActions.css";
+import { sendEmail } from "@/lib/api/users";
 
 export default function RequestDetailsActions({ id }: { id: string }) {
         return (

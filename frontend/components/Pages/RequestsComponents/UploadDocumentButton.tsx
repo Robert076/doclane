@@ -4,8 +4,8 @@ import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPri
 import { useRouter } from "next/navigation";
 
 import { toast } from "react-hot-toast";
-import { uploadDocument } from "@/lib/api/api";
 import { UI_TEXT } from "@/locales/ro";
+import { uploadDocument } from "@/lib/api/requests";
 
 const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];
 interface Props {

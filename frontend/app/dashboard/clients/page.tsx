@@ -1,8 +1,8 @@
 import ClientsSection from "@/components/ClientComponents/ClientsSection/ClientsSection";
 import PageHeader from "@/components/PageHeader/PageHeader";
-import { getClientsByProfessional } from "@/lib/api/api";
 import { notFound } from "next/navigation";
 import ClientsActions from "@/components/Pages/ClientsComponents/ClientsActions";
+import { getClientsByProfessional } from "@/lib/api/users";
 
 export default async function ClientsPage() {
         const clientsResponse = await getClientsByProfessional();

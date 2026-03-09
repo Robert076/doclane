@@ -1,31 +1,28 @@
-import { DocumentRequest } from "@/types";
 import React from "react";
-import "./RequestBody.css";
+import { DocumentRequest } from "@/types";
 import RequestInfoItem from "./RequestInfoItem";
-import { UI_TEXT } from "@/locales/ro";
+import "./RequestBody.css";
 
 interface RequestBodyProps {
         request: DocumentRequest;
         searchTerm?: string;
 }
 
-const RequestBody: React.FC<RequestBodyProps> = ({ request, searchTerm }) => {
+export default function RequestBodyProfessional({ request, searchTerm }: RequestBodyProps) {
         return (
                 <div className="request-body">
                         <div className="request-info">
-                                {RequestInfoItem(
-                                        searchTerm,
-                                        UI_TEXT.request.card.clientEmail,
-                                        request.client_email,
-                                )}
-                                {RequestInfoItem(
-                                        searchTerm,
-                                        UI_TEXT.request.card.clientName,
-                                        `${request.client_first_name} ${request.client_last_name}`,
-                                )}
+                                <RequestInfoItem
+                                        label="Email client"
+                                        value={request.client_email}
+                                        searchTerm={searchTerm}
+                                />
+                                <RequestInfoItem
+                                        label="Nume client"
+                                        value={`${request.client_first_name} ${request.client_last_name}`}
+                                        searchTerm={searchTerm}
+                                />
                         </div>
                 </div>
         );
-};
-
-export default RequestBody;
+}

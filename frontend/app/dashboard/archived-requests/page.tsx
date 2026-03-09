@@ -1,8 +1,8 @@
-import { getDocumentRequests } from "@/lib/api/api";
 import { notFound } from "next/navigation";
 import { DocumentRequest } from "@/types";
 import ArchivedRequestsSection from "@/components/Pages/ArchivedRequestsComponents/ArchivedRequestsSection";
 import PageHeader from "@/components/PageHeader/PageHeader";
+import { getDocumentRequests } from "@/lib/api/requests";
 
 const ArchivedRequests = async () => {
         const requestsResponse = await getDocumentRequests("PROFESSIONAL");
