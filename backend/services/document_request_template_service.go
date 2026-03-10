@@ -468,3 +468,30 @@ func (s *DocumentRequestTemplateService) ReopenTemplate(ctx context.Context, jwt
 
 	return err
 }
+
+func (s *DocumentRequestTemplateService) DeleteTemplate(ctx context.Context, jwtUserID int, templateID int) error {
+	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+	if err != nil {
+		s.logger.Error("failed to retrieve template by id when trying to delete it",
+			slog.Int("template_id", templateID),
+			slog.Int("user_id", jwtUserID),
+			slog.Any("error", err),
+		)
+
+		return err
+	}
+
+	if template.CreatedBy != jwtUserID {
+		s.logger.Warn("unauthorized attempt to unarchive template",
+			slog.Int("template_id", templateID),
+			slog.Int("user_id", jwtUserID),
+			slog.Any("error", err),
+		)
+
+		return errors.ErrForbidden{Msg: "You are not allowed to delete this template."}
+	}
+
+	err = s.templateRepo.DeleteDocumentRequestTemplate(ctx, templateID)
+
+	return err
+}

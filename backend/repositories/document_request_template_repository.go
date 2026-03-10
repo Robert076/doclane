@@ -105,3 +105,12 @@ func (r *DocumentRequestTemplateRepository) ReopenDocumentRequestTemplate(ctx co
 	_, err := r.db.ExecContext(ctx, query, id)
 	return err
 }
+
+func (r *DocumentRequestTemplateRepository) DeleteDocumentRequestTemplate(ctx context.Context, id int) error {
+	query := `
+		DELETE FROM document_request_templates WHERE id = $1
+	`
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}

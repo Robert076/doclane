@@ -100,6 +100,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", template_handler.GetTemplateByIDHandler)
 				r.Post("/instantiate", template_handler.InstantiateTemplateHandler)
+				r.Delete("/", template_handler.DeleteTemplateHandler)
 				r.Route("/expected-documents", func(r chi.Router) {
 					r.Get("/", template_handler.GetExpectedDocumentTemplatesByTemplateIDHandler)
 					r.Post("/", template_handler.AddExpectedDocumentTemplateHandler)

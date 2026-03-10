@@ -43,6 +43,7 @@ type IDocumentRequestTemplateRepository interface {
 	AddDocumentRequestTemplate(ctx context.Context, tmp models.DocumentRequestTemplate) (int, error)
 	CloseDocumentRequestTemplate(ctx context.Context, id int) error
 	ReopenDocumentRequestTemplate(ctx context.Context, id int) error
+	DeleteDocumentRequestTemplate(ctx context.Context, id int) error
 }
 
 type IExpectedDocumentTemplateRepository interface {
