@@ -7,6 +7,7 @@ import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import { UI_TEXT } from "@/locales/ro";
 import "./ArchivedTemplatesSection.css";
 import TemplateCard from "@/components/Pages/TemplatesComponents/TemplateCard";
+import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 
 type Props = {
         templates: DocumentRequestTemplate[];
@@ -31,6 +32,12 @@ const ArchivedTemplatesSection = ({ templates }: Props) => {
                                 placeholder={UI_TEXT.common.search}
                         />
 
+                        {filteredTemplates.length === 0 && (
+                                <NotFound
+                                        text="Nu ai niciun şablon arhivat."
+                                        background="white"
+                                />
+                        )}
                         <div className="archived-grid">
                                 {filteredTemplates.map((t) => (
                                         <TemplateCard

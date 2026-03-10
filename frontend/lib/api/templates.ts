@@ -40,6 +40,13 @@ export async function unarchiveTemplate(id: number): Promise<APIResponse> {
         });
 }
 
+export async function deleteTemplate(id: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/templates/${id}`, {
+                method: "DELETE",
+                revalidate: "dashboard/archived-templates",
+        });
+}
+
 export async function instantiateTemplate(
         templateID: number,
         payload: {

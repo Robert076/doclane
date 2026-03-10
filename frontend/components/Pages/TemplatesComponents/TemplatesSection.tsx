@@ -5,7 +5,6 @@ import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import PaginationFooter from "@/components/ClientComponents/ClientsSection/_components/PaginationFooter";
 import TemplateCard from "./TemplateCard";
-
 import { UI_TEXT } from "@/locales/ro";
 import "./TemplatesSection.css";
 import { useSearch } from "@/hooks/useSearch";
@@ -19,13 +18,13 @@ const ITEMS_PER_PAGE = 12;
 export default function TemplatesSection({ templates }: TemplatesSectionProps) {
         const [currentPage, setCurrentPage] = useState(1);
 
+        const openTemplates = templates.filter((t) => !t.is_closed);
+
         const {
                 searchInput,
                 setSearchInput,
                 filteredItems: filteredTemplates,
-        } = useSearch(templates, (template, search) => {
-                if (template.is_closed) return false;
-
+        } = useSearch(openTemplates, (template, search) => {
                 return (
                         template.title.toLowerCase().includes(search) ||
                         (template.description ?? "").toLowerCase().includes(search)
@@ -37,9 +36,7 @@ export default function TemplatesSection({ templates }: TemplatesSectionProps) {
         }, [searchInput]);
 
         const totalPages = Math.ceil(filteredTemplates.length / ITEMS_PER_PAGE);
-
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-
         const currentTemplates = filteredTemplates.slice(
                 startIndex,
                 startIndex + ITEMS_PER_PAGE,
@@ -47,7 +44,7 @@ export default function TemplatesSection({ templates }: TemplatesSectionProps) {
 
         return (
                 <div className="templates-section">
-                        {templates.length > 0 && (
+                        {openTemplates.length > 0 && (
                                 <SearchBar
                                         value={searchInput}
                                         onChange={setSearchInput}
@@ -55,7 +52,7 @@ export default function TemplatesSection({ templates }: TemplatesSectionProps) {
                                 />
                         )}
 
-                        {templates.length === 0 && (
+                        {openTemplates.length === 0 && (
                                 <NotFound
                                         text="Nu ai niciun şablon încă."
                                         subtext="Începe prin a crea primul şablon."
@@ -63,7 +60,7 @@ export default function TemplatesSection({ templates }: TemplatesSectionProps) {
                                 />
                         )}
 
-                        {filteredTemplates.length === 0 && templates.length > 0 && (
+                        {filteredTemplates.length === 0 && openTemplates.length > 0 && (
                                 <NotFound
                                         text={UI_TEXT.common.searchNotFound}
                                         subtext=""
