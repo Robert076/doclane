@@ -62,8 +62,8 @@ export default function TemplatesSection({ templates }: TemplatesSectionProps) {
 
                         {filteredTemplates.length === 0 && openTemplates.length > 0 && (
                                 <NotFound
-                                        text={UI_TEXT.common.searchNotFound}
-                                        subtext=""
+                                        text="Nu am găsit niciun șablon"
+                                        subtext="Nu există niciun rezultat care să corespundă căutarii tale."
                                         background="#fff"
                                 />
                         )}

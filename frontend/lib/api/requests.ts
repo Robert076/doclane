@@ -21,14 +21,14 @@ export async function getDocumentRequestById(
 export async function closeRequest(requestID: number): Promise<APIResponse> {
         return doclaneHTTPHelper(`/document-requests/${requestID}/archive`, {
                 method: "POST",
-                revalidate: "/dashboard",
+                revalidate: "/dashboard/requests",
         });
 }
 
 export async function reopenRequest(requestID: number): Promise<APIResponse> {
         return doclaneHTTPHelper(`/document-requests/${requestID}/unarchive`, {
                 method: "POST",
-                revalidate: "/dashboard",
+                revalidate: "/dashboard/requests",
         });
 }
 

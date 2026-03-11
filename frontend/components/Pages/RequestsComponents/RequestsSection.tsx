@@ -75,7 +75,7 @@ export default function RequestsSection({ requests, user }: RequestsSectionProps
                                         setSearchInput(value);
                                         setCurrentPage(1);
                                 }}
-                                placeholder="Caută un dosar..."
+                                placeholder="Caută..."
                         />
 
                         {/* Caz 2: Are dosare, dar căutarea nu returnează nimic */}

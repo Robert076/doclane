@@ -54,7 +54,7 @@ export default function DetailsHeader({ data }: { data: DocumentRequest }) {
 
         return (
                 <header className="details-header">
-                        <Link href="/dashboard" className="back-link">
+                        <Link href="/dashboard/requests" className="back-link">
                                 ← Înapoi la Cereri
                         </Link>
                         <div className="header-main">

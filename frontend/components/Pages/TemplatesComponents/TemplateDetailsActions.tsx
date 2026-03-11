@@ -23,7 +23,7 @@ export default function TemplateActions({ id, clients }: { id: string; clients: 
                                 loading: "Se generează dosarul...",
                                 success: (res) => {
                                         if (!res.success) throw new Error(res.error);
-                                        router.push("/dashboard");
+                                        router.push("/dashboard/templates");
                                         return "Dosar generat cu succes!";
                                 },
                                 error: (err) => `Eroare: ${err.message}`,

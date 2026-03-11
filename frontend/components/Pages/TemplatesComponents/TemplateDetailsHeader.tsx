@@ -7,7 +7,11 @@ import "./TemplateDetailsHeader.css";
 export default function TemplateDetailsHeader({ data }: { data: DocumentRequestTemplate }) {
         return (
                 <header className="template-details-header">
-                        <Link href="/dashboard" className="back-link" title="Mergi înapoi">
+                        <Link
+                                href="/dashboard/templates"
+                                className="back-link"
+                                title="Mergi înapoi"
+                        >
                                 ← Înapoi la Cereri
                         </Link>
                         <div

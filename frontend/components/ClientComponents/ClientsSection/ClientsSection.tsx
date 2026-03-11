@@ -56,7 +56,7 @@ export default function ClientsSection({ clients }: ClientsSectionProps) {
                                         setSearchInput(value);
                                         setCurrentPage(1); // Resetăm pagina automat la căutare
                                 }}
-                                placeholder="Caută un client (nume, email)..."
+                                placeholder="Caută..."
                         />
 
                         {/* Caz 2: Are clienți, dar n-a găsit nimic la căutare */}

@@ -9,7 +9,7 @@ interface AddRequestForClientHeaderProps {
 const AddRequestForClientHeader: React.FC<AddRequestForClientHeaderProps> = ({ id }) => {
         return (
                 <div className="add-request-for-client-header">
-                        <Link href="/dashboard" className="back-link">
+                        <Link href="/dashboard/requests" className="back-link">
                                 {UI_TEXT.common.back}
                         </Link>
                         <h1>Dosar nou</h1>

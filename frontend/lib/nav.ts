@@ -45,7 +45,7 @@ export const SIDEBAR_CONFIG: Record<string, NavItem[]> = {
                 { label: "Ajutor", href: "/dashboard/help", icon: MdHelpCenter },
         ],
         CLIENT: [
-                { label: "My Portal", href: "/dashboard", icon: MdHome },
+                { label: "My Portal", href: "/dashboard/requests", icon: MdHome },
                 { label: "Settings", href: "/dashboard/settings", icon: MdSettings },
         ],
 };
