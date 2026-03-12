@@ -41,6 +41,7 @@ type IDocumentRequestTemplateRepository interface {
 	GetDocumentRequestTemplatesByProfessionalID(ctx context.Context, professionalID int) ([]models.DocumentRequestTemplate, error)
 	GetDocumentRequestTemplateByID(ctx context.Context, id int) (models.DocumentRequestTemplate, error)
 	AddDocumentRequestTemplate(ctx context.Context, tmp models.DocumentRequestTemplate) (int, error)
+	PatchTemplate(ctx context.Context, templateID int, tmp models.DocumentRequestTemplateDTOPatch) error
 	CloseDocumentRequestTemplate(ctx context.Context, id int) error
 	ReopenDocumentRequestTemplate(ctx context.Context, id int) error
 	DeleteDocumentRequestTemplate(ctx context.Context, id int) error

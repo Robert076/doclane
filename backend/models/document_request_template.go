@@ -18,3 +18,10 @@ type DocumentRequestTemplateDTORead struct {
 	DocumentRequestTemplate
 	AuthorName *string
 }
+
+type DocumentRequestTemplateDTOPatch struct {
+	Title          *string `json:"title"`
+	Description    *string `json:"description"`
+	IsRecurring    *bool   `json:"is_recurring"`
+	RecurrenceCron *string `json:"recurrence_cron"`
+}

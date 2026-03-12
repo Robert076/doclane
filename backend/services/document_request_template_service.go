@@ -6,11 +6,13 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"strings"
 	"time"
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/types/errors"
+	"github.com/robfig/cron/v3"
 )
 
 type DocumentRequestTemplateService struct {
@@ -494,4 +496,62 @@ func (s *DocumentRequestTemplateService) DeleteTemplate(ctx context.Context, jwt
 	err = s.templateRepo.DeleteDocumentRequestTemplate(ctx, templateID)
 
 	return err
+}
+
+func (s *DocumentRequestTemplateService) PatchTemplate(ctx context.Context, jwtUserID int, templateID int, dto models.DocumentRequestTemplateDTOPatch) error {
+	if err := validateTemplatePatchDTO(dto); err != nil {
+		return err
+	}
+
+	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+	if err != nil {
+		s.logger.Error("failed to retrieve template by id when trying to patch it",
+			slog.Int("template_id", templateID),
+			slog.Int("user_id", jwtUserID),
+			slog.Any("error", err),
+		)
+
+		return err
+	}
+
+	if template.CreatedBy != jwtUserID {
+		s.logger.Warn("unauthorized attempt to unarchive template",
+			slog.Int("template_id", templateID),
+			slog.Int("user_id", jwtUserID),
+			slog.Any("error", err),
+		)
+
+		return errors.ErrForbidden{Msg: "You are not allowed to patch this template."}
+	}
+
+	err = s.templateRepo.PatchTemplate(ctx, templateID, dto)
+
+	return err
+}
+
+func validateTemplatePatchDTO(dto models.DocumentRequestTemplateDTOPatch) error {
+	if dto.Title != nil {
+		if strings.TrimSpace(*dto.Title) == "" {
+			return errors.ErrBadRequest{Msg: "Title cannot be empty."}
+		}
+		if len(*dto.Title) > 255 {
+			return errors.ErrBadRequest{Msg: "Title cannot exceed 255 characters."}
+		}
+	}
+
+	if dto.Description != nil && len(*dto.Description) > 1000 {
+		return errors.ErrBadRequest{Msg: "Description cannot exceed 1000 characters."}
+	}
+
+	if dto.IsRecurring != nil && *dto.IsRecurring && (dto.RecurrenceCron == nil || strings.TrimSpace(*dto.RecurrenceCron) == "") {
+		return errors.ErrBadRequest{Msg: "Recurrence cron is required when is_recurring is true."}
+	}
+
+	if dto.RecurrenceCron != nil && strings.TrimSpace(*dto.RecurrenceCron) != "" {
+		if _, err := cron.ParseStandard(*dto.RecurrenceCron); err != nil {
+			return errors.ErrBadRequest{Msg: "Invalid cron expression."}
+		}
+	}
+
+	return nil
 }

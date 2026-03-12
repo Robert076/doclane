@@ -3,6 +3,9 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"strings"
+	"time"
 
 	"github.com/Robert076/doclane/backend/models"
 )
@@ -112,5 +115,53 @@ func (r *DocumentRequestTemplateRepository) DeleteDocumentRequestTemplate(ctx co
 	`
 
 	_, err := r.db.ExecContext(ctx, query, id)
+	return err
+}
+
+func (r *DocumentRequestTemplateRepository) PatchTemplate(ctx context.Context, templateID int, dto models.DocumentRequestTemplateDTOPatch) error {
+	setClauses := []string{}
+	args := []any{}
+	argIdx := 1
+
+	if dto.Title != nil {
+		setClauses = append(setClauses, fmt.Sprintf("title = $%d", argIdx))
+		args = append(args, *dto.Title)
+		argIdx++
+	}
+
+	if dto.Description != nil {
+		setClauses = append(setClauses, fmt.Sprintf("description = $%d", argIdx))
+		args = append(args, *dto.Description)
+		argIdx++
+	}
+
+	if dto.IsRecurring != nil {
+		setClauses = append(setClauses, fmt.Sprintf("is_recurring = $%d", argIdx))
+		args = append(args, *dto.IsRecurring)
+		argIdx++
+	}
+
+	if dto.RecurrenceCron != nil {
+		setClauses = append(setClauses, fmt.Sprintf("recurrence_cron = $%d", argIdx))
+		args = append(args, *dto.RecurrenceCron)
+		argIdx++
+	}
+
+	if len(setClauses) == 0 {
+		return nil
+	}
+
+	setClauses = append(setClauses, fmt.Sprintf("updated_at = $%d", argIdx))
+	args = append(args, time.Now())
+	argIdx++
+
+	args = append(args, templateID)
+	query := fmt.Sprintf(
+		"UPDATE document_request_templates SET %s WHERE id = $%d",
+		strings.Join(setClauses, ", "),
+		argIdx,
+	)
+
+	_, err := r.db.ExecContext(ctx, query, args...)
 	return err
 }
