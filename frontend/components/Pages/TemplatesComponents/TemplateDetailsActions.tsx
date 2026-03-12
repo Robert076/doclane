@@ -3,17 +3,27 @@ import "./TemplateDetailsActions.css";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import toast from "react-hot-toast";
-import { User } from "@/types";
+import { DocumentRequestTemplate, User } from "@/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AssignClientModal from "./AssignClientModal";
-import { instantiateTemplate } from "@/lib/api/templates";
+import EditTemplateModal from "./EditTemplateModal";
+import { instantiateTemplate, patchTemplate } from "@/lib/api/templates";
 
-export default function TemplateActions({ id, clients }: { id: string; clients: User[] }) {
-        const [isModalOpen, setIsModalOpen] = useState(false);
+export default function TemplateActions({
+        id,
+        clients,
+        template,
+}: {
+        id: string;
+        clients: User[];
+        template: DocumentRequestTemplate;
+}) {
+        const [isInstantiateModalOpen, setIsInstantiateModalOpen] = useState(false);
+        const [isEditModalOpen, setIsEditModalOpen] = useState(false);
         const router = useRouter();
 
-        const handleConfirm = async (client: User) => {
+        const handleInstantiateConfirm = async (client: User) => {
                 toast.promise(
                         instantiateTemplate(+id, {
                                 client_id: +client.id,
@@ -31,6 +41,18 @@ export default function TemplateActions({ id, clients }: { id: string; clients: 
                 );
         };
 
+        const handleEditConfirm = async (data: { title?: string; description?: string }) => {
+                toast.promise(patchTemplate(+id, data), {
+                        loading: "Se salvează...",
+                        success: (res) => {
+                                if (!res.success) throw new Error(res.error);
+                                router.refresh();
+                                return "Șablon actualizat!";
+                        },
+                        error: (err) => `Eroare: ${err.message}`,
+                });
+        };
+
         return (
                 <>
                         <aside className="template-actions">
@@ -39,15 +61,28 @@ export default function TemplateActions({ id, clients }: { id: string; clients: 
                                         <ButtonPrimary
                                                 text="Generează dosar"
                                                 fullWidth={true}
-                                                onClick={() => setIsModalOpen(true)}
+                                                onClick={() => setIsInstantiateModalOpen(true)}
+                                        />
+                                        <ButtonPrimary
+                                                text="Editează șablon"
+                                                fullWidth={true}
+                                                variant="ghost"
+                                                onClick={() => setIsEditModalOpen(true)}
                                         />
                                 </div>
                         </aside>
+
                         <AssignClientModal
-                                isOpen={isModalOpen}
-                                onClose={() => setIsModalOpen(false)}
-                                onConfirm={handleConfirm}
+                                isOpen={isInstantiateModalOpen}
+                                onClose={() => setIsInstantiateModalOpen(false)}
+                                onConfirm={handleInstantiateConfirm}
                                 clients={clients}
+                        />
+                        <EditTemplateModal
+                                isOpen={isEditModalOpen}
+                                onClose={() => setIsEditModalOpen(false)}
+                                onConfirm={handleEditConfirm}
+                                template={template}
                         />
                 </>
         );

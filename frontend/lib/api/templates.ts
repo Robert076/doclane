@@ -119,3 +119,19 @@ export async function getDocumentRequestTemplateByID(
 ): Promise<APIResponse<DocumentRequestTemplate>> {
         return doclaneHTTPHelper(`/templates/${id}`, { method: "GET" });
 }
+
+export async function patchTemplate(
+        id: number,
+        payload: {
+                title?: string;
+                description?: string;
+                is_recurring?: boolean;
+                recurrence_cron?: string;
+        },
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/templates/${id}`, {
+                method: "PATCH",
+                body: payload,
+                revalidate: `/dashboard/templates/${id}`,
+        });
+}

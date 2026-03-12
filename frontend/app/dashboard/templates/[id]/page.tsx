@@ -47,7 +47,11 @@ export default async function TemplateDetailsPage({ params }: PageProps) {
                                                 documents={expectedDocumentsResponse.data}
                                         />
                                 </div>
-                                <TemplateActions id={id} clients={clientsResponse.data} />
+                                <TemplateActions
+                                        id={id}
+                                        clients={clientsResponse.data}
+                                        template={data}
+                                />
                         </div>
                 </div>
         );

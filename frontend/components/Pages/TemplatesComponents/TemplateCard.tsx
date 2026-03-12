@@ -11,6 +11,7 @@ import toast from "react-hot-toast";
 import BaseDashboardCard from "@/components/CardComponents/BaseDashboardCard/BaseDashboardCard";
 import { archiveTemplate, deleteTemplate, unarchiveTemplate } from "@/lib/api/templates";
 import DeleteTemplateModal from "./DeleteTemplateModal";
+import "./TemplateCard.css";
 
 interface TemplateCardProps {
         template: DocumentRequestTemplate;
@@ -128,17 +129,6 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                                                         }
                                                                         search={searchTerm}
                                                                 />
-                                                        </span>
-                                                </div>
-                                        )}
-
-                                        {template.is_recurring && template.recurrence_cron && (
-                                                <div className="template-info-item">
-                                                        <span className="template-label">
-                                                                Recurenţă
-                                                        </span>
-                                                        <span className="template-value">
-                                                                {template.recurrence_cron}
                                                         </span>
                                                 </div>
                                         )}

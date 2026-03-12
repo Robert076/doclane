@@ -13,6 +13,7 @@ import ExpectedDocumentsList, {
         ExpectedDocumentInput,
 } from "@/components/Pages/ClientsComponents/ExpectedDocumentsList";
 import { addExpectedDocumentTemplate, createTemplate } from "@/lib/api/templates";
+import { buildCronExpression } from "@/lib/cron";
 
 const CreateTemplateForm = () => {
         const [title, setTitle] = useState("");
@@ -45,13 +46,12 @@ const CreateTemplateForm = () => {
 
                 toast.promise(
                         (async () => {
-                                console.log(title);
                                 const res = await createTemplate({
                                         title,
                                         description: description || undefined,
                                         is_recurring: isRecurring,
                                         recurrence_cron: isRecurring
-                                                ? buildCron(hour, minute, unit)
+                                                ? buildCronExpression(unit, hour, minute)
                                                 : undefined,
                                 });
 
@@ -80,81 +80,60 @@ const CreateTemplateForm = () => {
         };
 
         return (
-                <>
-                        <form className="add-form" onSubmit={handleSubmit}>
-                                <Input
-                                        label="Titlul şablonului"
-                                        placeholder="Scrie titlul şablonului..."
-                                        value={title}
-                                        onChange={(e: any) => setTitle(e.target.value)}
+                <form className="add-form" onSubmit={handleSubmit}>
+                        <Input
+                                label="Titlul şablonului"
+                                placeholder="Scrie titlul şablonului..."
+                                value={title}
+                                onChange={(e: any) => setTitle(e.target.value)}
+                        />
+                        <TextArea
+                                label="Descrierea şablonului"
+                                placeholder="Scrie descrierea şablonului..."
+                                value={description}
+                                onChange={(e: any) => setDescription(e.target.value)}
+                        />
+                        <div className="radio-inputs-time">
+                                <RadioInput
+                                        isChecked={isNoneSelected}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                setIsNoneSelected(e.target.checked);
+                                                setIsRecurring(false);
+                                        }}
+                                        label="Fără recurenţă"
                                 />
-                                <TextArea
-                                        label="Descrierea şablonului"
-                                        placeholder="Scrie descrierea şablonului..."
-                                        value={description}
-                                        onChange={(e: any) => setDescription(e.target.value)}
+                                <RadioInput
+                                        isChecked={isRecurring}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                setIsRecurring(e.target.checked);
+                                                setIsNoneSelected(false);
+                                        }}
+                                        label="Recurent"
                                 />
-                                <div className="radio-inputs-time">
-                                        <RadioInput
-                                                isChecked={isNoneSelected}
-                                                onChange={(
-                                                        e: React.ChangeEvent<HTMLInputElement>,
-                                                ) => {
-                                                        setIsNoneSelected(e.target.checked);
-                                                        setIsRecurring(false);
-                                                }}
-                                                label="Fără recurenţă"
-                                        />
-                                        <RadioInput
-                                                isChecked={isRecurring}
-                                                onChange={(
-                                                        e: React.ChangeEvent<HTMLInputElement>,
-                                                ) => {
-                                                        setIsRecurring(e.target.checked);
-                                                        setIsNoneSelected(false);
-                                                }}
-                                                label="Recurent"
-                                        />
-                                </div>
-                                {isRecurring && (
-                                        <CronInput
-                                                unit={unit}
-                                                setUnit={setUnit}
-                                                hour={hour}
-                                                minute={minute}
-                                                setHour={setHour}
-                                                setMinute={setMinute}
-                                        />
-                                )}
-                                <ExpectedDocumentsList
-                                        documents={expectedDocuments}
-                                        onChange={setExpectedDocuments}
+                        </div>
+                        {isRecurring && (
+                                <CronInput
+                                        unit={unit}
+                                        setUnit={setUnit}
+                                        hour={hour}
+                                        minute={minute}
+                                        setHour={setHour}
+                                        setMinute={setMinute}
                                 />
-                                <div className="button-group">
-                                        <ButtonPrimary
-                                                text="Crează şablon"
-                                                onClick={handleSubmit}
-                                                type="button"
-                                        />
-                                </div>
-                        </form>
-                </>
+                        )}
+                        <ExpectedDocumentsList
+                                documents={expectedDocuments}
+                                onChange={setExpectedDocuments}
+                        />
+                        <div className="button-group">
+                                <ButtonPrimary
+                                        text="Crează şablon"
+                                        onClick={handleSubmit}
+                                        type="button"
+                                />
+                        </div>
+                </form>
         );
 };
 
 export default CreateTemplateForm;
-
-const buildCron = (hour: string, minute: string, unit: RecurrenceUnit) => {
-        const h = hour || "0";
-        const m = minute || "0";
-        switch (unit) {
-                case "day":
-                        return `${m} ${h} * * *`;
-                case "week":
-                        return `${m} ${h} * * 1`;
-                case "month":
-                        return `${m} ${h} 1 * *`;
-                case "year":
-                        return `${m} ${h} 1 1 *`;
-        }
-};
