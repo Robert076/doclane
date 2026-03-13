@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type DocumentRequestBase struct {
+type RequestBase struct {
 	ClientID       int        `db:"client_id" json:"client_id"`
 	Title          string     `db:"title" json:"title"`
 	Description    *string    `db:"description,omitempty" json:"description,omitempty"`
@@ -16,17 +16,17 @@ type DocumentRequestBase struct {
 	DueDate        *time.Time `db:"due_date,omitempty" json:"due_date,omitempty"`
 }
 
-type DocumentRequest struct {
-	DocumentRequestBase
-	ID             int       `db:"id" json:"id"`
-	ProfessionalID int       `db:"professional_id" json:"professional_id"`
-	CreatedAt      time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt      time.Time `db:"updated_at" json:"updated_at"`
-	TemplateID     *int      `db:"template_id" json:"template_id"`
+type Request struct {
+	RequestBase
+	ID                int       `db:"id" json:"id"`
+	ProfessionalID    int       `db:"professional_id" json:"professional_id"`
+	CreatedAt         time.Time `db:"created_at" json:"created_at"`
+	UpdatedAt         time.Time `db:"updated_at" json:"updated_at"`
+	RequestTemplateID *int      `db:"template_id" json:"template_id"`
 }
 
-type DocumentRequestDTORead struct {
-	DocumentRequest
+type RequestDTORead struct {
+	Request
 	ClientEmail       string             `json:"client_email"`
 	ClientFirstName   string             `json:"client_first_name"`
 	ClientLastName    string             `json:"client_last_name"`
@@ -34,13 +34,13 @@ type DocumentRequestDTORead struct {
 	ExpectedDocuments []ExpectedDocument `json:"expected_documents"`
 }
 
-type DocumentRequestDTOPatch struct {
+type RequestDTOPatch struct {
 	Title string `json:"title"`
 }
 
-type DocumentFile struct {
+type Document struct {
 	ID                 int       `db:"id" json:"id"`
-	DocumentRequestID  int       `db:"document_request_id" json:"document_request_id"`
+	RequestID          int       `db:"document_request_id" json:"document_request_id"`
 	ExpectedDocumentID int       `db:"expected_document_id" json:"expected_document_id"`
 	FileName           string    `db:"file_name" json:"file_name"`
 	FilePath           string    `db:"file_path" json:"file_path"`
@@ -51,18 +51,18 @@ type DocumentFile struct {
 	UploadedBy         *int      `db:"uploaded_by" json:"uploaded_by"`
 }
 
-type DocumentFileDTORead struct {
-	DocumentFile
+type DocumentDTORead struct {
+	Document
 	UploadedByFirstName string `json:"uploaded_by_first_name"`
 	UploadedByLastName  string `json:"uploaded_by_last_name"`
 }
 
-type DocumentFileDTOExtended struct {
-	DocumentFile
+type DocumentDTOExtended struct {
+	Document
 	AuthorRole string
 }
 
-type DocumentRequestDTOCreate struct {
-	DocumentRequestBase
+type RequestDTOCreate struct {
+	RequestBase
 	ExpectedDocuments []ExpectedDocumentInput
 }

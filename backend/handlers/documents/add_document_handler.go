@@ -48,7 +48,7 @@ func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := config.DocumentService.AddDocumentFile(
+	id, err := config.RequestService.AddDocument(
 		r.Context(),
 		userId,
 		requestID,

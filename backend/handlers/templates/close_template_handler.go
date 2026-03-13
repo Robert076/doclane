@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func CloseTemplateHandler(w http.ResponseWriter, r *http.Request) {
+func CloseRequestTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -24,12 +24,12 @@ func CloseTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, errors.ErrUnprocessableContent{Msg: "Invalid ID received."})
 	}
 
-	if err := config.DocumentRequestTemplateService.CloseTemplate(r.Context(), jwtUserId, idInt); err != nil {
+	if err := config.RequestTemplateService.CloseRequestTemplate(r.Context(), jwtUserId, idInt); err != nil {
 		utils.WriteError(w, err)
 	}
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Template closed successfully.",
+		Msg:     "RequestTemplate closed successfully.",
 	})
 }

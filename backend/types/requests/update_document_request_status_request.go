@@ -1,5 +1,5 @@
 package requests
 
-type UpdateDocumentRequestStatusRequest struct {
+type UpdateRequestStatusRequest struct {
 	Status string `json:"status"`
 }

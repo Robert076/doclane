@@ -14,7 +14,7 @@ import (
 )
 
 type UserService struct {
-	repo   repositories.IUserRepository
+	repo   repositories.IUserRepo
 	logger *slog.Logger
 }
 
@@ -32,7 +32,7 @@ type LoginParams struct {
 	Password string
 }
 
-func NewUserService(repo repositories.IUserRepository, logger *slog.Logger) *UserService {
+func NewUserService(repo repositories.IUserRepo, logger *slog.Logger) *UserService {
 	return &UserService{repo: repo, logger: logger}
 }
 

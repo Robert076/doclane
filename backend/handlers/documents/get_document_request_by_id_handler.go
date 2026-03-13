@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func GetDocumentRequestByIDHandler(w http.ResponseWriter, r *http.Request) {
+func GetRequestByIDHandler(w http.ResponseWriter, r *http.Request) {
 	userId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -25,7 +25,7 @@ func GetDocumentRequestByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	docReq, err := config.DocumentService.GetDocumentRequestByID(r.Context(), userId, id)
+	docReq, err := config.RequestService.GetRequestByID(r.Context(), userId, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

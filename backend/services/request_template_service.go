@@ -15,28 +15,28 @@ import (
 	"github.com/robfig/cron/v3"
 )
 
-type DocumentRequestTemplateService struct {
-	templateRepo        repositories.IDocumentRequestTemplateRepository
-	expectedDocTmplRepo repositories.IExpectedDocumentTemplateRepository
-	expectedDocRepo     repositories.IExpectedDocumentRepository
-	documentRepo        repositories.IDocumentRepository
-	userRepo            repositories.IUserRepository
+type RequestTemplateService struct {
+	templateRepo        repositories.IRequestTemplateRepo
+	expectedDocTmplRepo repositories.IExpectedDocumentTemplateRepo
+	expectedDocRepo     repositories.IExpectedDocumentRepo
+	documentRepo        repositories.IRequestRepo
+	userRepo            repositories.IUserRepo
 	txManager           repositories.ITxManager
 	fileStorage         *FileStorageService
 	logger              *slog.Logger
 }
 
-func NewDocumentRequestTemplateService(
-	templateRepo repositories.IDocumentRequestTemplateRepository,
-	expectedDocTmplRepo repositories.IExpectedDocumentTemplateRepository,
-	expectedDocRepo repositories.IExpectedDocumentRepository,
-	documentRepo repositories.IDocumentRepository,
-	userRepo repositories.IUserRepository,
+func NewRequestTemplateService(
+	templateRepo repositories.IRequestTemplateRepo,
+	expectedDocTmplRepo repositories.IExpectedDocumentTemplateRepo,
+	expectedDocRepo repositories.IExpectedDocumentRepo,
+	documentRepo repositories.IRequestRepo,
+	userRepo repositories.IUserRepo,
 	txManager repositories.ITxManager,
 	fileStorage *FileStorageService,
 	logger *slog.Logger,
-) *DocumentRequestTemplateService {
-	return &DocumentRequestTemplateService{
+) *RequestTemplateService {
+	return &RequestTemplateService{
 		templateRepo:        templateRepo,
 		expectedDocTmplRepo: expectedDocTmplRepo,
 		expectedDocRepo:     expectedDocRepo,
@@ -48,11 +48,11 @@ func NewDocumentRequestTemplateService(
 	}
 }
 
-func (s *DocumentRequestTemplateService) GetTemplatesByProfessionalID(
+func (s *RequestTemplateService) GetRequestTemplatesByProfessionalID(
 	ctx context.Context,
 	jwtUserID int,
-) ([]models.DocumentRequestTemplate, error) {
-	templates, err := s.templateRepo.GetDocumentRequestTemplatesByProfessionalID(ctx, jwtUserID)
+) ([]models.RequestTemplate, error) {
+	templates, err := s.templateRepo.GetRequestTemplatesByProfessionalID(ctx, jwtUserID)
 	if err != nil {
 		s.logger.Error("failed to fetch templates",
 			slog.Int("professional_id", jwtUserID),
@@ -63,18 +63,18 @@ func (s *DocumentRequestTemplateService) GetTemplatesByProfessionalID(
 	return templates, nil
 }
 
-func (s *DocumentRequestTemplateService) GetTemplateByID(
+func (s *RequestTemplateService) GetRequestTemplateByID(
 	ctx context.Context,
 	jwtUserID int,
 	templateID int,
-) (models.DocumentRequestTemplate, error) {
-	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+) (models.RequestTemplate, error) {
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, templateID)
 	if err != nil {
 		s.logger.Error("failed to fetch template by id",
 			slog.Int("template_id", templateID),
 			slog.Any("error", err),
 		)
-		return models.DocumentRequestTemplate{}, errors.ErrNotFound{Msg: "Template not found."}
+		return models.RequestTemplate{}, errors.ErrNotFound{Msg: "Request template not found."}
 	}
 
 	if template.CreatedBy != jwtUserID {
@@ -82,18 +82,18 @@ func (s *DocumentRequestTemplateService) GetTemplateByID(
 			slog.Int("user_id", jwtUserID),
 			slog.Int("template_id", templateID),
 		)
-		return models.DocumentRequestTemplate{}, errors.ErrForbidden{Msg: "You are not allowed to access this template."}
+		return models.RequestTemplate{}, errors.ErrForbidden{Msg: "You are not allowed to access this template."}
 	}
 
 	return template, nil
 }
 
-func (s *DocumentRequestTemplateService) AddTemplate(
+func (s *RequestTemplateService) AddRequestTemplate(
 	ctx context.Context,
 	jwtUserID int,
-	template models.DocumentRequestTemplate,
+	template models.RequestTemplate,
 ) (int, error) {
-	if err := ValidateTemplateInput(template); err != nil {
+	if err := ValidateRequestTemplateInput(template); err != nil {
 		s.logger.Warn("template create failed validation",
 			slog.Int("professional_id", jwtUserID),
 			slog.Any("error", err),
@@ -105,7 +105,7 @@ func (s *DocumentRequestTemplateService) AddTemplate(
 	template.CreatedAt = time.Now()
 	template.UpdatedAt = time.Now()
 
-	id, err := s.templateRepo.AddDocumentRequestTemplate(ctx, template)
+	id, err := s.templateRepo.AddRequestTemplate(ctx, template)
 	if err != nil {
 		s.logger.Error("failed to create template",
 			slog.Int("professional_id", jwtUserID),
@@ -121,7 +121,7 @@ func (s *DocumentRequestTemplateService) AddTemplate(
 	return id, nil
 }
 
-func (s *DocumentRequestTemplateService) AddExpectedDocumentTemplate(
+func (s *RequestTemplateService) AddExpectedDocumentTemplate(
 	ctx context.Context,
 	jwtUserID int,
 	t models.ExpectedDocumentTemplate,
@@ -130,9 +130,9 @@ func (s *DocumentRequestTemplateService) AddExpectedDocumentTemplate(
 	ExampleMimeType string,
 	exampleFileSize int64,
 ) (int, error) {
-	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, t.DocumentRequestTemplateID)
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, t.RequestTemplateID)
 	if err != nil {
-		return 0, errors.ErrNotFound{Msg: "Template not found."}
+		return 0, errors.ErrNotFound{Msg: "Request template not found."}
 	}
 
 	if template.CreatedBy != jwtUserID {
@@ -144,7 +144,7 @@ func (s *DocumentRequestTemplateService) AddExpectedDocumentTemplate(
 			return 0, err
 		}
 
-		s3Key := generateExampleS3Key(exampleFileName)
+		s3Key := s.fileStorage.GenerateExampleS3Key(exampleFileName)
 		result, err := s.fileStorage.UploadFile(ctx, s3Key, exampleFile, ExampleMimeType)
 		if err != nil {
 			s.logger.Error("s3 upload failed for example file",
@@ -160,7 +160,7 @@ func (s *DocumentRequestTemplateService) AddExpectedDocumentTemplate(
 		id, err := s.expectedDocTmplRepo.Add(ctx, t)
 		if err != nil {
 			s.logger.Error("failed to add expected document template",
-				slog.Int("template_id", t.DocumentRequestTemplateID),
+				slog.Int("template_id", t.RequestTemplateID),
 				slog.Any("error", err),
 			)
 
@@ -178,7 +178,7 @@ func (s *DocumentRequestTemplateService) AddExpectedDocumentTemplate(
 
 		s.logger.Info("expected document template added with example",
 			slog.Int("expected_document_template_id", id),
-			slog.Int("template_id", t.DocumentRequestTemplateID),
+			slog.Int("template_id", t.RequestTemplateID),
 		)
 		return id, nil
 	}
@@ -186,7 +186,7 @@ func (s *DocumentRequestTemplateService) AddExpectedDocumentTemplate(
 	id, err := s.expectedDocTmplRepo.Add(ctx, t)
 	if err != nil {
 		s.logger.Error("failed to add expected document template",
-			slog.Int("template_id", t.DocumentRequestTemplateID),
+			slog.Int("template_id", t.RequestTemplateID),
 			slog.Any("error", err),
 		)
 		return 0, err
@@ -194,41 +194,41 @@ func (s *DocumentRequestTemplateService) AddExpectedDocumentTemplate(
 
 	s.logger.Info("expected document template added",
 		slog.Int("expected_document_template_id", id),
-		slog.Int("template_id", t.DocumentRequestTemplateID),
+		slog.Int("template_id", t.RequestTemplateID),
 	)
 	return id, nil
 }
 
-func (s *DocumentRequestTemplateService) DeleteExpectedDocumentTemplate(
+func (s *RequestTemplateService) DeleteExpectedDocumentTemplate(
 	ctx context.Context,
 	jwtUserID int,
-	expectedDocTemplateID int,
+	expectedDocRequestTemplateID int,
 	templateID int,
 ) error {
-	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, templateID)
 	if err != nil {
-		return errors.ErrNotFound{Msg: "Template not found."}
+		return errors.ErrNotFound{Msg: "Request template not found."}
 	}
 
 	if template.CreatedBy != jwtUserID {
 		return errors.ErrForbidden{Msg: "You are not allowed to modify this template."}
 	}
 
-	if err := s.expectedDocTmplRepo.DeleteByID(ctx, expectedDocTemplateID); err != nil {
+	if err := s.expectedDocTmplRepo.DeleteByID(ctx, expectedDocRequestTemplateID); err != nil {
 		s.logger.Error("failed to delete expected document template",
-			slog.Int("expected_document_template_id", expectedDocTemplateID),
+			slog.Int("expected_document_template_id", expectedDocRequestTemplateID),
 			slog.Any("error", err),
 		)
 		return err
 	}
 
 	s.logger.Info("expected document template deleted",
-		slog.Int("expected_document_template_id", expectedDocTemplateID),
+		slog.Int("expected_document_template_id", expectedDocRequestTemplateID),
 	)
 	return nil
 }
 
-func (s *DocumentRequestTemplateService) InstantiateTemplate(
+func (s *RequestTemplateService) InstantiateRequestTemplate(
 	ctx context.Context,
 	jwtUserID int,
 	templateID int,
@@ -237,9 +237,9 @@ func (s *DocumentRequestTemplateService) InstantiateTemplate(
 	scheduledFor *string,
 	dueDate *time.Time,
 ) (int, error) {
-	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, templateID)
 	if err != nil {
-		return 0, errors.ErrNotFound{Msg: "Template not found."}
+		return 0, errors.ErrNotFound{Msg: "Request template not found."}
 	}
 
 	if template.CreatedBy != jwtUserID {
@@ -259,7 +259,7 @@ func (s *DocumentRequestTemplateService) InstantiateTemplate(
 		return 0, errors.ErrForbidden{Msg: "This client is not assigned to you."}
 	}
 
-	expectedDocTemplates, err := s.expectedDocTmplRepo.GetByTemplateID(ctx, templateID)
+	expectedDocRequestTemplates, err := s.expectedDocTmplRepo.GetByRequestTemplateID(ctx, templateID)
 	if err != nil {
 		s.logger.Error("failed to fetch expected document templates",
 			slog.Int("template_id", templateID),
@@ -270,10 +270,10 @@ func (s *DocumentRequestTemplateService) InstantiateTemplate(
 
 	nextDueAt := ComputeNextDueAt(dueDate, template.RecurrenceCron)
 
-	req := models.DocumentRequest{
-		ProfessionalID: jwtUserID,
-		TemplateID:     &templateID,
-		DocumentRequestBase: models.DocumentRequestBase{
+	req := models.Request{
+		ProfessionalID:    jwtUserID,
+		RequestTemplateID: &templateID,
+		RequestBase: models.RequestBase{
 			ClientID:       clientID,
 			Title:          template.Title,
 			Description:    template.Description,
@@ -291,19 +291,19 @@ func (s *DocumentRequestTemplateService) InstantiateTemplate(
 	var id int
 	err = s.txManager.WithTx(ctx, func(tx *sql.Tx) error {
 		var txErr error
-		id, txErr = s.documentRepo.AddDocumentRequestWithTx(ctx, req, tx)
+		id, txErr = s.documentRepo.AddRequestWithTx(ctx, req, tx)
 		if txErr != nil {
 			return txErr
 		}
 
-		for _, edt := range expectedDocTemplates {
+		for _, edt := range expectedDocRequestTemplates {
 			ed := models.ExpectedDocument{
-				DocumentRequestID: id,
-				Title:             edt.Title,
-				Description:       edt.Description,
-				Status:            "pending",
-				ExampleFilePath:   edt.ExampleFilePath,
-				ExampleMimeType:   edt.ExampleMimeType,
+				RequestID:       id,
+				Title:           edt.Title,
+				Description:     edt.Description,
+				Status:          "pending",
+				ExampleFilePath: edt.ExampleFilePath,
+				ExampleMimeType: edt.ExampleMimeType,
 			}
 			if txErr = s.expectedDocRepo.AddExpectedDocumentToRequestWithTx(ctx, tx, ed); txErr != nil {
 				return txErr
@@ -324,16 +324,16 @@ func (s *DocumentRequestTemplateService) InstantiateTemplate(
 	s.logger.Info("template instantiated successfully",
 		slog.Int("request_id", id),
 		slog.Int("template_id", templateID),
-		slog.Int("expected_documents", len(expectedDocTemplates)),
+		slog.Int("expected_documents", len(expectedDocRequestTemplates)),
 	)
 	return id, nil
 }
 
-func (s *DocumentRequestTemplateService) GetExpectedDocumentTemplatesByTemplateID(ctx context.Context, jwtUserID int, documentRequestTemplateID int) ([]models.ExpectedDocumentTemplate, error) {
-	requestTemplate, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, documentRequestTemplateID)
+func (s *RequestTemplateService) GetExpectedDocumentTemplatesByRequestTemplateID(ctx context.Context, jwtUserID int, RequestTemplateID int) ([]models.ExpectedDocumentTemplate, error) {
+	requestRequestTemplate, err := s.templateRepo.GetRequestTemplateByID(ctx, RequestTemplateID)
 	if err != nil {
 		s.logger.Error("failed to retrieve template by id when trying to retrieve expected document templates from it",
-			slog.Int("template_id", documentRequestTemplateID),
+			slog.Int("template_id", RequestTemplateID),
 			slog.Int("user_id", jwtUserID),
 			slog.Any("error", err),
 		)
@@ -341,19 +341,19 @@ func (s *DocumentRequestTemplateService) GetExpectedDocumentTemplatesByTemplateI
 		return nil, err
 	}
 
-	if requestTemplate.CreatedBy != jwtUserID {
+	if requestRequestTemplate.CreatedBy != jwtUserID {
 		s.logger.Warn("unauthorized access attempted for getting expected document templates for a request template",
-			slog.Int("template_id", documentRequestTemplateID),
+			slog.Int("template_id", RequestTemplateID),
 			slog.Int("user_id", jwtUserID),
 		)
 
 		return nil, errors.ErrForbidden{Msg: "This template does not belong to you."}
 	}
 
-	documentTemplates, err := s.expectedDocTmplRepo.GetByTemplateID(ctx, documentRequestTemplateID)
+	documentRequestTemplates, err := s.expectedDocTmplRepo.GetByRequestTemplateID(ctx, RequestTemplateID)
 	if err != nil {
 		s.logger.Error("failed to retrieve document templates by template id",
-			slog.Int("template_id", documentRequestTemplateID),
+			slog.Int("template_id", RequestTemplateID),
 			slog.Int("user_id", jwtUserID),
 			slog.Any("error", err),
 		)
@@ -361,11 +361,11 @@ func (s *DocumentRequestTemplateService) GetExpectedDocumentTemplatesByTemplateI
 		return nil, err
 	}
 
-	return documentTemplates, nil
+	return documentRequestTemplates, nil
 }
 
-func (s *DocumentRequestTemplateService) PresignExample(ctx context.Context, jwtUserID int, templateID int, expectedDocID int) (string, error) {
-	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+func (s *RequestTemplateService) PresignExample(ctx context.Context, jwtUserID int, templateID int, expectedDocID int) (string, error) {
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, templateID)
 	if err != nil {
 		s.logger.Error("failed to retrieve template by id when trying to presign url for example",
 			slog.Int("template_id", templateID),
@@ -417,8 +417,8 @@ func (s *DocumentRequestTemplateService) PresignExample(ctx context.Context, jwt
 	return presignedURL, nil
 }
 
-func (s *DocumentRequestTemplateService) CloseTemplate(ctx context.Context, jwtUserID int, templateID int) error {
-	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+func (s *RequestTemplateService) CloseRequestTemplate(ctx context.Context, jwtUserID int, templateID int) error {
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, templateID)
 	if err != nil {
 		s.logger.Error("failed to retrieve template by id when trying to close it",
 			slog.Int("template_id", templateID),
@@ -439,13 +439,13 @@ func (s *DocumentRequestTemplateService) CloseTemplate(ctx context.Context, jwtU
 		return errors.ErrForbidden{Msg: "You are not allowed to close this template."}
 	}
 
-	err = s.templateRepo.CloseDocumentRequestTemplate(ctx, templateID)
+	err = s.templateRepo.CloseRequestTemplate(ctx, templateID)
 
 	return err
 }
 
-func (s *DocumentRequestTemplateService) ReopenTemplate(ctx context.Context, jwtUserID int, templateID int) error {
-	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+func (s *RequestTemplateService) ReopenRequestTemplate(ctx context.Context, jwtUserID int, templateID int) error {
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, templateID)
 	if err != nil {
 		s.logger.Error("failed to retrieve template by id when trying to reopen it",
 			slog.Int("template_id", templateID),
@@ -466,13 +466,13 @@ func (s *DocumentRequestTemplateService) ReopenTemplate(ctx context.Context, jwt
 		return errors.ErrForbidden{Msg: "You are not allowed to reopen this template."}
 	}
 
-	err = s.templateRepo.ReopenDocumentRequestTemplate(ctx, templateID)
+	err = s.templateRepo.ReopenRequestTemplate(ctx, templateID)
 
 	return err
 }
 
-func (s *DocumentRequestTemplateService) DeleteTemplate(ctx context.Context, jwtUserID int, templateID int) error {
-	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+func (s *RequestTemplateService) DeleteRequestTemplate(ctx context.Context, jwtUserID int, templateID int) error {
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, templateID)
 	if err != nil {
 		s.logger.Error("failed to retrieve template by id when trying to delete it",
 			slog.Int("template_id", templateID),
@@ -493,17 +493,17 @@ func (s *DocumentRequestTemplateService) DeleteTemplate(ctx context.Context, jwt
 		return errors.ErrForbidden{Msg: "You are not allowed to delete this template."}
 	}
 
-	err = s.templateRepo.DeleteDocumentRequestTemplate(ctx, templateID)
+	err = s.templateRepo.DeleteRequestTemplate(ctx, templateID)
 
 	return err
 }
 
-func (s *DocumentRequestTemplateService) PatchTemplate(ctx context.Context, jwtUserID int, templateID int, dto models.DocumentRequestTemplateDTOPatch) error {
-	if err := validateTemplatePatchDTO(dto); err != nil {
+func (s *RequestTemplateService) PatchRequestTemplate(ctx context.Context, jwtUserID int, templateID int, dto models.RequestTemplateDTOPatch) error {
+	if err := validateRequestTemplatePatchDTO(dto); err != nil {
 		return err
 	}
 
-	template, err := s.templateRepo.GetDocumentRequestTemplateByID(ctx, templateID)
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, templateID)
 	if err != nil {
 		s.logger.Error("failed to retrieve template by id when trying to patch it",
 			slog.Int("template_id", templateID),
@@ -524,12 +524,12 @@ func (s *DocumentRequestTemplateService) PatchTemplate(ctx context.Context, jwtU
 		return errors.ErrForbidden{Msg: "You are not allowed to patch this template."}
 	}
 
-	err = s.templateRepo.PatchTemplate(ctx, templateID, dto)
+	err = s.templateRepo.PatchRequestTemplate(ctx, templateID, dto)
 
 	return err
 }
 
-func validateTemplatePatchDTO(dto models.DocumentRequestTemplateDTOPatch) error {
+func validateRequestTemplatePatchDTO(dto models.RequestTemplateDTOPatch) error {
 	if dto.Title != nil {
 		if strings.TrimSpace(*dto.Title) == "" {
 			return errors.ErrBadRequest{Msg: "Title cannot be empty."}

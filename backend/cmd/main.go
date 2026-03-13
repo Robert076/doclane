@@ -73,17 +73,17 @@ func buildRouter() (http.Handler, *chi.Mux) {
 		})
 
 		r.Route("/document-requests", func(r chi.Router) {
-			r.Post("/", document_handler.AddDocumentRequestHandler)
-			r.Get("/professional/my-requests", document_handler.GetDocumentRequestsByProfessionalHandler)
-			r.Get("/client/my-requests", document_handler.GetDocumentRequestsByClientHandler)
+			r.Post("/", document_handler.AddRequestHandler)
+			r.Get("/professional/my-requests", document_handler.GetRequestsByProfessionalHandler)
+			r.Get("/client/my-requests", document_handler.GetRequestsByClientHandler)
 			r.Patch("/expected-documents/{id}/status", document_handler.PatchExpectedDocumentStatusHandler)
 			r.Get("/expected-documents/{id}/presign-example", document_handler.GetExamplePresignedURLHandler)
 
 			r.Route("/{id}", func(r chi.Router) {
-				r.Get("/", document_handler.GetDocumentRequestByIDHandler)
-				r.Patch("/", document_handler.PatchDocumentRequestHandler)
-				r.Post("/archive", document_handler.CloseDocumentRequestHandler)
-				r.Post("/unarchive", document_handler.ReopenDocumentRequestHandler)
+				r.Get("/", document_handler.GetRequestByIDHandler)
+				r.Patch("/", document_handler.PatchRequestHandler)
+				r.Post("/archive", document_handler.CloseRequestHandler)
+				r.Post("/unarchive", document_handler.ReopenRequestHandler)
 
 				r.Route("/files", func(r chi.Router) {
 					r.Get("/", document_handler.GetFilesByRequestHandler)
@@ -95,21 +95,21 @@ func buildRouter() (http.Handler, *chi.Mux) {
 		})
 
 		r.Route("/templates", func(r chi.Router) {
-			r.Post("/", template_handler.AddTemplateHandler)
-			r.Get("/", template_handler.GetTemplatesByProfessionalHandler)
+			r.Post("/", template_handler.AddRequestTemplateHandler)
+			r.Get("/", template_handler.GetRequestTemplatesByProfessionalHandler)
 			r.Route("/{id}", func(r chi.Router) {
-				r.Get("/", template_handler.GetTemplateByIDHandler)
-				r.Post("/instantiate", template_handler.InstantiateTemplateHandler)
-				r.Patch("/", template_handler.PatchTemplateHandler)
-				r.Delete("/", template_handler.DeleteTemplateHandler)
+				r.Get("/", template_handler.GetRequestTemplateByIDHandler)
+				r.Post("/instantiate", template_handler.InstantiateRequestTemplateHandler)
+				r.Patch("/", template_handler.PatchRequestTemplateHandler)
+				r.Delete("/", template_handler.DeleteRequestTemplateHandler)
 				r.Route("/expected-documents", func(r chi.Router) {
-					r.Get("/", template_handler.GetExpectedDocumentTemplatesByTemplateIDHandler)
+					r.Get("/", template_handler.GetExpectedDocumentTemplatesByRequestTemplateIDHandler)
 					r.Post("/", template_handler.AddExpectedDocumentTemplateHandler)
 					r.Delete("/{expectedDocId}", template_handler.DeleteExpectedDocumentTemplateHandler)
 					r.Get("/{expectedDocId}/presign-example", template_handler.PresignExampleHandler)
 				})
-				r.Post("/archive", template_handler.CloseTemplateHandler)
-				r.Post("/unarchive", template_handler.ReopenTemplateHandler)
+				r.Post("/archive", template_handler.CloseRequestTemplateHandler)
+				r.Post("/unarchive", template_handler.ReopenRequestTemplateHandler)
 			})
 		})
 

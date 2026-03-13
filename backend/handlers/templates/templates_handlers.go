@@ -14,7 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func AddTemplateHandler(w http.ResponseWriter, r *http.Request) {
+func AddRequestTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -38,14 +38,14 @@ func AddTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	template := models.DocumentRequestTemplate{
+	template := models.RequestTemplate{
 		Title:          body.Title,
 		Description:    body.Description,
 		IsRecurring:    body.IsRecurring,
 		RecurrenceCron: body.RecurrenceCron,
 	}
 
-	id, err := config.DocumentRequestTemplateService.AddTemplate(r.Context(), userID, template)
+	id, err := config.RequestTemplateService.AddRequestTemplate(r.Context(), userID, template)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -53,19 +53,19 @@ func AddTemplateHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusCreated, types.APIResponse{
 		Success: true,
-		Msg:     "Template created successfully.",
+		Msg:     "RequestTemplate created successfully.",
 		Data:    id,
 	})
 }
 
-func GetTemplatesByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
+func GetRequestTemplatesByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	templates, err := config.DocumentRequestTemplateService.GetTemplatesByProfessionalID(r.Context(), userID)
+	templates, err := config.RequestTemplateService.GetRequestTemplatesByProfessionalID(r.Context(), userID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -73,12 +73,12 @@ func GetTemplatesByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Templates retrieved successfully.",
+		Msg:     "RequestTemplates retrieved successfully.",
 		Data:    templates,
 	})
 }
 
-func GetTemplateByIDHandler(w http.ResponseWriter, r *http.Request) {
+func GetRequestTemplateByIDHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -92,7 +92,7 @@ func GetTemplateByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	template, err := config.DocumentRequestTemplateService.GetTemplateByID(r.Context(), userID, templateID)
+	template, err := config.RequestTemplateService.GetRequestTemplateByID(r.Context(), userID, templateID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -100,7 +100,7 @@ func GetTemplateByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Template retrieved successfully.",
+		Msg:     "RequestTemplate retrieved successfully.",
 		Data:    template,
 	})
 }
@@ -137,9 +137,9 @@ func AddExpectedDocumentTemplateHandler(w http.ResponseWriter, r *http.Request) 
 	}
 
 	t := models.ExpectedDocumentTemplate{
-		DocumentRequestTemplateID: templateID,
-		Title:                     title,
-		Description:               description,
+		RequestTemplateID: templateID,
+		Title:             title,
+		Description:       description,
 	}
 
 	var (
@@ -158,7 +158,7 @@ func AddExpectedDocumentTemplateHandler(w http.ResponseWriter, r *http.Request) 
 		exampleFileSize = header.Size
 	}
 
-	id, err := config.DocumentRequestTemplateService.AddExpectedDocumentTemplate(
+	id, err := config.RequestTemplateService.AddExpectedDocumentTemplate(
 		r.Context(),
 		userID,
 		t,
@@ -193,17 +193,17 @@ func DeleteExpectedDocumentTemplateHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	expectedDocTemplateIDStr := chi.URLParam(r, "expectedDocId")
-	expectedDocTemplateID, err := strconv.Atoi(expectedDocTemplateIDStr)
+	expectedDocRequestTemplateIDStr := chi.URLParam(r, "expectedDocId")
+	expectedDocRequestTemplateID, err := strconv.Atoi(expectedDocRequestTemplateIDStr)
 	if err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid expected document template ID format."})
 		return
 	}
 
-	if err := config.DocumentRequestTemplateService.DeleteExpectedDocumentTemplate(
+	if err := config.RequestTemplateService.DeleteExpectedDocumentTemplate(
 		r.Context(),
 		userID,
-		expectedDocTemplateID,
+		expectedDocRequestTemplateID,
 		templateID,
 	); err != nil {
 		utils.WriteError(w, err)
@@ -216,7 +216,7 @@ func DeleteExpectedDocumentTemplateHandler(w http.ResponseWriter, r *http.Reques
 	})
 }
 
-func InstantiateTemplateHandler(w http.ResponseWriter, r *http.Request) {
+func InstantiateRequestTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -252,7 +252,7 @@ func InstantiateTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := config.DocumentRequestTemplateService.InstantiateTemplate(
+	id, err := config.RequestTemplateService.InstantiateRequestTemplate(
 		r.Context(),
 		userID,
 		templateID,
@@ -268,7 +268,7 @@ func InstantiateTemplateHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusCreated, types.APIResponse{
 		Success: true,
-		Msg:     "Template instantiated successfully.",
+		Msg:     "RequestTemplate instantiated successfully.",
 		Data:    id,
 	})
 }

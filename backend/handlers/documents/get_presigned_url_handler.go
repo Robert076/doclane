@@ -25,7 +25,7 @@ func GetFilePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := config.DocumentService.GetFilePresignedURL(r.Context(), jwtUserId, fileID)
+	url, err := config.RequestService.GetFilePresignedURL(r.Context(), jwtUserId, fileID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

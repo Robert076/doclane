@@ -23,10 +23,10 @@ import (
 var JWTSecret string
 var Logger *slog.Logger
 var UserService *services.UserService
-var DocumentService *services.DocumentService
+var RequestService *services.RequestService
 var InvitationCodeService *services.InvitationCodeService
-var ExpectedDocumentService *services.ExpectedDocumentService
-var DocumentRequestTemplateService *services.DocumentRequestTemplateService
+var ExpectedRequestService *services.ExpectedRequestService
+var RequestTemplateService *services.RequestTemplateService
 var S3Client *s3.Client
 
 func init() {
@@ -39,12 +39,12 @@ func init() {
 	JWTSecret = requireEnv("JWT_SECRET")
 
 	// Initialize repositories
-	userRepository := repositories.NewUserRepository(db)
-	documentRepository := repositories.NewDocumentRepository(db)
-	invitationRepository := repositories.NewInvitationCodeRepository(db)
-	expectedDocumentRepo := repositories.NewExpectedDocRepository(db)
-	documentRequestTemplateRepo := repositories.NewDocumentRequestTemplateRepository(db)
-	expectedDocumentTemplateRepo := repositories.NewExpectedDocumentTemplateRepository(db)
+	userRepo := repositories.NewUserRepo(db)
+	documentRepo := repositories.NewRequestRepo(db)
+	invitationRepo := repositories.NewInvitationCodeRepo(db)
+	expectedDocumentRepo := repositories.NewExpectedDocRepo(db)
+	RequestTemplateRepo := repositories.NewRequestTemplateRepo(db)
+	expectedDocumentRequestTemplateRepo := repositories.NewExpectedDocumentTemplateRepo(db)
 	txManager := repositories.NewTxManager(db)
 
 	// Initialize S3
@@ -56,16 +56,16 @@ func init() {
 
 	// Initialize services
 	fileStorage := services.NewFileStorageService(S3Client, requireEnv("S3_BUCKET_NAME"), Logger)
-	UserService = services.NewUserService(userRepository, Logger)
-	DocumentService = services.NewDocumentService(documentRepository, userRepository, expectedDocumentRepo, txManager, Logger, fileStorage)
-	InvitationCodeService = services.NewInvitationCodeService(invitationRepository, userRepository, Logger)
-	ExpectedDocumentService = services.NewExpectedDocumentService(expectedDocumentRepo, Logger)
-	DocumentRequestTemplateService = services.NewDocumentRequestTemplateService(
-		documentRequestTemplateRepo,
-		expectedDocumentTemplateRepo,
+	UserService = services.NewUserService(userRepo, Logger)
+	RequestService = services.NewRequestService(documentRepo, userRepo, expectedDocumentRepo, txManager, Logger, fileStorage)
+	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, userRepo, Logger)
+	ExpectedRequestService = services.NewExpectedRequestService(expectedDocumentRepo, Logger)
+	RequestTemplateService = services.NewRequestTemplateService(
+		RequestTemplateRepo,
+		expectedDocumentRequestTemplateRepo,
 		expectedDocumentRepo,
-		documentRepository,
-		userRepository,
+		documentRepo,
+		userRepo,
 		txManager,
 		fileStorage,
 		Logger,

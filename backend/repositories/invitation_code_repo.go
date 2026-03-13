@@ -9,15 +9,15 @@ import (
 	"github.com/Robert076/doclane/backend/models"
 )
 
-type InvitationCodeRepository struct {
+type InvitationCodeRepo struct {
 	db *sql.DB
 }
 
-func NewInvitationCodeRepository(db *sql.DB) *InvitationCodeRepository {
-	return &InvitationCodeRepository{db: db}
+func NewInvitationCodeRepo(db *sql.DB) *InvitationCodeRepo {
+	return &InvitationCodeRepo{db: db}
 }
 
-func (r *InvitationCodeRepository) GetInvitationCodeByCode(
+func (r *InvitationCodeRepo) GetInvitationCodeByCode(
 	ctx context.Context,
 	code string,
 ) (models.InvitationCode, error) {
@@ -47,7 +47,7 @@ func (r *InvitationCodeRepository) GetInvitationCodeByCode(
 	return invCode, nil
 }
 
-func (r *InvitationCodeRepository) GetInvitationCodesByProfessional(
+func (r *InvitationCodeRepo) GetInvitationCodesByProfessional(
 	ctx context.Context,
 	professionalID int,
 ) ([]models.InvitationCode, error) {
@@ -84,7 +84,7 @@ func (r *InvitationCodeRepository) GetInvitationCodesByProfessional(
 	return codes, rows.Err()
 }
 
-func (r *InvitationCodeRepository) GetInvitationCodeByID(
+func (r *InvitationCodeRepo) GetInvitationCodeByID(
 	ctx context.Context,
 	id int,
 ) (models.InvitationCode, error) {
@@ -114,7 +114,7 @@ func (r *InvitationCodeRepository) GetInvitationCodeByID(
 	return invCode, nil
 }
 
-func (r *InvitationCodeRepository) CreateInvitationCode(
+func (r *InvitationCodeRepo) CreateInvitationCode(
 	ctx context.Context,
 	code string,
 	professionalID int,
@@ -129,7 +129,7 @@ func (r *InvitationCodeRepository) CreateInvitationCode(
 	return err
 }
 
-func (r *InvitationCodeRepository) InvalidateCode(
+func (r *InvitationCodeRepo) InvalidateCode(
 	ctx context.Context,
 	id int,
 ) error {
@@ -152,7 +152,7 @@ func (r *InvitationCodeRepository) InvalidateCode(
 	return nil
 }
 
-func (r *InvitationCodeRepository) ReactivateCode(
+func (r *InvitationCodeRepo) ReactivateCode(
 	ctx context.Context,
 	code string,
 ) error {
@@ -175,7 +175,7 @@ func (r *InvitationCodeRepository) ReactivateCode(
 	return nil
 }
 
-func (r *InvitationCodeRepository) DeleteCode(
+func (r *InvitationCodeRepo) DeleteCode(
 	ctx context.Context,
 	id int,
 ) error {

@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func DeleteTemplateHandler(w http.ResponseWriter, r *http.Request) {
+func DeleteRequestTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -24,12 +24,12 @@ func DeleteTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, errors.ErrUnprocessableContent{Msg: "Invalid ID received."})
 	}
 
-	if err := config.DocumentRequestTemplateService.DeleteTemplate(r.Context(), jwtUserId, idInt); err != nil {
+	if err := config.RequestTemplateService.DeleteRequestTemplate(r.Context(), jwtUserId, idInt); err != nil {
 		utils.WriteError(w, err)
 	}
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Template deleted successfully.",
+		Msg:     "RequestTemplate deleted successfully.",
 	})
 }

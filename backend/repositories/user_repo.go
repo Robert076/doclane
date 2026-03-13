@@ -11,15 +11,15 @@ import (
 	"github.com/Robert076/doclane/backend/types/errors"
 )
 
-type UserRepository struct {
+type UserRepo struct {
 	db *sql.DB
 }
 
-func NewUserRepository(db *sql.DB) *UserRepository {
-	return &UserRepository{db: db}
+func NewUserRepo(db *sql.DB) *UserRepo {
+	return &UserRepo{db: db}
 }
 
-func (repo *UserRepository) GetUsers(
+func (repo *UserRepo) GetUsers(
 	ctx context.Context,
 	limit *int,
 	offset *int,
@@ -119,7 +119,7 @@ func (repo *UserRepository) GetUsers(
 	return users, nil
 }
 
-func (repo *UserRepository) GetUserByID(ctx context.Context, id int) (models.User, error) {
+func (repo *UserRepo) GetUserByID(ctx context.Context, id int) (models.User, error) {
 	var user models.User
 
 	err := repo.db.QueryRowContext(ctx,
@@ -152,7 +152,7 @@ func (repo *UserRepository) GetUserByID(ctx context.Context, id int) (models.Use
 	return user, nil
 }
 
-func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
+func (repo *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
 	var user models.User
 
 	err := repo.db.QueryRowContext(ctx,
@@ -185,7 +185,7 @@ func (repo *UserRepository) GetUserByEmail(ctx context.Context, email string) (m
 	return user, nil
 }
 
-func (repo *UserRepository) GetUsersByProfessionalID(
+func (repo *UserRepo) GetUsersByProfessionalID(
 	ctx context.Context,
 	professionalID int,
 	limit *int,
@@ -247,7 +247,7 @@ func (repo *UserRepository) GetUsersByProfessionalID(
 	return users, nil
 }
 
-func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int, error) {
+func (repo *UserRepo) AddUser(ctx context.Context, user models.User) (int, error) {
 	var id int
 
 	err := repo.db.QueryRowContext(ctx,
@@ -273,7 +273,7 @@ func (repo *UserRepository) AddUser(ctx context.Context, user models.User) (int,
 	return id, nil
 }
 
-func (repo *UserRepository) DeactivateUser(ctx context.Context, userId int) error {
+func (repo *UserRepo) DeactivateUser(ctx context.Context, userId int) error {
 	_, err := repo.db.ExecContext(ctx,
 		`UPDATE users SET is_active=false WHERE id=$1`,
 		userId,
@@ -281,7 +281,7 @@ func (repo *UserRepository) DeactivateUser(ctx context.Context, userId int) erro
 	return err
 }
 
-func (repo *UserRepository) NotifyUser(ctx context.Context, userId int, time time.Time) error {
+func (repo *UserRepo) NotifyUser(ctx context.Context, userId int, time time.Time) error {
 	_, err := repo.db.ExecContext(ctx,
 		`UPDATE users SET last_notified=$1 WHERE id=$2`,
 		time, userId)

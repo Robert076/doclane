@@ -8,19 +8,19 @@ import (
 	"github.com/Robert076/doclane/backend/types/errors"
 )
 
-type ExpectedDocumentService struct {
-	expectedDocRepo repositories.IExpectedDocumentRepository
+type ExpectedRequestService struct {
+	expectedDocRepo repositories.IExpectedDocumentRepo
 	logger          *slog.Logger
 }
 
-func NewExpectedDocumentService(expectedDocRepo repositories.IExpectedDocumentRepository, logger *slog.Logger) *ExpectedDocumentService {
-	return &ExpectedDocumentService{
+func NewExpectedRequestService(expectedDocRepo repositories.IExpectedDocumentRepo, logger *slog.Logger) *ExpectedRequestService {
+	return &ExpectedRequestService{
 		expectedDocRepo: expectedDocRepo,
 		logger:          logger,
 	}
 }
 
-func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
+func (service *ExpectedRequestService) UpdateExpectedDocumentStatus(
 	ctx context.Context,
 	expectedDocID int,
 	status string,

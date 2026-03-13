@@ -10,15 +10,15 @@ import (
 	"github.com/Robert076/doclane/backend/models"
 )
 
-type DocumentRequestTemplateRepository struct {
+type RequestTemplateRepo struct {
 	db *sql.DB
 }
 
-func NewDocumentRequestTemplateRepository(db *sql.DB) *DocumentRequestTemplateRepository {
-	return &DocumentRequestTemplateRepository{db: db}
+func NewRequestTemplateRepo(db *sql.DB) *RequestTemplateRepo {
+	return &RequestTemplateRepo{db: db}
 }
 
-func (r *DocumentRequestTemplateRepository) GetDocumentRequestTemplatesByProfessionalID(ctx context.Context, professionalID int) ([]models.DocumentRequestTemplate, error) {
+func (r *RequestTemplateRepo) GetRequestTemplatesByProfessionalID(ctx context.Context, professionalID int) ([]models.RequestTemplate, error) {
 	query := `
         SELECT id, title, description, is_recurring, recurrence_cron, created_by, created_at, updated_at, is_closed
         FROM document_request_templates
@@ -31,9 +31,9 @@ func (r *DocumentRequestTemplateRepository) GetDocumentRequestTemplatesByProfess
 	}
 	defer rows.Close()
 
-	templates := make([]models.DocumentRequestTemplate, 0)
+	templates := make([]models.RequestTemplate, 0)
 	for rows.Next() {
-		var t models.DocumentRequestTemplate
+		var t models.RequestTemplate
 		if err := rows.Scan(
 			&t.ID,
 			&t.Title,
@@ -52,8 +52,8 @@ func (r *DocumentRequestTemplateRepository) GetDocumentRequestTemplatesByProfess
 	return templates, rows.Err()
 }
 
-func (r *DocumentRequestTemplateRepository) GetDocumentRequestTemplateByID(ctx context.Context, id int) (models.DocumentRequestTemplate, error) {
-	var t models.DocumentRequestTemplate
+func (r *RequestTemplateRepo) GetRequestTemplateByID(ctx context.Context, id int) (models.RequestTemplate, error) {
+	var t models.RequestTemplate
 	query := `
         SELECT id, title, description, is_recurring, recurrence_cron, created_by, created_at, updated_at, is_closed
         FROM document_request_templates
@@ -73,7 +73,7 @@ func (r *DocumentRequestTemplateRepository) GetDocumentRequestTemplateByID(ctx c
 	return t, err
 }
 
-func (r *DocumentRequestTemplateRepository) AddDocumentRequestTemplate(ctx context.Context, tmp models.DocumentRequestTemplate) (int, error) {
+func (r *RequestTemplateRepo) AddRequestTemplate(ctx context.Context, tmp models.RequestTemplate) (int, error) {
 	var id int
 	query := `
 		INSERT INTO document_request_templates (title, description, is_recurring, recurrence_cron, created_by, is_closed)
@@ -91,7 +91,7 @@ func (r *DocumentRequestTemplateRepository) AddDocumentRequestTemplate(ctx conte
 	return id, err
 }
 
-func (r *DocumentRequestTemplateRepository) CloseDocumentRequestTemplate(ctx context.Context, id int) error {
+func (r *RequestTemplateRepo) CloseRequestTemplate(ctx context.Context, id int) error {
 	query := `
 		UPDATE document_request_templates SET is_closed=true WHERE id=$1
 	`
@@ -100,7 +100,7 @@ func (r *DocumentRequestTemplateRepository) CloseDocumentRequestTemplate(ctx con
 	return err
 }
 
-func (r *DocumentRequestTemplateRepository) ReopenDocumentRequestTemplate(ctx context.Context, id int) error {
+func (r *RequestTemplateRepo) ReopenRequestTemplate(ctx context.Context, id int) error {
 	query := `
 		UPDATE document_request_templates SET is_closed=false WHERE id=$1
 	`
@@ -109,7 +109,7 @@ func (r *DocumentRequestTemplateRepository) ReopenDocumentRequestTemplate(ctx co
 	return err
 }
 
-func (r *DocumentRequestTemplateRepository) DeleteDocumentRequestTemplate(ctx context.Context, id int) error {
+func (r *RequestTemplateRepo) DeleteRequestTemplate(ctx context.Context, id int) error {
 	query := `
 		DELETE FROM document_request_templates WHERE id = $1
 	`
@@ -118,7 +118,7 @@ func (r *DocumentRequestTemplateRepository) DeleteDocumentRequestTemplate(ctx co
 	return err
 }
 
-func (r *DocumentRequestTemplateRepository) PatchTemplate(ctx context.Context, templateID int, dto models.DocumentRequestTemplateDTOPatch) error {
+func (r *RequestTemplateRepo) PatchRequestTemplate(ctx context.Context, templateID int, dto models.RequestTemplateDTOPatch) error {
 	setClauses := []string{}
 	args := []any{}
 	argIdx := 1

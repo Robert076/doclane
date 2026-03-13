@@ -25,7 +25,7 @@ func GetFilesByRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files, err := config.DocumentService.GetFilesByRequest(r.Context(), jwtUserId, requestID)
+	files, err := config.RequestService.GetFilesByRequest(r.Context(), jwtUserId, requestID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

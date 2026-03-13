@@ -25,14 +25,14 @@ func PresignExampleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expectedDocTemplateIDStr := chi.URLParam(r, "expectedDocId")
-	expectedDocTemplateID, err := strconv.Atoi(expectedDocTemplateIDStr)
+	expectedDocRequestTemplateIDStr := chi.URLParam(r, "expectedDocId")
+	expectedDocRequestTemplateID, err := strconv.Atoi(expectedDocRequestTemplateIDStr)
 	if err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid expected document template ID format."})
 		return
 	}
 
-	url, err := config.DocumentRequestTemplateService.PresignExample(r.Context(), userID, templateID, expectedDocTemplateID)
+	url, err := config.RequestTemplateService.PresignExample(r.Context(), userID, templateID, expectedDocRequestTemplateID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

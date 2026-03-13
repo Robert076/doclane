@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func PatchDocumentRequestHandler(w http.ResponseWriter, r *http.Request) {
+func PatchRequestHandler(w http.ResponseWriter, r *http.Request) {
 	userId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -27,13 +27,13 @@ func PatchDocumentRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var dto models.DocumentRequestDTOPatch
+	var dto models.RequestDTOPatch
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
-	if err := config.DocumentService.PatchDocumentRequest(r.Context(), userId, id, dto); err != nil {
+	if err := config.RequestService.PatchRequest(r.Context(), userId, id, dto); err != nil {
 		utils.WriteError(w, err)
 		return
 	}

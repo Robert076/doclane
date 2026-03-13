@@ -15,7 +15,7 @@ import (
 	"github.com/Robert076/doclane/backend/utils/config"
 )
 
-func AddDocumentRequestHandler(w http.ResponseWriter, r *http.Request) {
+func AddRequestHandler(w http.ResponseWriter, r *http.Request) {
 	const maxRequestSize = 21 << 20
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
 
@@ -27,7 +27,7 @@ func AddDocumentRequestHandler(w http.ResponseWriter, r *http.Request) {
 
 	contentType := r.Header.Get("Content-Type")
 
-	var dto models.DocumentRequestDTOCreate
+	var dto models.RequestDTOCreate
 
 	if strings.Contains(contentType, "multipart/form-data") {
 		if err := r.ParseMultipartForm(5 << 20); err != nil {
@@ -107,7 +107,7 @@ func AddDocumentRequestHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	id, err := config.DocumentService.AddDocumentRequest(r.Context(), userId, dto)
+	id, err := config.RequestService.AddRequest(r.Context(), userId, dto)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

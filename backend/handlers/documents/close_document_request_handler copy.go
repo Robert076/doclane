@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func CloseDocumentRequestHandler(w http.ResponseWriter, r *http.Request) {
+func CloseRequestHandler(w http.ResponseWriter, r *http.Request) {
 	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -24,7 +24,7 @@ func CloseDocumentRequestHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, errors.ErrUnprocessableContent{Msg: "Invalid ID received."})
 	}
 
-	if err := config.DocumentService.CloseRequest(r.Context(), jwtUserId, idInt); err != nil {
+	if err := config.RequestService.CloseRequest(r.Context(), jwtUserId, idInt); err != nil {
 		utils.WriteError(w, err)
 	}
 

@@ -25,7 +25,7 @@ func GetExamplePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := config.DocumentService.GetExamplePresignedURL(r.Context(), jwtUserID, expectedDocID)
+	url, err := config.RequestService.GetExamplePresignedURL(r.Context(), jwtUserID, expectedDocID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

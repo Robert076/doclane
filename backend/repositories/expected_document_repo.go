@@ -7,17 +7,17 @@ import (
 	"github.com/Robert076/doclane/backend/models"
 )
 
-type ExpectedDocumentRepository struct {
+type ExpectedRequestRepo struct {
 	db *sql.DB
 }
 
-func NewExpectedDocRepository(db *sql.DB) *ExpectedDocumentRepository {
-	return &ExpectedDocumentRepository{
+func NewExpectedDocRepo(db *sql.DB) *ExpectedRequestRepo {
+	return &ExpectedRequestRepo{
 		db: db,
 	}
 }
 
-func (r *ExpectedDocumentRepository) AddExpectedDocumentToRequest(ctx context.Context, requestID int, expectedDocument models.ExpectedDocument) (int, error) {
+func (r *ExpectedRequestRepo) AddExpectedDocumentToRequest(ctx context.Context, requestID int, expectedDocument models.ExpectedDocument) (int, error) {
 	query := `
 		INSERT INTO expected_documents(document_request_id, title, description, status, rejection_reason, example_file_path, example_mime_type) 
 		VALUES($1, $2, $3, $4, $5, $6, $7) RETURNING id
@@ -40,13 +40,13 @@ func (r *ExpectedDocumentRepository) AddExpectedDocumentToRequest(ctx context.Co
 	return insertedID, nil
 }
 
-func (r *ExpectedDocumentRepository) AddExpectedDocumentToRequestWithTx(ctx context.Context, tx *sql.Tx, ed models.ExpectedDocument) error {
+func (r *ExpectedRequestRepo) AddExpectedDocumentToRequestWithTx(ctx context.Context, tx *sql.Tx, ed models.ExpectedDocument) error {
 	query := `
 		INSERT INTO expected_documents (document_request_id, title, description, status, rejection_reason, example_file_path, example_mime_type) 
 		VALUES ($1, $2, $3, $4, $5, $6, $7)
 	`
 	_, err := tx.ExecContext(ctx, query,
-		ed.DocumentRequestID,
+		ed.RequestID,
 		ed.Title,
 		ed.Description,
 		ed.Status,
@@ -57,7 +57,7 @@ func (r *ExpectedDocumentRepository) AddExpectedDocumentToRequestWithTx(ctx cont
 	return err
 }
 
-func (r *ExpectedDocumentRepository) GetExpectedDocumentsByRequest(ctx context.Context, requestID int) ([]models.ExpectedDocument, error) {
+func (r *ExpectedRequestRepo) GetExpectedDocumentsByRequest(ctx context.Context, requestID int) ([]models.ExpectedDocument, error) {
 	query := `
 		SELECT id, document_request_id, title, description, status, rejection_reason, example_file_path, example_mime_type 
 		FROM expected_documents 
@@ -75,7 +75,7 @@ func (r *ExpectedDocumentRepository) GetExpectedDocumentsByRequest(ctx context.C
 		var expectedDoc models.ExpectedDocument
 		err := rows.Scan(
 			&expectedDoc.ID,
-			&expectedDoc.DocumentRequestID,
+			&expectedDoc.RequestID,
 			&expectedDoc.Title,
 			&expectedDoc.Description,
 			&expectedDoc.Status,
@@ -91,7 +91,7 @@ func (r *ExpectedDocumentRepository) GetExpectedDocumentsByRequest(ctx context.C
 	return expectedDocuments, rows.Err()
 }
 
-func (r *ExpectedDocumentRepository) GetExpectedDocumentByID(ctx context.Context, id int) (models.ExpectedDocument, error) {
+func (r *ExpectedRequestRepo) GetExpectedDocumentByID(ctx context.Context, id int) (models.ExpectedDocument, error) {
 	query := `
 		SELECT id, document_request_id, title, description, status, rejection_reason, example_file_path, example_mime_type 
 		FROM expected_documents 
@@ -100,7 +100,7 @@ func (r *ExpectedDocumentRepository) GetExpectedDocumentByID(ctx context.Context
 	var ed models.ExpectedDocument
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&ed.ID,
-		&ed.DocumentRequestID,
+		&ed.RequestID,
 		&ed.Title,
 		&ed.Description,
 		&ed.Status,
@@ -114,7 +114,7 @@ func (r *ExpectedDocumentRepository) GetExpectedDocumentByID(ctx context.Context
 	return ed, nil
 }
 
-func (r *ExpectedDocumentRepository) UpdateExpectedDocumentStatus(ctx context.Context, documentID int, status string, rejectionReason *string) error {
+func (r *ExpectedRequestRepo) UpdateExpectedDocumentStatus(ctx context.Context, documentID int, status string, rejectionReason *string) error {
 	query := `
 		UPDATE expected_documents 
 		SET status = $1, rejection_reason = $2 
@@ -124,7 +124,7 @@ func (r *ExpectedDocumentRepository) UpdateExpectedDocumentStatus(ctx context.Co
 	return err
 }
 
-func (r *ExpectedDocumentRepository) DeleteExpectedDocumentFromRequest(ctx context.Context, requestId int, expectedDocumentId int) error {
+func (r *ExpectedRequestRepo) DeleteExpectedDocumentFromRequest(ctx context.Context, requestId int, expectedDocumentId int) error {
 	query := `
 		DELETE FROM expected_documents WHERE id=$1 AND document_request_id=$2
 	`

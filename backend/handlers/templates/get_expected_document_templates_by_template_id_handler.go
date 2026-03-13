@@ -11,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func GetExpectedDocumentTemplatesByTemplateIDHandler(w http.ResponseWriter, r *http.Request) {
+func GetExpectedDocumentTemplatesByRequestTemplateIDHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -25,7 +25,7 @@ func GetExpectedDocumentTemplatesByTemplateIDHandler(w http.ResponseWriter, r *h
 		return
 	}
 
-	expectedDocumentTemplates, err := config.DocumentRequestTemplateService.GetExpectedDocumentTemplatesByTemplateID(r.Context(), userID, idInt)
+	expectedDocumentRequestTemplates, err := config.RequestTemplateService.GetExpectedDocumentTemplatesByRequestTemplateID(r.Context(), userID, idInt)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -34,6 +34,6 @@ func GetExpectedDocumentTemplatesByTemplateIDHandler(w http.ResponseWriter, r *h
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
 		Msg:     "Expected document templates received successfully.",
-		Data:    expectedDocumentTemplates,
+		Data:    expectedDocumentRequestTemplates,
 	})
 }

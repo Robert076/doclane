@@ -7,15 +7,15 @@ import (
 	"github.com/Robert076/doclane/backend/models"
 )
 
-type ExpectedDocumentTemplateRepository struct {
+type ExpectedDocumentTemplateRepo struct {
 	db *sql.DB
 }
 
-func NewExpectedDocumentTemplateRepository(db *sql.DB) *ExpectedDocumentTemplateRepository {
-	return &ExpectedDocumentTemplateRepository{db: db}
+func NewExpectedDocumentTemplateRepo(db *sql.DB) *ExpectedDocumentTemplateRepo {
+	return &ExpectedDocumentTemplateRepo{db: db}
 }
 
-func (r *ExpectedDocumentTemplateRepository) GetByTemplateID(ctx context.Context, templateID int) ([]models.ExpectedDocumentTemplate, error) {
+func (r *ExpectedDocumentTemplateRepo) GetByRequestTemplateID(ctx context.Context, templateID int) ([]models.ExpectedDocumentTemplate, error) {
 	query := `
 		SELECT id, document_request_template_id, title, description, example_file_path, example_mime_type
 		FROM expected_document_templates
@@ -33,7 +33,7 @@ func (r *ExpectedDocumentTemplateRepository) GetByTemplateID(ctx context.Context
 		var t models.ExpectedDocumentTemplate
 		if err := rows.Scan(
 			&t.ID,
-			&t.DocumentRequestTemplateID,
+			&t.RequestTemplateID,
 			&t.Title,
 			&t.Description,
 			&t.ExampleFilePath,
@@ -46,7 +46,7 @@ func (r *ExpectedDocumentTemplateRepository) GetByTemplateID(ctx context.Context
 	return templates, rows.Err()
 }
 
-func (r *ExpectedDocumentTemplateRepository) Add(ctx context.Context, t models.ExpectedDocumentTemplate) (int, error) {
+func (r *ExpectedDocumentTemplateRepo) Add(ctx context.Context, t models.ExpectedDocumentTemplate) (int, error) {
 	var id int
 	query := `
         INSERT INTO expected_document_templates (document_request_template_id, title, description, example_file_path, example_mime_type)
@@ -54,7 +54,7 @@ func (r *ExpectedDocumentTemplateRepository) Add(ctx context.Context, t models.E
         RETURNING id
     `
 	err := r.db.QueryRowContext(ctx, query,
-		t.DocumentRequestTemplateID,
+		t.RequestTemplateID,
 		t.Title,
 		t.Description,
 		t.ExampleFilePath,
@@ -63,7 +63,7 @@ func (r *ExpectedDocumentTemplateRepository) Add(ctx context.Context, t models.E
 	return id, err
 }
 
-func (r *ExpectedDocumentTemplateRepository) DeleteByID(ctx context.Context, id int) error {
+func (r *ExpectedDocumentTemplateRepo) DeleteByID(ctx context.Context, id int) error {
 	query := `
         DELETE FROM expected_document_templates WHERE id = $1
     `
@@ -71,7 +71,7 @@ func (r *ExpectedDocumentTemplateRepository) DeleteByID(ctx context.Context, id 
 	return err
 }
 
-func (r *ExpectedDocumentTemplateRepository) GetByDocumentID(ctx context.Context, id int) (models.ExpectedDocumentTemplate, error) {
+func (r *ExpectedDocumentTemplateRepo) GetByDocumentID(ctx context.Context, id int) (models.ExpectedDocumentTemplate, error) {
 	query := `
 		SELECT id, document_request_template_id, title, description, example_file_path, example_mime_type
 		FROM expected_document_templates
@@ -82,7 +82,7 @@ func (r *ExpectedDocumentTemplateRepository) GetByDocumentID(ctx context.Context
 
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&t.ID,
-		&t.DocumentRequestTemplateID,
+		&t.RequestTemplateID,
 		&t.Title,
 		&t.Description,
 		&t.ExampleFilePath,

@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func PatchTemplateHandler(w http.ResponseWriter, r *http.Request) {
+func PatchRequestTemplateHandler(w http.ResponseWriter, r *http.Request) {
 	userID, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -27,19 +27,19 @@ func PatchTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var dto models.DocumentRequestTemplateDTOPatch
+	var dto models.RequestTemplateDTOPatch
 	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
-	if err := config.DocumentRequestTemplateService.PatchTemplate(r.Context(), userID, idInt, dto); err != nil {
+	if err := config.RequestTemplateService.PatchRequestTemplate(r.Context(), userID, idInt, dto); err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Template updated successfully",
+		Msg:     "RequestTemplate updated successfully",
 	})
 }

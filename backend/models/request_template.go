@@ -2,7 +2,7 @@ package models
 
 import "time"
 
-type DocumentRequestTemplate struct {
+type RequestTemplate struct {
 	ID             int       `db:"id" json:"id"`
 	Title          string    `db:"title" json:"title"`
 	Description    *string   `db:"description,omitempty" json:"description,omitempty"`
@@ -14,12 +14,12 @@ type DocumentRequestTemplate struct {
 	IsClosed       bool      `db:"is_closed" json:"is_closed"`
 }
 
-type DocumentRequestTemplateDTORead struct {
-	DocumentRequestTemplate
+type RequestTemplateDTORead struct {
+	RequestTemplate
 	AuthorName *string
 }
 
-type DocumentRequestTemplateDTOPatch struct {
+type RequestTemplateDTOPatch struct {
 	Title          *string `json:"title"`
 	Description    *string `json:"description"`
 	IsRecurring    *bool   `json:"is_recurring"`

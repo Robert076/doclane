@@ -1,4 +1,3 @@
-// services/invitation_code_service.go
 package services
 
 import (
@@ -16,14 +15,14 @@ import (
 )
 
 type InvitationCodeService struct {
-	invitationRepo repositories.IInvitationCodeRepository
-	userRepo       repositories.IUserRepository
+	invitationRepo repositories.IInvitationCodeRepo
+	userRepo       repositories.IUserRepo
 	logger         *slog.Logger
 }
 
 func NewInvitationCodeService(
-	invitationRepo repositories.IInvitationCodeRepository,
-	userRepo repositories.IUserRepository,
+	invitationRepo repositories.IInvitationCodeRepo,
+	userRepo repositories.IUserRepo,
 	logger *slog.Logger,
 ) *InvitationCodeService {
 	return &InvitationCodeService{

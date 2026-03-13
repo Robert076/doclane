@@ -9,7 +9,7 @@ import (
 	"github.com/Robert076/doclane/backend/utils/config"
 )
 
-func GetDocumentRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
+func GetRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
 	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -24,7 +24,7 @@ func GetDocumentRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Req
 		searchPtr = &s
 	}
 
-	reqs, err := config.DocumentService.GetDocumentRequestsByProfessional(r.Context(), jwtUserId, searchPtr)
+	reqs, err := config.RequestService.GetRequestsByProfessional(r.Context(), jwtUserId, searchPtr)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

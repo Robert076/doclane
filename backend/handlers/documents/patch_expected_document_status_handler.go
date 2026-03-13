@@ -26,7 +26,7 @@ func PatchExpectedDocumentStatusHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err = config.ExpectedDocumentService.UpdateExpectedDocumentStatus(r.Context(), docID, req.Status, req.RejectionReason); err != nil {
+	if err = config.ExpectedRequestService.UpdateExpectedDocumentStatus(r.Context(), docID, req.Status, req.RejectionReason); err != nil {
 		utils.WriteError(w, err)
 		return
 	}
