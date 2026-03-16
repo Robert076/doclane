@@ -22,10 +22,12 @@ func ReopenRequestHandler(w http.ResponseWriter, r *http.Request) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnprocessableContent{Msg: "Invalid ID received."})
+		return
 	}
 
 	if err := config.RequestService.ReopenRequest(r.Context(), jwtUserId, idInt); err != nil {
 		utils.WriteError(w, err)
+		return
 	}
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
