@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"io"
 	"log/slog"
@@ -11,7 +10,6 @@ import (
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
-	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 )
 
@@ -37,38 +35,38 @@ func NewRequestService(requestRepo repositories.IRequestRepo, userRepo repositor
 
 func (service *RequestService) AddRequest(
 	ctx context.Context,
-	jwtUserId int,
+	jwtUserID int,
 	dto models.RequestDTOCreate,
-) (int, error) {
+) (*int, error) {
 	if err := ValidateRequestInput(dto); err != nil {
 		service.logger.Warn("document request create failed because it did not pass validations",
-			slog.Int("user_id", jwtUserId),
+			slog.Int("user_id", jwtUserID),
 			slog.Any("error", err))
-		return 0, err
+		return nil, err
 	}
 
 	client, err := service.userRepo.GetUserByID(ctx, dto.ClientID)
 	if err != nil {
 		service.logger.Warn("client lookup failed for document request",
 			slog.Int("client_id", dto.ClientID),
-			slog.Int("requested_by", jwtUserId),
+			slog.Int("requested_by", jwtUserID),
 			slog.Any("error", err),
 		)
-		return 0, errors.ErrNotFound{Msg: "Client not found."}
+		return nil, errors.ErrNotFound{Msg: "Client not found."}
 	}
 
-	if client.ProfessionalID == nil || *client.ProfessionalID != jwtUserId {
+	if client.ProfessionalID == nil || *client.ProfessionalID != jwtUserID {
 		service.logger.Warn("unauthorized attempt to add request to unassigned client",
-			slog.Int("professional_id", jwtUserId),
+			slog.Int("professional_id", jwtUserID),
 			slog.Int("client_id", dto.ClientID),
 		)
-		return 0, errors.ErrForbidden{Msg: "This client is not assigned to you."}
+		return nil, errors.ErrForbidden{Msg: "This client is not assigned to you."}
 	}
 
 	nextDueAt := ComputeNextDueAt(dto.DueDate, dto.RecurrenceCron)
 
 	req := models.Request{
-		ProfessionalID: jwtUserId,
+		ProfessionalID: jwtUserID,
 		RequestBase: models.RequestBase{
 			ClientID:       dto.ClientID,
 			Title:          dto.Title,
@@ -87,7 +85,7 @@ func (service *RequestService) AddRequest(
 
 	uploadedExamples, err := service.getUploadedExamples(ctx, dto)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
 	expectedDocs := getExpectedDocuments(dto, uploadedExamples)
@@ -96,146 +94,38 @@ func (service *RequestService) AddRequest(
 	if err != nil {
 		service.logger.Error("failed to create document request",
 			slog.Any("error", err),
-			slog.Int("professional_id", jwtUserId),
+			slog.Int("professional_id", jwtUserID),
 			slog.Int("client_id", dto.ClientID),
 		)
 
-		service.removeUploadedExamples(uploadedExamples)
-		return 0, err
+		service.removeUploadedExamples(ctx, uploadedExamples)
+		return nil, err
 	}
 
 	service.logger.Info("document request created",
-		slog.Int("request_id", id),
+		slog.Int("request_id", *id),
 		slog.Int("expected_documents", len(dto.ExpectedDocuments)),
 	)
 	return id, nil
 }
 
-func (service *RequestService) getUploadedExamples(ctx context.Context, dto models.RequestDTOCreate) ([]types.UploadedExample, error) {
-	uploadedExamples := make([]types.UploadedExample, 0)
-
-	for i, ed := range dto.ExpectedDocuments {
-		if ed.ExampleFile == nil {
-			continue
-		}
-
-		if err := ValidateFileInfo(ed.ExampleFileName, ed.ExampleFileSize); err != nil {
-			for _, uploaded := range uploadedExamples {
-				cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-				service.fileStorage.DeleteFile(cleanupCtx, uploaded.S3Key, uploaded.S3VersionID)
-				cancel()
-			}
-			return nil, err
-		}
-
-		s3Key := service.fileStorage.GenerateExampleS3Key(ed.ExampleFileName)
-		result, err := service.fileStorage.UploadFile(ctx, s3Key, ed.ExampleFile, ed.ExampleMimeType)
-		if err != nil {
-			service.logger.Error("s3 upload failed for example file",
-				slog.String("key", s3Key),
-				slog.Any("error", err),
-			)
-
-			for _, uploaded := range uploadedExamples {
-				cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-				service.fileStorage.DeleteFile(cleanupCtx, uploaded.S3Key, uploaded.S3VersionID)
-				cancel()
-			}
-			return nil, errors.ErrBadGateway{Msg: fmt.Sprintf("Failed to upload example file to S3. %v", err)}
-		}
-
-		uploadedExamples = append(uploadedExamples, types.UploadedExample{
-			Index:       i,
-			S3Key:       s3Key,
-			S3VersionID: result.VersionId,
-			MimeType:    ed.ExampleMimeType,
-		})
-	}
-
-	return uploadedExamples, nil
-}
-
-func getExpectedDocuments(dto models.RequestDTOCreate, uploadedExamples []types.UploadedExample) []models.ExpectedDocument {
-	expectedDocs := make([]models.ExpectedDocument, len(dto.ExpectedDocuments))
-	for i, ed := range dto.ExpectedDocuments {
-		expectedDocs[i] = models.ExpectedDocument{
-			Title:       ed.Title,
-			Description: ed.Description,
-			Status:      "pending",
-		}
-	}
-	for _, uploaded := range uploadedExamples {
-		expectedDocs[uploaded.Index].ExampleFilePath = &uploaded.S3Key
-		expectedDocs[uploaded.Index].ExampleMimeType = &uploaded.MimeType
-	}
-
-	return expectedDocs
-}
-
-func (service *RequestService) createRequestTransaction(ctx context.Context, req models.Request, expectedDocs []models.ExpectedDocument) (int, error) {
-	var id int
-	err := service.txManager.WithTx(ctx, func(tx *sql.Tx) error {
-		var txErr error
-		id, txErr = service.requestRepo.AddRequestWithTx(ctx, req, tx)
-		if txErr != nil {
-			return txErr
-		}
-
-		for _, ed := range expectedDocs {
-			ed.RequestID = id
-			if txErr = service.expectedDocRepo.AddExpectedDocumentToRequestWithTx(ctx, tx, ed); txErr != nil {
-				return txErr
-			}
-		}
-		return nil
-	})
-
-	return id, err
-}
-
-func (service *RequestService) removeUploadedExamples(uploadedExamples []types.UploadedExample) {
-	for _, uploaded := range uploadedExamples {
-		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		cleanupErr := service.fileStorage.DeleteFile(cleanupCtx, uploaded.S3Key, uploaded.S3VersionID)
-		cancel()
-		if cleanupErr != nil {
-			service.logger.Error("failed to cleanup example file after transaction failure",
-				slog.String("key", uploaded.S3Key),
-				slog.Any("error", cleanupErr),
-			)
-		}
-	}
-}
-
-func (service *RequestService) GetRequestByID(
+func (s *RequestService) GetRequestByID(
 	ctx context.Context,
-	jwtUserId int,
-	id int,
-) (models.RequestDTORead, error) {
-	req, err := service.requestRepo.GetRequestByID(ctx, id)
+	jwtUserID int,
+	requestID int,
+) (*models.RequestDTORead, error) {
+	req, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, requestID)
 	if err != nil {
-		service.logger.Error("failed to get document request by id",
-			slog.Int("request_id", id),
-			slog.Any("error", err),
-		)
-		return models.RequestDTORead{}, err
+		return nil, err
 	}
 
-	if req.ProfessionalID != jwtUserId && req.ClientID != jwtUserId {
-		service.logger.Warn("unauthorized access attempt to document request",
-			slog.Int("user_id", jwtUserId),
-			slog.Int("request_id", id),
-		)
-		return models.RequestDTORead{}, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to access document request with id %v", jwtUserId, req.ID)}
-	}
-
-	expectedDocs, err := service.expectedDocRepo.GetExpectedDocumentsByRequest(ctx, id)
+	expectedDocs, err := s.expectedDocRepo.GetExpectedDocumentsByRequest(ctx, requestID)
 	if err != nil {
-		service.logger.Error("failed to get expected documents for request",
-			slog.Int("request_id", id),
+		s.logger.Error("failed to get expected documents for request",
+			slog.Int("request_id", requestID),
 			slog.Any("error", err),
 		)
-		return models.RequestDTORead{}, err
+		return nil, err
 	}
 	req.ExpectedDocuments = expectedDocs
 
@@ -246,31 +136,31 @@ func (service *RequestService) GetRequestByID(
 
 func (service *RequestService) GetRequestsByProfessional(
 	ctx context.Context,
-	jwtUserId int,
+	jwtUserID int,
 	search *string,
 ) ([]models.RequestDTORead, error) {
-	return service.getRequestsByRole(ctx, jwtUserId, "PROFESSIONAL", search, service.requestRepo.GetRequestsByProfessionalWithExpectedDocs)
+	return service.getRequestsByRole(ctx, jwtUserID, "PROFESSIONAL", search, service.requestRepo.GetRequestsByProfessionalWithExpectedDocs)
 }
 
 func (service *RequestService) GetRequestsByClient(
 	ctx context.Context,
-	jwtUserId int,
+	jwtUserID int,
 	search *string,
 ) ([]models.RequestDTORead, error) {
-	return service.getRequestsByRole(ctx, jwtUserId, "CLIENT", search, service.requestRepo.GetRequestsByClientWithExpectedDocs)
+	return service.getRequestsByRole(ctx, jwtUserID, "CLIENT", search, service.requestRepo.GetRequestsByClientWithExpectedDocs)
 }
 
 func (service *RequestService) getRequestsByRole(
 	ctx context.Context,
-	jwtUserId int,
+	jwtUserID int,
 	requiredRole string,
 	search *string,
 	fetchFunc func(context.Context, int, *string) ([]models.RequestDTORead, error),
 ) ([]models.RequestDTORead, error) {
-	user, err := service.userRepo.GetUserByID(ctx, jwtUserId)
+	user, err := service.userRepo.GetUserByID(ctx, jwtUserID)
 	if err != nil {
 		service.logger.Error("failed to fetch user for document requests",
-			slog.Int("user_id", jwtUserId),
+			slog.Int("user_id", jwtUserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -278,15 +168,15 @@ func (service *RequestService) getRequestsByRole(
 
 	if user.Role != requiredRole {
 		service.logger.Warn("user tried to access other role's endpoint for document requests",
-			slog.Int("user_id", jwtUserId),
+			slog.Int("user_id", jwtUserID),
 			slog.String("role", user.Role))
 		return nil, errors.ErrForbidden{Msg: fmt.Sprintf("This is a %s endpoint.", requiredRole)}
 	}
 
-	reqs, err := fetchFunc(ctx, jwtUserId, search)
+	reqs, err := fetchFunc(ctx, jwtUserID, search)
 	if err != nil {
 		service.logger.Error("failed to fetch document requests from repo",
-			slog.Int("client_id", jwtUserId),
+			slog.Int("client_id", jwtUserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -299,14 +189,14 @@ func (service *RequestService) getRequestsByRole(
 	return reqs, nil
 }
 
-func (service *RequestService) PatchRequest(
+func (s *RequestService) PatchRequest(
 	ctx context.Context,
 	jwtUserID int,
 	requestID int,
 	updatedDTO models.RequestDTOPatch,
 ) error {
 	if err := ValidatePatchDTO(updatedDTO); err != nil {
-		service.logger.Warn("patch validation failed",
+		s.logger.Warn("patch validation failed",
 			slog.Int("user_id", jwtUserID),
 			slog.Int("request_id", requestID),
 			slog.Any("error", err),
@@ -314,26 +204,12 @@ func (service *RequestService) PatchRequest(
 		return err
 	}
 
-	req, err := service.requestRepo.GetRequestByID(ctx, requestID)
-	if err != nil {
-		service.logger.Error("failed to get document request for patch",
-			slog.Int("request_id", requestID),
-			slog.Any("error", err),
-		)
+	if _, err := s.checkUserIsProfessionalOfRequest(ctx, jwtUserID, requestID); err != nil {
 		return err
 	}
 
-	if req.ProfessionalID != jwtUserID {
-		service.logger.Warn("unauthorized patch attempt",
-			slog.Int("user_id", jwtUserID),
-			slog.Int("request_id", requestID),
-			slog.Int("actual_professional_id", req.ProfessionalID),
-		)
-		return errors.ErrForbidden{Msg: "Forbidden."}
-	}
-
-	if err := service.requestRepo.UpdateRequestTitle(ctx, requestID, updatedDTO.Title); err != nil {
-		service.logger.Error("failed to update document request title",
+	if err := s.requestRepo.UpdateRequestTitle(ctx, requestID, updatedDTO.Title); err != nil {
+		s.logger.Error("failed to update document request title",
 			slog.Int("request_id", requestID),
 			slog.String("new_title", updatedDTO.Title),
 			slog.Any("error", err),
@@ -341,7 +217,7 @@ func (service *RequestService) PatchRequest(
 		return err
 	}
 
-	service.logger.Info("document request patched successfully",
+	s.logger.Info("document request patched successfully",
 		slog.Int("request_id", requestID),
 		slog.String("new_title", updatedDTO.Title),
 	)
@@ -349,87 +225,63 @@ func (service *RequestService) PatchRequest(
 	return nil
 }
 
-func (service *RequestService) ReopenRequest(
+func (s *RequestService) ReopenRequest(
 	ctx context.Context,
 	jwtUserID int,
 	requestID int,
 ) error {
-	req, err := service.requestRepo.GetRequestByID(ctx, requestID)
-	if err != nil {
+	if _, err := s.checkUserIsProfessionalOfRequest(ctx, jwtUserID, requestID); err != nil {
 		return err
 	}
 
-	if req.ProfessionalID != jwtUserID {
-		return errors.ErrForbidden{Msg: "You are not allowed to close this request."}
-	}
-
-	if err := service.requestRepo.ReopenRequest(ctx, requestID); err != nil {
-		return err
-	}
-
-	return nil
+	return s.requestRepo.ReopenRequest(ctx, requestID)
 }
 
-func (service *RequestService) CloseRequest(
+func (s *RequestService) CloseRequest(
 	ctx context.Context,
 	jwtUserID int,
 	requestID int,
 ) error {
-	req, err := service.requestRepo.GetRequestByID(ctx, requestID)
-	if err != nil {
+	if _, err := s.checkUserIsProfessionalOfRequest(ctx, jwtUserID, requestID); err != nil {
 		return err
 	}
 
-	if req.ProfessionalID != jwtUserID {
-		return errors.ErrForbidden{Msg: "You are not allowed to close this request."}
-	}
-
-	if err := service.requestRepo.CloseRequest(ctx, requestID); err != nil {
-		return err
-	}
-
-	return nil
+	return s.requestRepo.CloseRequest(ctx, requestID)
 }
 
-func (service *RequestService) AddDocument(
+func (s *RequestService) AddDocument(
 	ctx context.Context,
-	jwtUserId int,
+	jwtUserID int,
 	requestID int,
 	expectedDocID int,
 	fileName string,
 	fileSize int64,
 	contentType string,
 	content io.Reader,
-) (int, error) {
+) (*int, error) {
 	if err := ValidateFileInfo(fileName, fileSize); err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	service.logger.Info("attempting file upload",
-		slog.Int("user_id", jwtUserId),
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, requestID); err != nil {
+		return nil, err
+	}
+	s.logger.Info("attempting file upload",
+		slog.Int("user_id", jwtUserID),
 		slog.Int("request_id", requestID),
 		slog.String("file_name", fileName),
 	)
 
-	docReq, err := service.requestRepo.GetRequestByID(ctx, requestID)
-	if err != nil {
-		return 0, errors.ErrNotFound{Msg: fmt.Sprintf("Document request not found. %v", err)}
-	}
-
-	if docReq.ClientID != jwtUserId && docReq.ProfessionalID != jwtUserId {
-		return 0, errors.ErrForbidden{Msg: fmt.Sprintf("User with id %v is not allowed to modify document request with id %v.", jwtUserId, requestID)}
-	}
-
 	cleanFileName := filepath.Base(fileName)
-	s3Key := service.fileStorage.GenerateS3Key(fileName, requestID)
+	s3Key := s.fileStorage.GenerateS3Key(fileName, requestID)
 
-	result, err := service.fileStorage.UploadFile(ctx, s3Key, content, contentType)
+	result, err := s.fileStorage.UploadFile(ctx, s3Key, content, contentType)
 	if err != nil {
-		service.logger.Error("s3 upload failed",
+		s.logger.Error("s3 upload failed",
 			slog.String("key", s3Key),
 			slog.Any("error", err),
 		)
-		return 0, errors.ErrBadGateway{Msg: fmt.Sprintf("Failed to upload to S3. %v", err)}
+		return nil, errors.ErrBadGateway{Msg: fmt.Sprintf("Failed to upload to S3. %v", err)}
 	}
 
 	fileModel := models.Document{
@@ -441,12 +293,12 @@ func (service *RequestService) AddDocument(
 		FileSize:           &fileSize,
 		S3VersionID:        result.VersionId,
 		UploadedAt:         time.Now(),
-		UploadedBy:         &jwtUserId,
+		UploadedBy:         &jwtUserID,
 	}
 
-	id, err := service.requestRepo.AddDocument(ctx, fileModel)
+	id, err := s.requestRepo.AddDocument(ctx, fileModel)
 	if err != nil {
-		service.logger.Warn("metadata save failed, starting cleanup",
+		s.logger.Warn("metadata save failed, starting cleanup",
 			slog.String("key", s3Key),
 			slog.Any("error", err),
 		)
@@ -454,119 +306,107 @@ func (service *RequestService) AddDocument(
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		cleanupErr := service.fileStorage.DeleteFile(cleanupCtx, fileModel.FilePath, fileModel.S3VersionID)
+		cleanupErr := s.fileStorage.DeleteFile(cleanupCtx, fileModel.FilePath, fileModel.S3VersionID)
 		if cleanupErr != nil {
-			return 0, errors.ErrBadGateway{Msg: fmt.Sprintf("Failed to cleanup S3 object after DB failure. Key: %s, Version: %s, Error: %v\n", s3Key, *result.VersionId, cleanupErr)}
+			return nil, errors.ErrBadGateway{Msg: fmt.Sprintf("Failed to cleanup S3 object after DB failure. Key: %s, Version: %s, Error: %v\n", s3Key, *result.VersionId, cleanupErr)}
 		}
 
-		return 0, errors.ErrInternalServerError{Msg: fmt.Sprintf("Metadata save failed, file removed from storage. %v", err)}
+		return nil, errors.ErrInternalServerError{Msg: fmt.Sprintf("Metadata save failed, file removed from storage. %v", err)}
 	}
 
-	uploadedFile, err := service.requestRepo.GetFileByIDExtended(ctx, id)
+	uploadedFile, err := s.requestRepo.GetFileByIDExtended(ctx, id)
 	if err != nil {
-		service.logger.Error("error getting uploaded file",
-			slog.Int("id", uploadedFile.ID),
+		s.logger.Error("error getting uploaded file",
+			slog.Int("id", id),
 			slog.Any("err", err),
 		)
-		return 0, errors.ErrInternalServerError{Msg: fmt.Sprintf("Error getting uploaded file: %v", err)}
+		return nil, errors.ErrInternalServerError{Msg: fmt.Sprintf("Error getting uploaded file: %v", err)}
 	}
 
 	if uploadedFile.AuthorRole == "CLIENT" {
-		service.requestRepo.SetFileUploaded(ctx, requestID)
+		s.requestRepo.SetFileUploaded(ctx, requestID)
 		if expectedDocID != 0 {
-			service.expectedDocRepo.UpdateExpectedDocumentStatus(ctx, expectedDocID, "uploaded", nil)
+			s.expectedDocRepo.UpdateExpectedDocumentStatus(ctx, expectedDocID, "uploaded", nil)
 		}
 	}
 
-	service.logger.Info("file upload successful", slog.Int("file_id", id))
-	return id, nil
+	s.logger.Info("file upload successful", slog.Int("file_id", id))
+	return &id, nil
 }
 
-func (service *RequestService) GetFilesByRequest(
+func (s *RequestService) GetFilesByRequest(
 	ctx context.Context,
-	jwtUserId int,
+	jwtUserID int,
 	requestID int,
 ) ([]models.DocumentDTORead, error) {
-	docReq, err := service.requestRepo.GetRequestByID(ctx, requestID)
-	if err != nil {
-		service.logger.Error("failed to find document request", slog.Int("request_id", requestID), slog.Any("error", err))
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, requestID); err != nil {
 		return nil, err
 	}
 
-	if docReq.ProfessionalID != jwtUserId && docReq.ClientID != jwtUserId {
-		service.logger.Warn("unauthorized access attempt", slog.Int("user_id", jwtUserId), slog.Int("request_id", requestID))
-		return nil, errors.ErrForbidden{Msg: "You are not authorized to view files for this request."}
-	}
-
-	files, err := service.requestRepo.GetFilesByRequest(ctx, requestID)
+	files, err := s.requestRepo.GetFilesByRequest(ctx, requestID)
 	if err != nil {
-		service.logger.Error("failed to fetch files", slog.Int("request_id", requestID), slog.Any("error", err))
+		s.logger.Error("failed to fetch files", slog.Int("request_id", requestID), slog.Any("error", err))
 		return nil, err
 	}
 
-	service.logger.Info("files retrieved successfully", slog.Int("request_id", requestID), slog.Int("count", len(files)))
+	s.logger.Info("files retrieved successfully", slog.Int("request_id", requestID), slog.Int("count", len(files)))
 	return files, nil
 }
 
-func (service *RequestService) GetFilePresignedURL(
+func (s *RequestService) GetFilePresignedURL(
 	ctx context.Context,
-	jwtUserId int,
+	jwtUserID int,
 	fileID int,
-) (string, error) {
-	file, err := service.requestRepo.GetFileByID(ctx, fileID)
+) (*string, error) {
+	file, err := s.requestRepo.GetFileByID(ctx, fileID)
 	if err != nil {
-		return "", err
+		s.logger.Error("could not fetch file by id",
+			slog.Int("user_id", jwtUserID),
+			slog.Int("file_id", fileID),
+			slog.Any("error", err),
+		)
+		return nil, err
 	}
 
-	docReq, err := service.requestRepo.GetRequestByID(ctx, file.RequestID)
-	if err != nil {
-		return "", err
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, file.RequestID); err != nil {
+		return nil, err
 	}
 
-	if docReq.ProfessionalID != jwtUserId && docReq.ClientID != jwtUserId {
-		return "", errors.ErrForbidden{Msg: "No access to this file."}
-	}
-
-	presignedURL, err := service.fileStorage.GeneratePresignedURL(ctx, file.FilePath, file.S3VersionID, 15*time.Minute)
+	presignedURL, err := s.fileStorage.GeneratePresignedURL(ctx, file.FilePath, file.S3VersionID, 15*time.Minute)
 	if err != nil {
-		service.logger.Error("s3 presign failed",
+		s.logger.Error("s3 presign failed",
 			slog.Int("file_id", fileID),
 			slog.Any("error", err))
-		return "", err
+		return nil, err
 	}
-	return presignedURL, nil
+	return &presignedURL, nil
 }
 
-func (service *RequestService) GetExamplePresignedURL(
+func (s *RequestService) GetExamplePresignedURL(
 	ctx context.Context,
 	jwtUserID int,
 	expectedDocID int,
-) (string, error) {
-	expectedDoc, err := service.expectedDocRepo.GetExpectedDocumentByID(ctx, expectedDocID)
+) (*string, error) {
+	expectedDoc, err := s.expectedDocRepo.GetExpectedDocumentByID(ctx, expectedDocID)
 	if err != nil {
-		return "", errors.ErrNotFound{Msg: "Expected document not found."}
+		return nil, errors.ErrNotFound{Msg: "Expected document not found."}
 	}
 
 	if expectedDoc.ExampleFilePath == nil {
-		return "", errors.ErrNotFound{Msg: "This document has no example file."}
+		return nil, errors.ErrNotFound{Msg: "This document has no example file."}
 	}
 
-	docReq, err := service.requestRepo.GetRequestByID(ctx, expectedDoc.RequestID)
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, expectedDoc.RequestID); err != nil {
+		return nil, err
+	}
+
+	presignedURL, err := s.fileStorage.GeneratePresignedURL(ctx, *expectedDoc.ExampleFilePath, nil, 15*time.Minute)
 	if err != nil {
-		return "", errors.ErrNotFound{Msg: "Document request not found."}
-	}
-
-	if docReq.ProfessionalID != jwtUserID && docReq.ClientID != jwtUserID {
-		return "", errors.ErrForbidden{Msg: "No access to this file."}
-	}
-
-	presignedURL, err := service.fileStorage.GeneratePresignedURL(ctx, *expectedDoc.ExampleFilePath, nil, 15*time.Minute)
-	if err != nil {
-		service.logger.Error("s3 presign failed for example file",
+		s.logger.Error("s3 presign failed for example file",
 			slog.Int("expected_doc_id", expectedDocID),
 			slog.Any("error", err),
 		)
-		return "", err
+		return nil, err
 	}
-	return presignedURL, nil
+	return &presignedURL, nil
 }
