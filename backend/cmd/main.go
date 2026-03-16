@@ -44,7 +44,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 	})
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("Stone cold healthy"))
+		_, err := w.Write([]byte("Healthy"))
 		if err != nil {
 			log.Fatal(err)
 		}
