@@ -13,6 +13,14 @@ import (
 	"github.com/google/uuid"
 )
 
+type IFileStorageService interface {
+	UploadFile(ctx context.Context, key string, content io.Reader, contentType string) (*s3.PutObjectOutput, error)
+	DeleteFile(ctx context.Context, key string, versionID *string) error
+	GeneratePresignedURL(ctx context.Context, key string, versionID *string, expiry time.Duration) (string, error)
+	GenerateExampleS3Key(fileName string) string
+	GenerateS3Key(fileName string, requestID int) string
+}
+
 type FileStorageService struct {
 	s3Client *s3.Client
 	bucket   string

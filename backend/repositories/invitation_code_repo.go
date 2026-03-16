@@ -22,10 +22,10 @@ func (r *InvitationCodeRepo) GetInvitationCodeByCode(
 	code string,
 ) (models.InvitationCode, error) {
 	query := `
-        SELECT id, code, professional_id, used_at, expires_at, created_at
-        FROM invitation_codes
-        WHERE code = $1
-    `
+		SELECT id, code, professional_id, used_at, expires_at, created_at
+		FROM invitation_codes
+		WHERE code = $1
+	`
 
 	var invCode models.InvitationCode
 	err := r.db.QueryRowContext(ctx, query, code).Scan(
@@ -52,11 +52,11 @@ func (r *InvitationCodeRepo) GetInvitationCodesByProfessional(
 	professionalID int,
 ) ([]models.InvitationCode, error) {
 	query := `
-        SELECT id, code, professional_id, used_at, expires_at, created_at
-        FROM invitation_codes
-        WHERE professional_id = $1 AND used_at IS NULL
-        ORDER BY created_at DESC
-    `
+		SELECT id, code, professional_id, used_at, expires_at, created_at
+		FROM invitation_codes
+		WHERE professional_id = $1 AND used_at IS NULL
+		ORDER BY created_at DESC
+	`
 
 	rows, err := r.db.QueryContext(ctx, query, professionalID)
 	if err != nil {
@@ -121,9 +121,9 @@ func (r *InvitationCodeRepo) CreateInvitationCode(
 	expiresAt *time.Time,
 ) error {
 	query := `
-        INSERT INTO invitation_codes (code, professional_id, expires_at)
-        VALUES ($1, $2, $3)
-		`
+        	INSERT INTO invitation_codes (code, professional_id, expires_at)
+        	VALUES ($1, $2, $3)
+	`
 
 	_, err := r.db.ExecContext(ctx, query, code, professionalID, expiresAt)
 	return err

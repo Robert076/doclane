@@ -73,6 +73,12 @@ type IExpectedDocumentRepo interface {
 	DeleteExpectedDocumentFromRequest(ctx context.Context, requestId int, expectedDocumentId int) error
 }
 
+type IRequestCommentRepo interface {
+	GetCommentsByRequestID(ctx context.Context, requestID int) ([]models.RequestCommentDTO, error)
+	GetCommentByID(ctx context.Context, commentID int) (models.RequestCommentDTO, error)
+	AddComment(ctx context.Context, comment models.RequestComment) (int, error)
+}
+
 type ITxManager interface {
 	WithTx(ctx context.Context, fn func(tx *sql.Tx) error) error
 }

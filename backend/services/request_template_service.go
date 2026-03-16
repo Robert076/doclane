@@ -20,7 +20,7 @@ type RequestTemplateService struct {
 	documentRepo        repositories.IRequestRepo
 	userRepo            repositories.IUserRepo
 	txManager           repositories.ITxManager
-	fileStorage         *FileStorageService
+	fileStorage         IFileStorageService
 	logger              *slog.Logger
 }
 
@@ -31,7 +31,7 @@ func NewRequestTemplateService(
 	documentRepo repositories.IRequestRepo,
 	userRepo repositories.IUserRepo,
 	txManager repositories.ITxManager,
-	fileStorage *FileStorageService,
+	fileStorage IFileStorageService,
 	logger *slog.Logger,
 ) *RequestTemplateService {
 	return &RequestTemplateService{

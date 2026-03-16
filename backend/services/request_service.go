@@ -18,11 +18,11 @@ type RequestService struct {
 	userRepo        repositories.IUserRepo
 	expectedDocRepo repositories.IExpectedDocumentRepo
 	txManager       repositories.ITxManager
+	fileStorage     IFileStorageService
 	logger          *slog.Logger
-	fileStorage     *FileStorageService
 }
 
-func NewRequestService(requestRepo repositories.IRequestRepo, userRepo repositories.IUserRepo, expectedDocRepo repositories.IExpectedDocumentRepo, txManager repositories.ITxManager, logger *slog.Logger, fileStorage *FileStorageService) *RequestService {
+func NewRequestService(requestRepo repositories.IRequestRepo, userRepo repositories.IUserRepo, expectedDocRepo repositories.IExpectedDocumentRepo, txManager repositories.ITxManager, logger *slog.Logger, fileStorage IFileStorageService) *RequestService {
 	return &RequestService{
 		requestRepo:     requestRepo,
 		userRepo:        userRepo,
