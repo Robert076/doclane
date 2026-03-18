@@ -1,0 +1,119 @@
+Table users {
+  id int [pk, increment]
+  email varchar
+  first_name varchar
+  last_name varchar
+  password_hash varchar
+  role varchar
+  professional_id int [ref: > users.id, null]
+  is_active boolean
+  created_at timestamp
+  last_notified timestamp [null]
+  updated_at timestamp
+}
+
+Table requests {
+  id int [pk, increment]
+  client_id int [ref: > users.id]
+  professional_id int [ref: > users.id]
+  template_id int [ref: > request_templates.id, null]
+
+  title varchar
+  description text [null]
+
+  is_recurring boolean
+  recurrence_cron varchar [null]
+
+  is_scheduled boolean
+  scheduled_for varchar [null]
+
+  is_closed boolean
+
+  last_uploaded_at timestamp [null]
+  next_due_at timestamp [null]
+  due_date timestamp [null]
+
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table documents {
+  id int [pk, increment]
+  document_request_id int [ref: > requests.id]
+  expected_document_id int [ref: > expected_documents.id]
+
+  file_name varchar
+  file_path varchar
+
+  mime_type varchar [null]
+  file_size bigint [null]
+
+  uploaded_at timestamp
+  s3_version_id varchar [null]
+
+  uploaded_by int [ref: > users.id, null]
+}
+
+Table expected_documents {
+  id int [pk, increment]
+  document_request_id int [ref: > requests.id]
+
+  title varchar
+  description text
+  status varchar
+
+  rejection_reason text [null]
+
+  example_file_path varchar [null]
+  example_mime_type varchar [null]
+}
+
+Table request_templates {
+  id int [pk, increment]
+
+  title varchar
+  description text [null]
+
+  is_recurring boolean
+  recurrence_cron varchar [null]
+
+  is_closed boolean
+
+  created_by int [ref: > users.id]
+
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table expected_document_templates {
+  id int [pk, increment]
+
+  document_request_template_id int [ref: > request_templates.id]
+
+  title varchar
+  description text
+
+  example_file_path varchar [null]
+  example_mime_type varchar [null]
+}
+
+Table invitation_codes {
+  id int [pk, increment]
+
+  code varchar
+  professional_id int [ref: > users.id]
+
+  used_at timestamp [null]
+  expires_at timestamp [null]
+
+  created_at timestamp
+}
+
+Table document_comments {
+  id int [pk]
+  document_id int [ref: > documents.id]
+  user_id int [ref: > users.id]
+
+  comment text
+  created_at timestamp
+}

@@ -11,10 +11,16 @@ type RequestCommentRepo struct {
 	db *sql.DB
 }
 
+func NewRequestCommentRepo(db *sql.DB) *RequestCommentRepo {
+	return &RequestCommentRepo{
+		db: db,
+	}
+}
+
 func (r *RequestCommentRepo) GetCommentsByRequestID(ctx context.Context, requestID int) ([]models.RequestCommentDTO, error) {
 	query := `
 		SELECT c.id, c.request_id, c.user_id, c.comment, c.created_at, c.updated_at, u.first_name, u.last_name
-		FROM request_comments c JOIN users u ON c.user_id = u.id
+		FROM document_comments c JOIN users u ON c.user_id = u.id
 	`
 
 	rows, err := r.db.QueryContext(ctx, query)
@@ -47,7 +53,7 @@ func (r *RequestCommentRepo) GetCommentsByRequestID(ctx context.Context, request
 func (r *RequestCommentRepo) GetCommentByID(ctx context.Context, commentID int) (models.RequestCommentDTO, error) {
 	query := `
 		SELECT c.id, c.request_id, c.user_id, c.comment, c.created_at, c.updated_at, u.first_name, u.last_name
-		FROM request_comments c JOIN users u ON c.user_id = u.id WHERE c.id = $1
+		FROM document_comments c JOIN users u ON c.user_id = u.id WHERE c.id = $1
 	`
 
 	row, err := r.db.QueryContext(ctx, query)
@@ -73,7 +79,7 @@ func (r *RequestCommentRepo) GetCommentByID(ctx context.Context, commentID int) 
 
 func (r *RequestCommentRepo) AddComment(ctx context.Context, comment models.RequestComment) (int, error) {
 	query := `
-		INSERT INTO request_comments(request_id, user_id, comment, created_at, updated_at) 
+		INSERT INTO document_comments(request_id, user_id, comment, created_at, updated_at) 
 		VALUES ($1, $2, $3, $4, $5) RETURNING id
 	`
 

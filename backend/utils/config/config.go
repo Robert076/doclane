@@ -27,6 +27,7 @@ var RequestService *services.RequestService
 var InvitationCodeService *services.InvitationCodeService
 var ExpectedRequestService *services.ExpectedRequestService
 var RequestTemplateService *services.RequestTemplateService
+var RequestCommentService *services.RequestCommentService
 var S3Client *s3.Client
 
 func init() {
@@ -43,8 +44,9 @@ func init() {
 	documentRepo := repositories.NewRequestRepo(db)
 	invitationRepo := repositories.NewInvitationCodeRepo(db)
 	expectedDocumentRepo := repositories.NewExpectedDocRepo(db)
-	RequestTemplateRepo := repositories.NewRequestTemplateRepo(db)
+	requestTemplateRepo := repositories.NewRequestTemplateRepo(db)
 	expectedDocumentRequestTemplateRepo := repositories.NewExpectedDocumentTemplateRepo(db)
+	requestCommentRepo := repositories.NewRequestCommentRepo(db)
 	txManager := repositories.NewTxManager(db)
 
 	// Initialize S3
@@ -61,13 +63,19 @@ func init() {
 	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, userRepo, Logger)
 	ExpectedRequestService = services.NewExpectedRequestService(expectedDocumentRepo, Logger)
 	RequestTemplateService = services.NewRequestTemplateService(
-		RequestTemplateRepo,
+		requestTemplateRepo,
 		expectedDocumentRequestTemplateRepo,
 		expectedDocumentRepo,
 		documentRepo,
 		userRepo,
 		txManager,
 		fileStorage,
+		Logger,
+	)
+	RequestCommentService = services.NewRequestCommentService(
+		requestCommentRepo,
+		documentRepo,
+		userRepo,
 		Logger,
 	)
 }

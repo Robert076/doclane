@@ -8,6 +8,7 @@ import (
 
 	"github.com/Robert076/doclane/backend/handlers/auth"
 	auth_middleware "github.com/Robert076/doclane/backend/handlers/auth/middleware"
+	comment_handler "github.com/Robert076/doclane/backend/handlers/comments"
 	document_handler "github.com/Robert076/doclane/backend/handlers/documents"
 	invitation_handler "github.com/Robert076/doclane/backend/handlers/invitation"
 	template_handler "github.com/Robert076/doclane/backend/handlers/templates"
@@ -84,6 +85,11 @@ func buildRouter() (http.Handler, *chi.Mux) {
 				r.Patch("/", document_handler.PatchRequestHandler)
 				r.Post("/archive", document_handler.CloseRequestHandler)
 				r.Post("/unarchive", document_handler.ReopenRequestHandler)
+				r.Route("/comments", func(r chi.Router) {
+					r.Get("/", comment_handler.GetCommentsByRequest)
+					r.Get("/{commentID}", comment_handler.GetCommentByID)
+					r.Post("/", comment_handler.AddCommentHandler)
+				})
 
 				r.Route("/files", func(r chi.Router) {
 					r.Get("/", document_handler.GetFilesByRequestHandler)

@@ -152,6 +152,10 @@ func (s *RequestService) checkUserIsParticipantOfRequest(ctx context.Context, jw
 	}
 
 	if req.ProfessionalID != jwtUserID && req.ClientID != jwtUserID {
+		s.logger.Warn("unauthorized access attempted for request",
+			slog.Int("user_id", jwtUserID),
+			slog.Int("request_id", requestID),
+		)
 		return nil, errors.ErrForbidden{Msg: "You don't have access to this request."}
 	}
 
