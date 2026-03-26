@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { DocumentRequest } from "@/types";
+import { Request } from "@/types";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import { UI_TEXT } from "@/locales/ro";
 import "./ArchivedRequestsSection.css";
@@ -11,7 +11,7 @@ import { useUser } from "@/context/UserContext";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 
 type Props = {
-        requests: DocumentRequest[];
+        requests: Request[];
 };
 
 const ArchivedRequestsSection = ({ requests }: Props) => {
@@ -24,17 +24,23 @@ const ArchivedRequestsSection = ({ requests }: Props) => {
                 return true;
         });
 
+        if (filteredRequests.length === 0) {
+                return (
+                        <NotFound
+                                text="Nu ai niciun dosar arhivat încă."
+                                subtext="Aici vor apărea dosarele pe care le arhivezi."
+                                background="white"
+                        />
+                );
+        }
+
         return (
                 <div className="archived-templates">
-                        <SearchBar
-                                value={searchInput}
-                                onChange={setSearchInput}
-                                placeholder={UI_TEXT.common.search}
-                        />
-                        {filteredRequests.length === 0 && (
-                                <NotFound
-                                        text="Nu ai niciun dosar arhivat."
-                                        background="white"
+                        {requests.length > 0 && (
+                                <SearchBar
+                                        value={searchInput}
+                                        onChange={setSearchInput}
+                                        placeholder={UI_TEXT.common.search}
                                 />
                         )}
                         <div className="archived-grid">

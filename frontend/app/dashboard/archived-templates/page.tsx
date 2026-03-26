@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { DocumentRequestTemplate } from "@/types";
+import { Template } from "@/types";
 import ArchivedTemplatesSection from "@/components/Pages/ArchivedTemplatesComponents/ArchivedTemplatesSection";
 import PageHeader from "@/components/PageHeader/PageHeader";
 import { getTemplates } from "@/lib/api/templates";
@@ -11,7 +11,7 @@ const ArchivedTemplates = async () => {
                 notFound();
         }
 
-        const templates = templateResponse.data as DocumentRequestTemplate[];
+        const templates = templateResponse.data as Template[];
 
         return (
                 <div>

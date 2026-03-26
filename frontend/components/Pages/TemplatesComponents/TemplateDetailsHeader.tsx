@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { DocumentRequestTemplate } from "@/types";
+import { Template } from "@/types";
 import "./TemplateDetailsHeader.css";
 
-export default function TemplateDetailsHeader({ data }: { data: DocumentRequestTemplate }) {
+export default function TemplateDetailsHeader({ data }: { data: Template }) {
         return (
                 <header className="template-details-header">
                         <Link

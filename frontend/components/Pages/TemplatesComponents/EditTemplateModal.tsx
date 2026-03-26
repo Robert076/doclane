@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { DocumentRequestTemplate, RecurrenceUnit } from "@/types";
+import { Template, RecurrenceUnit } from "@/types";
 import Modal from "@/components/Modals/Modal";
 import Input from "@/components/InputComponents/Input";
 import TextArea from "@/components/InputComponents/TextArea";
@@ -17,7 +17,7 @@ interface EditTemplateModalProps {
                 is_recurring?: boolean;
                 recurrence_cron?: string;
         }) => void;
-        template: DocumentRequestTemplate;
+        template: Template;
 }
 
 export default function EditTemplateModal({

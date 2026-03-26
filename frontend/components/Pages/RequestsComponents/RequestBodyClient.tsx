@@ -1,11 +1,11 @@
 import React from "react";
-import { DocumentRequest } from "@/types";
+import { Request } from "@/types";
 import RequestInfoItem from "./RequestInfoItem";
 import { formatDate } from "@/lib/client/formatDate";
 import "./RequestBody.css";
 
 interface RequestBodyProps {
-        request: DocumentRequest;
+        request: Request;
         searchTerm?: string;
 }
 

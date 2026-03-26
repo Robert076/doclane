@@ -39,9 +39,9 @@ export async function signUpClient(
                 body: {
                         email,
                         password,
-                        invitationCode,
-                        firstName,
-                        lastName,
+                        invitation_code: invitationCode,
+                        first_name: firstName,
+                        last_name: lastName,
                 },
         });
 }

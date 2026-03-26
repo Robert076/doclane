@@ -134,8 +134,8 @@ const InvitationCodesModal = () => {
                                                         </div>
                                                 ) : unusedCodes.length === 0 ? (
                                                         <NotFound
-                                                                text="No active invitation codes."
-                                                                subtext="Generate one to invite clients."
+                                                                text="Niciun cod activ."
+                                                                subtext="Generează un cod pentru a aduce lume în Doclane."
                                                         />
                                                 ) : (
                                                         <div className="codes-list">

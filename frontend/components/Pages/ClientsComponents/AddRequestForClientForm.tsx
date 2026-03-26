@@ -15,7 +15,7 @@ import CronInput from "./CronInput";
 import ScheduleModal from "./ScheduleModal";
 
 // API & Types
-import { createDocumentRequest } from "@/lib/api/requests";
+import { createRequest } from "@/lib/api/requests";
 import { RecurrenceUnit } from "@/types";
 import "./AddRequestForClientForm.css";
 
@@ -96,7 +96,7 @@ export default function AddRequestForClientForm({ id }: AddRequestForClientFormP
                 const loadingToast = toast.loading("Se creează dosarul...");
 
                 try {
-                        const res = await createDocumentRequest(buildPayload());
+                        const res = await createRequest(buildPayload());
 
                         if (!res.success) {
                                 throw new Error(
@@ -119,7 +119,7 @@ export default function AddRequestForClientForm({ id }: AddRequestForClientFormP
                 const loadingToast = toast.loading("Se programează dosarul...");
 
                 try {
-                        const res = await createDocumentRequest(
+                        const res = await createRequest(
                                 buildPayload({
                                         is_scheduled: true,
                                         scheduled_for: new Date(

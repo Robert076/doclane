@@ -3,7 +3,7 @@ import "./TemplateDetailsActions.css";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import toast from "react-hot-toast";
-import { DocumentRequestTemplate, User } from "@/types";
+import { Template, User } from "@/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AssignClientModal from "./AssignClientModal";
@@ -17,7 +17,7 @@ export default function TemplateActions({
 }: {
         id: string;
         clients: User[];
-        template: DocumentRequestTemplate;
+        template: Template;
 }) {
         const [isInstantiateModalOpen, setIsInstantiateModalOpen] = useState(false);
         const [isEditModalOpen, setIsEditModalOpen] = useState(false);

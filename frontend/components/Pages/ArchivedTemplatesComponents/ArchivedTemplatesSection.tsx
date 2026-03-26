@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { DocumentRequestTemplate } from "@/types";
+import { Template } from "@/types";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import { UI_TEXT } from "@/locales/ro";
 import "./ArchivedTemplatesSection.css";
@@ -10,7 +10,7 @@ import TemplateCard from "@/components/Pages/TemplatesComponents/TemplateCard";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 
 type Props = {
-        templates: DocumentRequestTemplate[];
+        templates: Template[];
 };
 
 const ArchivedTemplatesSection = ({ templates }: Props) => {
@@ -23,21 +23,26 @@ const ArchivedTemplatesSection = ({ templates }: Props) => {
                 return true;
         });
 
-        console.log(filteredTemplates);
+        if (filteredTemplates.length === 0) {
+                return (
+                        <NotFound
+                                text="Nu ai niciun şablon arhivat."
+                                subtext="Aici vor apărea şabloanele pe care le arhivezi."
+                                background="white"
+                        />
+                );
+        }
+
         return (
                 <div className="archived-templates">
-                        <SearchBar
-                                value={searchInput}
-                                onChange={setSearchInput}
-                                placeholder={UI_TEXT.common.search}
-                        />
-
-                        {filteredTemplates.length === 0 && (
-                                <NotFound
-                                        text="Nu ai niciun şablon arhivat."
-                                        background="white"
+                        {templates.length > 0 && (
+                                <SearchBar
+                                        value={searchInput}
+                                        onChange={setSearchInput}
+                                        placeholder={UI_TEXT.common.search}
                                 />
                         )}
+
                         <div className="archived-grid">
                                 {filteredTemplates.map((t) => (
                                         <TemplateCard

@@ -3,10 +3,7 @@ import TemplateDetailsHeader from "../../../../components/Pages/TemplatesCompone
 import TemplateActions from "../../../../components/Pages/TemplatesComponents/TemplateDetailsActions";
 import TemplateDetailsSummary from "../../../../components/Pages/TemplatesComponents/TemplateDetailsSummary";
 import TemplateDetailsExpectedDocuments from "../../../../components/Pages/TemplatesComponents/TemplateDetailsExpectedDocuments";
-import {
-        getDocumentRequestTemplateByID,
-        getExpectedDocumentTemplatesByTemplate,
-} from "@/lib/api/templates";
+import { getTemplateByID, getExpectedDocumentTemplatesByTemplate } from "@/lib/api/templates";
 import { getClientsByProfessional } from "@/lib/api/users";
 
 interface PageProps {
@@ -18,7 +15,7 @@ export default async function TemplateDetailsPage({ params }: PageProps) {
 
         const [templateResponse, clientsResponse, expectedDocumentsResponse] =
                 await Promise.all([
-                        getDocumentRequestTemplateByID(+id),
+                        getTemplateByID(+id),
                         getClientsByProfessional(),
                         getExpectedDocumentTemplatesByTemplate(+id),
                 ]);

@@ -29,8 +29,8 @@ export const UI_TEXT = {
         },
         dashboard: {
                 professional: {
-                        headerDocumentRequests: (name: string) => `Bine ai revenit, ${name}`,
-                        subheaderDocumentRequests: (activeRequestsCount: number) =>
+                        headerRequests: (name: string) => `Bine ai revenit, ${name}`,
+                        subheaderRequests: (activeRequestsCount: number) =>
                                 `Ai ${activeRequestsCount} dosare în lucru.`,
                         headerClients: "Lista solicitanților",
                         subheaderClients: "Administrează si gestionează solicitanții tăi.",

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { DocumentRequest, RequestStatus, User } from "@/types";
+import { Request, RequestStatus, User } from "@/types";
 import StatusBadge from "../../Pages/RequestsComponents/StatusBadge";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import HighlightText from "../../OtherComponents/HighlightText/HighlightText";
@@ -13,7 +13,7 @@ import RequestBodyClient from "@/components/Pages/RequestsComponents/RequestBody
 import Modal from "@/components/Modals/Modal";
 
 interface RequestProps {
-        request: DocumentRequest;
+        request: Request;
         user: User;
         searchTerm?: string;
         archived?: boolean;
@@ -45,7 +45,7 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                                                 className="scheduled-badge"
                                                                 title={`Programată pentru ${formatDate(request.scheduled_for!)}`}
                                                         >
-                                                                SCHEDULED
+                                                                Scheduled
                                                         </span>
                                                 )}
                                         </>

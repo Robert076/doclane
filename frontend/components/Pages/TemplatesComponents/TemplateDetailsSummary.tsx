@@ -1,10 +1,10 @@
-import { DocumentRequestTemplate } from "@/types";
+import { Template } from "@/types";
 import "./TemplateDetailsSummary.css";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import { formatDate } from "@/lib/formatDate";
 import { UI_TEXT } from "@/locales/ro";
 
-export default function DetailsCard({ data }: { data: DocumentRequestTemplate }) {
+export default function DetailsCard({ data }: { data: Template }) {
         return (
                 <section className="template-details-summary">
                         <SectionTitle text={UI_TEXT.request.details.title} />

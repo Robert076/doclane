@@ -1,13 +1,13 @@
 "use client";
 
-import { DocumentRequest } from "@/types";
+import { Request } from "@/types";
 import Link from "next/link";
 import "./RequestDetailsHeader.css";
 import { MdEdit, MdCheck, MdClose } from "react-icons/md";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
-export default function DetailsHeader({ data }: { data: DocumentRequest }) {
+export default function DetailsHeader({ data }: { data: Request }) {
         const [isEditing, setIsEditing] = useState(false);
         const [title, setTitle] = useState(data.title);
 

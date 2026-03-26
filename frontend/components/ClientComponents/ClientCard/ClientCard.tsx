@@ -57,11 +57,13 @@ const ClientCard: React.FC<ClientCardProps> = ({ client, searchTerm }) => {
                                                         UI_TEXT.client.card.clientEmail,
                                                         client.email,
                                                         searchTerm,
+                                                        true,
                                                 )}
                                                 {ClientInfoItem(
                                                         UI_TEXT.client.card.joinedAt,
                                                         formatDate(client.created_at),
                                                         searchTerm,
+                                                        false,
                                                 )}
                                         </div>
                                 </div>

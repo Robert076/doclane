@@ -1,0 +1,38 @@
+.request-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-10);
+}
+
+.tab-bar {
+  display: flex;
+  gap: 4px;
+  border-bottom: var(--border-default);
+  padding-bottom: 0;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: var(--font-size-s);
+  color: var(--text-color-secondary);
+  padding: 0.6rem 1.2rem;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab-btn:hover {
+  color: var(--color-primary);
+}
+
+.tab-btn--active {
+  color: var(--color-primary);
+  border-bottom: 2px solid var(--color-primary);
+  font-weight: 600;
+}
+
+.tab-content {
+  padding-top: var(--gap-10);
+}

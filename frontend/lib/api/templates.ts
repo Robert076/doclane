@@ -1,16 +1,5 @@
 import { doclaneHTTPHelper } from "@/lib/api/core";
-import {
-        APIResponse,
-        DocumentRequestTemplate,
-        ExpectedDocumentTemplate,
-        PresignedURL,
-} from "@/types";
-
-export async function getTemplateByID(templateID: number): Promise<APIResponse> {
-        return doclaneHTTPHelper(`/templates/${templateID}`, {
-                method: "GET",
-        });
-}
+import { APIResponse, Template, ExpectedDocumentTemplate, PresignedURL } from "@/types";
 
 export async function createTemplate(payload: object): Promise<APIResponse<number>> {
         return doclaneHTTPHelper("/templates", {
@@ -20,7 +9,7 @@ export async function createTemplate(payload: object): Promise<APIResponse<numbe
         });
 }
 
-export async function getTemplates(): Promise<APIResponse<DocumentRequestTemplate[]>> {
+export async function getTemplates(): Promise<APIResponse<Template[]>> {
         return doclaneHTTPHelper("/templates", {
                 method: "GET",
         });
@@ -114,9 +103,7 @@ export async function presignTemplateExample(
         );
 }
 
-export async function getDocumentRequestTemplateByID(
-        id: number,
-): Promise<APIResponse<DocumentRequestTemplate>> {
+export async function getTemplateByID(id: number): Promise<APIResponse<Template>> {
         return doclaneHTTPHelper(`/templates/${id}`, { method: "GET" });
 }
 

@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { DocumentRequestTemplate } from "@/types";
+import { Template } from "@/types";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import PaginationFooter from "@/components/ClientComponents/ClientsSection/_components/PaginationFooter";
@@ -10,7 +10,7 @@ import "./TemplatesSection.css";
 import { useSearch } from "@/hooks/useSearch";
 
 interface TemplatesSectionProps {
-        templates: DocumentRequestTemplate[];
+        templates: Template[];
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -41,6 +41,15 @@ export default function TemplatesSection({ templates }: TemplatesSectionProps) {
                 startIndex,
                 startIndex + ITEMS_PER_PAGE,
         );
+        if (openTemplates.length === 0) {
+                return (
+                        <NotFound
+                                text="Nu ai niciun şablon încă."
+                                subtext="Aici vor apărea şabloanele pe care le salvezi pentru a fi refolosite."
+                                background="#fff"
+                        />
+                );
+        }
 
         return (
                 <div className="templates-section">
@@ -49,14 +58,6 @@ export default function TemplatesSection({ templates }: TemplatesSectionProps) {
                                         value={searchInput}
                                         onChange={setSearchInput}
                                         placeholder={UI_TEXT.common.search}
-                                />
-                        )}
-
-                        {openTemplates.length === 0 && (
-                                <NotFound
-                                        text="Nu ai niciun şablon încă."
-                                        subtext="Începe prin a crea primul şablon."
-                                        background="#fff"
                                 />
                         )}
 

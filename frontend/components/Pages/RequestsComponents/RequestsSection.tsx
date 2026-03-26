@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useCallback } from "react";
-import { DocumentRequest, User } from "@/types";
+import { Request, User } from "@/types";
 import RequestCard from "@/components/CardComponents/RequestCard/RequestCard";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
@@ -10,7 +10,7 @@ import { useSearch } from "@/hooks/useSearch";
 import { usePagination } from "@/hooks/usePagination";
 
 interface RequestsSectionProps {
-        requests: DocumentRequest[];
+        requests: Request[];
         user: User;
 }
 
@@ -23,7 +23,7 @@ export default function RequestsSection({ requests, user }: RequestsSectionProps
         }, [requests]);
 
         // 2. Optimizăm funcția de căutare
-        const searchFn = useCallback((req: DocumentRequest, search: string) => {
+        const searchFn = useCallback((req: Request, search: string) => {
                 const searchLower = search.toLowerCase();
 
                 const searchableText = [
@@ -56,7 +56,7 @@ export default function RequestsSection({ requests, user }: RequestsSectionProps
                 const isProfessional = user.role === "PROFESSIONAL";
                 return (
                         <NotFound
-                                text="Nu ai niciun dosar deschis"
+                                text="Nu ai niciun dosar încă."
                                 subtext={
                                         isProfessional
                                                 ? "Aici vor apărea dosarele pe care le gestionezi pentru clienții tăi."

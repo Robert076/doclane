@@ -1,18 +1,21 @@
 "use server";
-import { APIResponse, DocumentFile, DocumentRequest, PresignedURL, UserRole } from "@/types";
+import {
+        APIResponse,
+        DocumentFile,
+        Request,
+        PresignedURL,
+        UserRole,
+        RequestCommentDTO,
+} from "@/types";
 import { doclaneHTTPHelper } from "./core";
 
-export async function getDocumentRequests(
-        role: UserRole,
-): Promise<APIResponse<DocumentRequest[]>> {
+export async function getRequests(role: UserRole): Promise<APIResponse<Request[]>> {
         return doclaneHTTPHelper(`/document-requests/${role.toLowerCase()}/my-requests`, {
                 method: "GET",
         });
 }
 
-export async function getDocumentRequestById(
-        requestId: string,
-): Promise<APIResponse<DocumentRequest>> {
+export async function getRequestById(requestId: string): Promise<APIResponse<Request>> {
         return doclaneHTTPHelper(`/document-requests/${requestId}`, {
                 method: "GET",
         });
@@ -32,7 +35,23 @@ export async function reopenRequest(requestID: number): Promise<APIResponse> {
         });
 }
 
-export async function createDocumentRequest(payload: {
+export async function addComment(requestId: number, comment: string): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/document-requests/${requestId}/comments`, {
+                method: "POST",
+                body: { comment },
+                revalidate: `/dashboard/requests/${requestId}`,
+        });
+}
+
+export async function getCommentsByRequest(
+        requestId: number,
+): Promise<APIResponse<RequestCommentDTO[]>> {
+        return doclaneHTTPHelper(`/document-requests/${requestId}/comments`, {
+                method: "GET",
+        });
+}
+
+export async function createRequest(payload: {
         title: string;
         description?: string;
         client_id: number;

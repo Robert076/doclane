@@ -1,12 +1,12 @@
-import { DocumentRequest, RequestStatus } from "@/types";
+import { Request, RequestStatus } from "@/types";
 import "./DetailsCard.css";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import StatusBadge from "@/components/Pages/RequestsComponents/StatusBadge";
-import { formatDate } from "@/lib/formatDate";
+import { formatDate } from "@/lib/client/formatDate";
 import { UI_TEXT } from "@/locales/ro";
 import CardRow from "@/components/CardRow/CardRow";
 
-export default function DetailsCard({ data }: { data: DocumentRequest }) {
+export default function DetailsCard({ data }: { data: Request }) {
         const rows = [
                 {
                         label: UI_TEXT.roles.clientSingular,

@@ -1,7 +1,7 @@
 "use server";
 import { APIResponse, User } from "@/types";
 import { doclaneHTTPHelper } from "./core";
-import { getDocumentRequestById } from "./requests";
+import { getRequestById } from "./requests";
 
 export async function getCurrentUser(): Promise<APIResponse<User>> {
         return doclaneHTTPHelper("/users/me", {
@@ -27,7 +27,7 @@ export async function deactivateUser(userId: number): Promise<APIResponse> {
 }
 
 export async function sendEmail(requestId: number): Promise<APIResponse> {
-        const responseRequest = await getDocumentRequestById(requestId.toString());
+        const responseRequest = await getRequestById(requestId.toString());
         if (responseRequest.success === false || !responseRequest.data) {
                 return responseRequest;
         }

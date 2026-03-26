@@ -1,6 +1,6 @@
 "use client";
 import React, { useState } from "react";
-import { DocumentRequestTemplate } from "@/types";
+import { Template } from "@/types";
 
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import HighlightText from "@/components/OtherComponents/HighlightText/HighlightText";
@@ -12,9 +12,10 @@ import BaseDashboardCard from "@/components/CardComponents/BaseDashboardCard/Bas
 import { archiveTemplate, deleteTemplate, unarchiveTemplate } from "@/lib/api/templates";
 import DeleteTemplateModal from "./DeleteTemplateModal";
 import "./TemplateCard.css";
+import Modal from "@/components/Modals/Modal";
 
 interface TemplateCardProps {
-        template: DocumentRequestTemplate;
+        template: Template;
         searchTerm?: string;
         archived?: boolean;
 }
@@ -22,6 +23,7 @@ interface TemplateCardProps {
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archived }) => {
         const router = useRouter();
         const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+        const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false); // ✅ nou
 
         const handleView = () => {
                 router.push(`/dashboard/templates/${template.id}`);
@@ -76,7 +78,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                         text="Arhivează şablon"
                                         variant="ghost"
                                         fullWidth
-                                        onClick={handleArchive}
+                                        onClick={() => setIsArchiveModalOpen(true)} // ✅ modificat
                                 />
                         </>
                 ) : archived === true ? (
@@ -134,6 +136,19 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                         )}
                                 </div>
                         </BaseDashboardCard>
+
+                        <Modal
+                                isOpen={isArchiveModalOpen}
+                                onClose={() => setIsArchiveModalOpen(false)}
+                                onConfirm={handleArchive}
+                                title="Arhivează şablon"
+                        >
+                                <p>
+                                        Eşti sigur că vrei să arhivezi şablonul{" "}
+                                        <strong>„{template.title}"</strong>? Îl vei putea
+                                        restaura ulterior din secţiunea de arhivă.
+                                </p>
+                        </Modal>
 
                         <DeleteTemplateModal
                                 isOpen={isDeleteModalOpen}

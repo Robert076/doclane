@@ -1,10 +1,8 @@
 import { notFound } from "next/navigation";
-
-import FileSection from "@/components/FileSectionComponents/FileSection/FileSection";
-import DetailsCard from "@/components/Pages/RequestsComponents/DetailsCard";
 import DetailCardsActionSidebar from "@/components/Pages/RequestsComponents/RequestDetailsActions";
 import RequestDetailsHeader from "@/components/Pages/RequestsComponents/RequestDetailsHeader";
-import { getDocumentRequestById, getFilesByRequestId } from "@/lib/api/requests";
+import RequestTabs from "@/components/Pages/RequestsComponents/RequestTabs";
+import { getRequestById, getFilesByRequestId, getCommentsByRequest } from "@/lib/api/requests";
 
 interface PageProps {
         params: Promise<{ id: string }>;
@@ -12,10 +10,10 @@ interface PageProps {
 
 export default async function RequestDetailsPage({ params }: PageProps) {
         const { id } = await params;
-
-        const [request, filesResponse] = await Promise.all([
-                getDocumentRequestById(id),
+        const [request, filesResponse, commentsResponse] = await Promise.all([
+                getRequestById(id),
                 getFilesByRequestId(id),
+                getCommentsByRequest(+id),
         ]);
 
         if (!request || !request.data) {
@@ -24,20 +22,17 @@ export default async function RequestDetailsPage({ params }: PageProps) {
 
         const data = request.data;
         const files = filesResponse?.data || [];
+        const comments = commentsResponse?.data || [];
 
         return (
                 <div className="details-container">
                         <RequestDetailsHeader data={data} />
-
                         <div className="details-grid">
                                 <div className="main-content">
-                                        <DetailsCard data={data} />
-
-                                        <FileSection
+                                        <RequestTabs
+                                                data={data}
                                                 files={files}
-                                                expectedDocuments={
-                                                        data.expected_documents || []
-                                                }
+                                                comments={comments}
                                                 requestId={id}
                                         />
                                 </div>

@@ -17,7 +17,7 @@ export interface User {
         last_name: string;
 }
 
-export interface DocumentRequest {
+export interface Request {
         id: number;
         professional_id: number;
         client_id: number;
@@ -41,7 +41,7 @@ export interface DocumentRequest {
         expected_documents: ExpectedDocument[];
 }
 
-export interface DocumentRequestTemplate {
+export interface Template {
         id: number;
         title: string;
         description?: string | null;
@@ -86,6 +86,17 @@ export interface ExpectedDocument {
         rejection_reason: string;
         example_file_path?: string | null;
         example_mime_type?: string | null;
+}
+
+interface RequestCommentDTO {
+        id: number;
+        request_id: number;
+        user_id: number;
+        comment: string;
+        created_at: string;
+        updated_at: string;
+        user_first_name: string;
+        user_last_name: string;
 }
 
 export type RequestStatus = "pending" | "uploaded" | "overdue";

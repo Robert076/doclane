@@ -1,6 +1,6 @@
 import PageHeader from "@/components/PageHeader/PageHeader";
 import RequestsSection from "@/components/Pages/RequestsComponents/RequestsSection";
-import { getDocumentRequests } from "@/lib/api/requests";
+import { getRequests } from "@/lib/api/requests";
 import { getCurrentUser } from "@/lib/api/users";
 import { notFound, redirect } from "next/navigation";
 
@@ -12,7 +12,7 @@ export default async function RequestsPage() {
 
         const user = userResponse.data;
 
-        const requestsResponse = await getDocumentRequests(userResponse.data.role);
+        const requestsResponse = await getRequests(userResponse.data.role);
         if (!requestsResponse.success || !requestsResponse.data) {
                 notFound();
         }
