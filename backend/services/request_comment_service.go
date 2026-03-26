@@ -49,10 +49,14 @@ func (s *RequestCommentService) AddComment(ctx context.Context, jwtUserID int, r
 		return nil, err
 	}
 
+	if err := s.checkUserIsNotSpamming(ctx, jwtUserID); err != nil {
+		return nil, err
+	}
+
 	comment.UserID = jwtUserID
 	comment.RequestID = requestID
-	comment.CreatedAt = time.Now()
-	comment.UpdatedAt = time.Now()
+	comment.CreatedAt = time.Now().UTC()
+	comment.UpdatedAt = time.Now().UTC()
 
 	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, requestID); err != nil {
 		return nil, err

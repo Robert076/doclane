@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/Robert076/doclane/backend/models"
 )
@@ -20,10 +21,10 @@ func NewRequestCommentRepo(db *sql.DB) *RequestCommentRepo {
 func (r *RequestCommentRepo) GetCommentsByRequestID(ctx context.Context, requestID int) ([]models.RequestCommentDTO, error) {
 	query := `
 		SELECT c.id, c.request_id, c.user_id, c.comment, c.created_at, c.updated_at, u.first_name, u.last_name
-		FROM document_comments c JOIN users u ON c.user_id = u.id
+		FROM document_comments c JOIN users u ON c.user_id = u.id and c.request_id = $1
 	`
 
-	rows, err := r.db.QueryContext(ctx, query)
+	rows, err := r.db.QueryContext(ctx, query, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -92,9 +93,29 @@ func (r *RequestCommentRepo) AddComment(ctx context.Context, comment models.Requ
 		comment.UpdatedAt,
 	).Scan(&id)
 
-	if err != nil {
-		return 0, err
-	}
+	return id, err
+}
 
-	return id, nil
+func (r *RequestCommentRepo) GetLastCommentFromUser(ctx context.Context, userID int) (models.RequestComment, error) {
+	query := `
+        SELECT c.id, c.request_id, c.user_id, c.comment, c.created_at, c.updated_at 
+        FROM document_comments c
+        WHERE c.user_id = $1 ORDER BY c.created_at DESC LIMIT 1
+    `
+	var comm models.RequestComment
+	var createdAt, updatedAt string
+	err := r.db.QueryRowContext(ctx, query, userID).Scan(
+		&comm.ID,
+		&comm.RequestID,
+		&comm.UserID,
+		&comm.Comment,
+		&createdAt,
+		&updatedAt,
+	)
+	if err != nil {
+		return comm, err
+	}
+	comm.CreatedAt, _ = time.ParseInLocation(time.RFC3339Nano, createdAt, time.UTC)
+	comm.UpdatedAt, _ = time.ParseInLocation(time.RFC3339Nano, updatedAt, time.UTC)
+	return comm, nil
 }

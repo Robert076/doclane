@@ -43,7 +43,7 @@ func ComputeStatus(lastUploadedAt *time.Time, nextDueAt *time.Time, expectedDocs
 
 	allUploaded := len(expectedDocs) > 0 && func() bool {
 		for _, ed := range expectedDocs {
-			if ed.Status != "uploaded" || ed.Status != "accepted" {
+			if ed.Status != "uploaded" && ed.Status != "accepted" {
 				return false
 			}
 		}

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/Robert076/doclane/backend/types"
+	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/Robert076/doclane/backend/types/requests"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/config"
@@ -20,13 +21,20 @@ func PatchExpectedDocumentStatusHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
+	userID, err := utils.GetUserIDFromContext(r.Context())
+	if err != nil {
+		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
+		return
+	}
+
 	var req requests.UpdateExpectedDocumentStatusRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
-	if err = config.ExpectedRequestService.UpdateExpectedDocumentStatus(r.Context(), docID, req.Status, req.RejectionReason); err != nil {
+	updatedDoc, err := config.ExpectedDocumentService.UpdateExpectedDocumentStatus(r.Context(), userID, docID, req.Status, req.RejectionReason)
+	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
@@ -34,5 +42,6 @@ func PatchExpectedDocumentStatusHandler(w http.ResponseWriter, r *http.Request) 
 	utils.WriteJSON(w, http.StatusOK, types.APIResponse{
 		Success: true,
 		Msg:     "Document status updated successfully",
+		Data:    updatedDoc,
 	})
 }

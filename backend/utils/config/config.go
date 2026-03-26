@@ -25,7 +25,7 @@ var Logger *slog.Logger
 var UserService *services.UserService
 var RequestService *services.RequestService
 var InvitationCodeService *services.InvitationCodeService
-var ExpectedRequestService *services.ExpectedRequestService
+var ExpectedDocumentService *services.ExpectedDocumentService
 var RequestTemplateService *services.RequestTemplateService
 var RequestCommentService *services.RequestCommentService
 var S3Client *s3.Client
@@ -61,7 +61,7 @@ func init() {
 	UserService = services.NewUserService(userRepo, Logger)
 	RequestService = services.NewRequestService(documentRepo, userRepo, expectedDocumentRepo, txManager, Logger, fileStorage)
 	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, userRepo, Logger)
-	ExpectedRequestService = services.NewExpectedRequestService(expectedDocumentRepo, Logger)
+	ExpectedDocumentService = services.NewExpectedDocumentService(expectedDocumentRepo, documentRepo, Logger)
 	RequestTemplateService = services.NewRequestTemplateService(
 		requestTemplateRepo,
 		expectedDocumentRequestTemplateRepo,
@@ -120,14 +120,13 @@ func newS3Client() (*s3.Client, error) {
 		return nil, err
 	}
 
-	s3IamRole := requireEnv("AWS_ROLE_S3")
+	s3IAMRole := os.Getenv("AWS_ROLE_S3")
+	if s3IAMRole != "" {
+		roleProvider := stscreds.NewAssumeRoleProvider(sts.NewFromConfig(cfg), s3IAMRole)
+		cfg.Credentials = aws.NewCredentialsCache(roleProvider)
+	}
 
-	roleProvider := stscreds.NewAssumeRoleProvider(sts.NewFromConfig(cfg), s3IamRole)
-
-	assumedCfg := cfg
-	assumedCfg.Credentials = aws.NewCredentialsCache(roleProvider)
-
-	return s3.NewFromConfig(assumedCfg), nil
+	return s3.NewFromConfig(cfg), nil
 }
 
 // requireEnv gets an env var and fatals if it's not set

@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/types/errors"
@@ -75,4 +76,26 @@ func (s *RequestCommentService) checkUserHasAccessToReadComment(ctx context.Cont
 	}
 
 	return &comm, nil
+}
+
+func (s *RequestCommentService) checkUserIsNotSpamming(ctx context.Context, jwtUserID int) error {
+	last, err := s.commentRepo.GetLastCommentFromUser(ctx, jwtUserID)
+	if err != nil {
+		return nil
+	}
+	s.logger.Info("now UTC:", slog.Any("now", time.Now().UTC()))
+	s.logger.Info("last UTC:", slog.Any("last", last.CreatedAt.UTC()))
+	s.logger.Info("diff:", slog.Any("diff", time.Now().UTC().Sub(last.CreatedAt.UTC())))
+
+	if time.Now().UTC().Sub(last.CreatedAt.UTC()) < 30*time.Second {
+		s.logger.Warn("refused to create comment for user, was timed out",
+			slog.Int("user_id", jwtUserID),
+		)
+		s.logger.Info("time: ",
+			slog.Any("test", time.Since(last.CreatedAt)),
+		)
+		return errors.ErrTooManyRequests{Msg: "Please wait before posting another comment."}
+	}
+
+	return nil
 }

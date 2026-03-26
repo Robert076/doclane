@@ -77,6 +77,7 @@ type IRequestCommentRepo interface {
 	GetCommentsByRequestID(ctx context.Context, requestID int) ([]models.RequestCommentDTO, error)
 	GetCommentByID(ctx context.Context, commentID int) (models.RequestCommentDTO, error)
 	AddComment(ctx context.Context, comment models.RequestComment) (int, error)
+	GetLastCommentFromUser(ctx context.Context, userID int) (models.RequestComment, error)
 }
 
 type ITxManager interface {
