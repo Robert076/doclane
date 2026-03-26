@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"time"
 
@@ -122,6 +123,9 @@ func (s *RequestTemplateService) AddExpectedDocumentTemplate(
 
 		s3Key := s.fileStorage.GenerateExampleS3Key(exampleFileName)
 		result, err := s.fileStorage.UploadFile(ctx, s3Key, exampleFile, ExampleMimeType)
+		log.Print("----------------\n")
+		log.Print(ctx)
+		log.Print("----------------\n")
 		if err != nil {
 			s.logger.Error("s3 upload failed for example file",
 				slog.String("key", s3Key),
