@@ -17,8 +17,7 @@ type IFileStorageService interface {
 	UploadFile(ctx context.Context, key string, content io.Reader, contentType string) (*s3.PutObjectOutput, error)
 	DeleteFile(ctx context.Context, key string, versionID *string) error
 	GeneratePresignedURL(ctx context.Context, key string, versionID *string, expiry time.Duration) (string, error)
-	GenerateExampleS3Key(fileName string) string
-	GenerateS3Key(fileName string, requestID int) string
+	GenerateS3Key(fileName string, prefix string) string
 }
 
 type FileStorageService struct {
@@ -70,17 +69,8 @@ func (s *FileStorageService) GeneratePresignedURL(ctx context.Context, key strin
 	return presignedReq.URL, err
 }
 
-func (s *FileStorageService) GenerateExampleS3Key(fileName string) string {
+func (s *FileStorageService) GenerateS3Key(fileName string, prefix string) string {
 	cleanFileName := filepath.Base(fileName)
 	uniqueID := uuid.New().String()
-	return fmt.Sprintf("examples/%s-%s", uniqueID, cleanFileName)
-}
-
-func (s *FileStorageService) GenerateS3Key(fileName string, requestID int) string {
-	cleanFileName := filepath.Base(fileName)
-	uniqueID := uuid.New().String()
-
-	s3Key := fmt.Sprintf("requests/%d/%s-%s", requestID, uniqueID, cleanFileName)
-
-	return s3Key
+	return fmt.Sprintf("%s/%s-%s", prefix, uniqueID, cleanFileName)
 }

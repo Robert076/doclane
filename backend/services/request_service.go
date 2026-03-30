@@ -273,7 +273,7 @@ func (s *RequestService) AddDocument(
 	)
 
 	cleanFileName := filepath.Base(fileName)
-	s3Key := s.fileStorage.GenerateS3Key(fileName, requestID)
+	s3Key := s.fileStorage.GenerateS3Key(fileName, fmt.Sprintf("/requests/%d", requestID))
 
 	result, err := s.fileStorage.UploadFile(ctx, s3Key, content, contentType)
 	if err != nil {

@@ -175,7 +175,7 @@ func (service *RequestService) getUploadedExamples(ctx context.Context, dto mode
 			return nil, err
 		}
 
-		s3Key := service.fileStorage.GenerateExampleS3Key(ed.ExampleFileName)
+		s3Key := service.fileStorage.GenerateS3Key(ed.ExampleFileName, "examples")
 		result, err := service.fileStorage.UploadFile(ctx, s3Key, ed.ExampleFile, ed.ExampleMimeType)
 		if err != nil {
 			service.logger.Error("s3 upload failed for example file",
