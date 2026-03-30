@@ -1,4 +1,4 @@
-package document_handler
+package request_handler
 
 import (
 	"encoding/json"
