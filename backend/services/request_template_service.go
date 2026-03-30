@@ -244,10 +244,10 @@ func (s *RequestTemplateService) GetExpectedDocumentTemplatesByRequestTemplateID
 	return documentRequestTemplates, nil
 }
 
-func (s *RequestTemplateService) PresignExample(ctx context.Context, jwtUserID int, requestTemplateID int, expectedDocID int) (string, error) {
+func (s *RequestTemplateService) PresignExample(ctx context.Context, jwtUserID int, requestTemplateID int, expectedDocID int) (*string, error) {
 	template, err := s.checkUserOwnsTemplate(ctx, jwtUserID, requestTemplateID)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 
 	expectedDoc, err := s.expectedDocTmplRepo.GetByDocumentID(ctx, expectedDocID)
@@ -258,7 +258,7 @@ func (s *RequestTemplateService) PresignExample(ctx context.Context, jwtUserID i
 			slog.Any("error", err),
 		)
 
-		return "", err
+		return nil, err
 	}
 
 	if expectedDoc.RequestTemplateID != template.ID {
@@ -267,7 +267,7 @@ func (s *RequestTemplateService) PresignExample(ctx context.Context, jwtUserID i
 			slog.Int("user_id", jwtUserID),
 			slog.Int("example_document_id", expectedDocID),
 		)
-		return "", errors.ErrForbidden{Msg: "You are not allowed to view this file."}
+		return nil, errors.ErrForbidden{Msg: "You are not allowed to view this file."}
 	}
 
 	if expectedDoc.ExampleFilePath == nil {
@@ -276,7 +276,7 @@ func (s *RequestTemplateService) PresignExample(ctx context.Context, jwtUserID i
 			slog.Int("user_id", jwtUserID),
 		)
 
-		return "", errors.ErrBadRequest{Msg: "This template document does not have an example."}
+		return nil, errors.ErrBadRequest{Msg: "This template document does not have an example."}
 	}
 
 	presignedURL, err := s.fileStorage.GeneratePresignedURL(ctx, *expectedDoc.ExampleFilePath, nil, 15*time.Minute)
@@ -285,9 +285,9 @@ func (s *RequestTemplateService) PresignExample(ctx context.Context, jwtUserID i
 			slog.Int("expected_doc_id", expectedDocID),
 			slog.Any("error", err),
 		)
-		return "", err
+		return nil, err
 	}
-	return presignedURL, nil
+	return &presignedURL, nil
 }
 
 func (s *RequestTemplateService) CloseRequestTemplate(ctx context.Context, jwtUserID int, requestTemplateID int) error {

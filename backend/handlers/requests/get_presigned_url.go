@@ -34,6 +34,6 @@ func GetFilePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
 		Msg:     "Presigned URL generated successfully.",
-		Data:    map[string]string{"url": *url},
+		Data:    *url,
 	})
 }
