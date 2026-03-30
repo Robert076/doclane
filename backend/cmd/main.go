@@ -9,8 +9,8 @@ import (
 	"github.com/Robert076/doclane/backend/handlers/auth"
 	auth_middleware "github.com/Robert076/doclane/backend/handlers/auth/middleware"
 	comment_handler "github.com/Robert076/doclane/backend/handlers/comments"
-	document_handler "github.com/Robert076/doclane/backend/handlers/documents"
 	invitation_handler "github.com/Robert076/doclane/backend/handlers/invitation"
+	request_handler "github.com/Robert076/doclane/backend/handlers/requests"
 	template_handler "github.com/Robert076/doclane/backend/handlers/templates"
 	user_handler "github.com/Robert076/doclane/backend/handlers/users"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -74,17 +74,17 @@ func buildRouter() (http.Handler, *chi.Mux) {
 		})
 
 		r.Route("/document-requests", func(r chi.Router) {
-			r.Post("/", document_handler.AddRequestHandler)
-			r.Get("/professional/my-requests", document_handler.GetRequestsByProfessionalHandler)
-			r.Get("/client/my-requests", document_handler.GetRequestsByClientHandler)
-			r.Patch("/expected-documents/{id}/status", document_handler.PatchExpectedDocumentStatusHandler)
-			r.Get("/expected-documents/{id}/presign-example", document_handler.GetExamplePresignedURLHandler)
+			r.Post("/", request_handler.AddRequestHandler)
+			r.Get("/professional/my-requests", request_handler.GetRequestsByProfessionalHandler)
+			r.Get("/client/my-requests", request_handler.GetRequestsByClientHandler)
+			r.Patch("/expected-documents/{id}/status", request_handler.PatchExpectedDocumentStatusHandler)
+			r.Get("/expected-documents/{id}/presign-example", request_handler.GetExamplePresignedURLHandler)
 
 			r.Route("/{id}", func(r chi.Router) {
-				r.Get("/", document_handler.GetRequestByIDHandler)
-				r.Patch("/", document_handler.PatchRequestHandler)
-				r.Post("/archive", document_handler.CloseRequestHandler)
-				r.Post("/unarchive", document_handler.ReopenRequestHandler)
+				r.Get("/", request_handler.GetRequestByIDHandler)
+				r.Patch("/", request_handler.PatchRequestHandler)
+				r.Post("/archive", request_handler.CloseRequestHandler)
+				r.Post("/unarchive", request_handler.ReopenRequestHandler)
 				r.Route("/comments", func(r chi.Router) {
 					r.Get("/", comment_handler.GetCommentsByRequest)
 					r.Get("/{commentID}", comment_handler.GetCommentByID)
@@ -92,9 +92,9 @@ func buildRouter() (http.Handler, *chi.Mux) {
 				})
 
 				r.Route("/files", func(r chi.Router) {
-					r.Get("/", document_handler.GetFilesByRequestHandler)
-					r.Post("/", document_handler.AddDocumentHandler)
-					r.Get("/{fileId}/presign", document_handler.GetFilePresignedURLHandler)
+					r.Get("/", request_handler.GetFilesByRequestHandler)
+					r.Post("/", request_handler.AddDocumentHandler)
+					r.Get("/{fileId}/presign", request_handler.GetFilePresignedURLHandler)
 				})
 			})
 

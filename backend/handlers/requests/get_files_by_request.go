@@ -1,30 +1,31 @@
-package document_handler
+package request_handler
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/config"
+	"github.com/go-chi/chi/v5"
 )
 
-func GetRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
+func GetFilesByRequestHandler(w http.ResponseWriter, r *http.Request) {
 	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	q := r.URL.Query()
-	var searchPtr *string
-
-	// search
-	if s := q.Get("search"); s != "" {
-		searchPtr = &s
+	requestIDStr := chi.URLParam(r, "id")
+	requestID, err := strconv.Atoi(requestIDStr)
+	if err != nil {
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid request ID format."})
+		return
 	}
 
-	reqs, err := config.RequestService.GetRequestsByProfessional(r.Context(), jwtUserId, searchPtr)
+	files, err := config.RequestService.GetFilesByRequest(r.Context(), jwtUserId, requestID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -32,7 +33,7 @@ func GetRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Professional document requests retrieved successfully.",
-		Data:    reqs,
+		Msg:     "Files retrieved successfully.",
+		Data:    files,
 	})
 }

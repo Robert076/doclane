@@ -1,31 +1,30 @@
-package document_handler
+package request_handler
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/config"
-	"github.com/go-chi/chi/v5"
 )
 
-func GetFilePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
+func GetRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
 	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	fileIDStr := chi.URLParam(r, "fileId")
-	fileID, err := strconv.Atoi(fileIDStr)
-	if err != nil {
-		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid file ID format."})
-		return
+	q := r.URL.Query()
+	var searchPtr *string
+
+	// search
+	if s := q.Get("search"); s != "" {
+		searchPtr = &s
 	}
 
-	url, err := config.RequestService.GetFilePresignedURL(r.Context(), jwtUserId, fileID)
+	reqs, err := config.RequestService.GetRequestsByProfessional(r.Context(), jwtUserId, searchPtr)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -33,7 +32,7 @@ func GetFilePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Presigned URL generated successfully.",
-		Data:    map[string]string{"url": *url},
+		Msg:     "Professional document requests retrieved successfully.",
+		Data:    reqs,
 	})
 }

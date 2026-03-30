@@ -1,11 +1,9 @@
-package document_handler
+package request_handler
 
 import (
-	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/Robert076/doclane/backend/utils"
@@ -13,7 +11,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func PatchRequestHandler(w http.ResponseWriter, r *http.Request) {
+func GetRequestByIDHandler(w http.ResponseWriter, r *http.Request) {
 	userId, err := utils.GetUserIDFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -27,20 +25,15 @@ func PatchRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var dto models.RequestDTOPatch
-	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
-		utils.WriteError(w, err)
-		return
-	}
-
-	if err := config.RequestService.PatchRequest(r.Context(), userId, id, dto); err != nil {
+	docReq, err := config.RequestService.GetRequestByID(r.Context(), userId, id)
+	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Document request updated successfully.",
-		Data:    nil,
+		Msg:     "Document request retrieved successfully.",
+		Data:    docReq,
 	})
 }
