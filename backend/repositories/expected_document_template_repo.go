@@ -63,6 +63,23 @@ func (r *ExpectedDocumentTemplateRepo) Add(ctx context.Context, t models.Expecte
 	return id, err
 }
 
+func (r *ExpectedDocumentTemplateRepo) AddWithTx(ctx context.Context, tx *sql.Tx, t models.ExpectedDocumentTemplate) (int, error) {
+	var id int
+	query := `
+        INSERT INTO expected_document_templates (document_request_template_id, title, description, example_file_path, example_mime_type)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING id
+    `
+	err := tx.QueryRowContext(ctx, query,
+		t.RequestTemplateID,
+		t.Title,
+		t.Description,
+		t.ExampleFilePath,
+		t.ExampleMimeType,
+	).Scan(&id)
+	return id, err
+}
+
 func (r *ExpectedDocumentTemplateRepo) DeleteByID(ctx context.Context, id int) error {
 	query := `
         DELETE FROM expected_document_templates WHERE id = $1

@@ -101,7 +101,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 		})
 
 		r.Route("/templates", func(r chi.Router) {
-			r.Post("/", template_handler.AddRequestTemplateHandler)
+			r.Post("/", template_handler.AddRequestTemplateWithDocumentsHandler)
 			r.Get("/", template_handler.GetRequestTemplatesByProfessionalHandler)
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", template_handler.GetRequestTemplateByIDHandler)
@@ -110,7 +110,6 @@ func buildRouter() (http.Handler, *chi.Mux) {
 				r.Delete("/", template_handler.DeleteRequestTemplateHandler)
 				r.Route("/expected-documents", func(r chi.Router) {
 					r.Get("/", template_handler.GetExpectedDocumentTemplatesByRequestTemplateIDHandler)
-					r.Post("/", template_handler.AddExpectedDocumentTemplateHandler)
 					r.Delete("/{expectedDocId}", template_handler.DeleteExpectedDocumentTemplateHandler)
 					r.Get("/{expectedDocId}/presign-example", template_handler.PresignExampleHandler)
 				})

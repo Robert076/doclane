@@ -91,6 +91,24 @@ func (r *RequestTemplateRepo) AddRequestTemplate(ctx context.Context, tmp models
 	return id, err
 }
 
+func (r *RequestTemplateRepo) AddRequestTemplateWithTx(ctx context.Context, tx *sql.Tx, tmp models.RequestTemplate) (int, error) {
+	var id int
+	query := `
+        INSERT INTO document_request_templates (title, description, is_recurring, recurrence_cron, created_by, is_closed)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id
+    `
+	err := tx.QueryRowContext(ctx, query,
+		tmp.Title,
+		tmp.Description,
+		tmp.IsRecurring,
+		tmp.RecurrenceCron,
+		tmp.CreatedBy,
+		tmp.IsClosed,
+	).Scan(&id)
+	return id, err
+}
+
 func (r *RequestTemplateRepo) CloseRequestTemplate(ctx context.Context, id int) error {
 	query := `
 		UPDATE document_request_templates SET is_closed=true WHERE id=$1

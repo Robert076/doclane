@@ -41,6 +41,7 @@ type IRequestTemplateRepo interface {
 	GetRequestTemplatesByProfessionalID(ctx context.Context, professionalID int) ([]models.RequestTemplate, error)
 	GetRequestTemplateByID(ctx context.Context, id int) (models.RequestTemplate, error)
 	AddRequestTemplate(ctx context.Context, tmp models.RequestTemplate) (int, error)
+	AddRequestTemplateWithTx(ctx context.Context, tx *sql.Tx, tmp models.RequestTemplate) (int, error) // new
 	PatchRequestTemplate(ctx context.Context, templateID int, tmp models.RequestTemplateDTOPatch) error
 	CloseRequestTemplate(ctx context.Context, id int) error
 	ReopenRequestTemplate(ctx context.Context, id int) error
@@ -51,6 +52,7 @@ type IExpectedDocumentTemplateRepo interface {
 	GetByRequestTemplateID(ctx context.Context, templateID int) ([]models.ExpectedDocumentTemplate, error)
 	GetByDocumentID(ctx context.Context, id int) (models.ExpectedDocumentTemplate, error)
 	Add(ctx context.Context, t models.ExpectedDocumentTemplate) (int, error)
+	AddWithTx(ctx context.Context, tx *sql.Tx, t models.ExpectedDocumentTemplate) (int, error) // new
 	DeleteByID(ctx context.Context, id int) error
 }
 
