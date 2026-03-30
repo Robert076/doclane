@@ -11,11 +11,8 @@ import (
 
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/services"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
-	"github.com/aws/aws-sdk-go-v2/credentials/stscreds"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/sts"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -114,18 +111,10 @@ func initDB() *sql.DB {
 
 func newS3Client() (*s3.Client, error) {
 	ctx := context.Background()
-
 	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("eu-west-1"))
 	if err != nil {
 		return nil, err
 	}
-
-	s3IAMRole := os.Getenv("AWS_ROLE_S3")
-	if s3IAMRole != "" {
-		roleProvider := stscreds.NewAssumeRoleProvider(sts.NewFromConfig(cfg), s3IAMRole)
-		cfg.Credentials = aws.NewCredentialsCache(roleProvider)
-	}
-
 	return s3.NewFromConfig(cfg), nil
 }
 
