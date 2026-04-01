@@ -10,16 +10,13 @@ import (
 )
 
 func GetMyInvitationCodesHandler(w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	codes, err := config.InvitationCodeService.GetInvitationCodesByProfessional(
-		r.Context(),
-		userId,
-	)
+	codes, err := config.InvitationCodeService.GetInvitationCodes(r.Context(), *claims)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

@@ -12,7 +12,7 @@ import (
 )
 
 func PresignExampleHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -32,7 +32,7 @@ func PresignExampleHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := config.RequestTemplateService.PresignExample(r.Context(), userID, templateID, expectedDocRequestTemplateID)
+	url, err := config.RequestTemplateService.PresignExample(r.Context(), *claims, templateID, expectedDocRequestTemplateID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

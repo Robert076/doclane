@@ -3,9 +3,11 @@ package models
 import "time"
 
 type RequestBase struct {
-	ClientID       int        `db:"client_id" json:"client_id"`
 	Title          string     `db:"title" json:"title"`
 	Description    *string    `db:"description,omitempty" json:"description,omitempty"`
+	Assignee       int        `db:"assignee" json:"assignee"`
+	DepartmentID   int        `db:"department_id" json:"department_id"`
+	TemplateID     int        `db:"template_id" json:"template_id"`
 	IsRecurring    bool       `db:"is_recurring" json:"is_recurring"`
 	RecurrenceCron *string    `db:"recurrence_cron" json:"recurrence_cron"`
 	IsScheduled    bool       `db:"is_scheduled" json:"is_scheduled"`
@@ -19,7 +21,6 @@ type RequestBase struct {
 type Request struct {
 	RequestBase
 	ID                int       `db:"id" json:"id"`
-	ProfessionalID    int       `db:"professional_id" json:"professional_id"`
 	CreatedAt         time.Time `db:"created_at" json:"created_at"`
 	UpdatedAt         time.Time `db:"updated_at" json:"updated_at"`
 	RequestTemplateID *int      `db:"template_id" json:"template_id"`
@@ -27,9 +28,9 @@ type Request struct {
 
 type RequestDTORead struct {
 	Request
-	ClientEmail       string             `json:"client_email"`
-	ClientFirstName   string             `json:"client_first_name"`
-	ClientLastName    string             `json:"client_last_name"`
+	AssigneeEmail     string             `json:"assignee_email"`
+	AssigneeFirstName string             `json:"assignee_first_name"`
+	AssigneeLastName  string             `json:"assignee_last_name"`
 	Status            string             `json:"status"`
 	ExpectedDocuments []ExpectedDocument `json:"expected_documents"`
 }
@@ -38,31 +39,10 @@ type RequestDTOPatch struct {
 	Title string `json:"title"`
 }
 
-type Document struct {
-	ID                 int       `db:"id" json:"id"`
-	RequestID          int       `db:"document_request_id" json:"document_request_id"`
-	ExpectedDocumentID int       `db:"expected_document_id" json:"expected_document_id"`
-	FileName           string    `db:"file_name" json:"file_name"`
-	FilePath           string    `db:"file_path" json:"file_path"`
-	MimeType           *string   `db:"mime_type,omitempty" json:"mime_type,omitempty"`
-	FileSize           *int64    `db:"file_size,omitempty" json:"file_size,omitempty"`
-	UploadedAt         time.Time `db:"uploaded_at" json:"uploaded_at"`
-	S3VersionID        *string   `db:"s3_version_id" json:"s3_version_id"`
-	UploadedBy         *int      `db:"uploaded_by" json:"uploaded_by"`
-}
-
-type DocumentDTORead struct {
-	Document
-	UploadedByFirstName string `json:"uploaded_by_first_name"`
-	UploadedByLastName  string `json:"uploaded_by_last_name"`
-}
-
-type DocumentDTOExtended struct {
-	Document
-	AuthorRole string
-}
-
 type RequestDTOCreate struct {
-	RequestBase
+	TemplateID        int
+	IsScheduled       bool
+	ScheduledFor      *string
+	DueDate           *time.Time
 	ExpectedDocuments []ExpectedDocumentInput
 }

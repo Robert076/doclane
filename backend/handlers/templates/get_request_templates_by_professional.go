@@ -9,14 +9,14 @@ import (
 	"github.com/Robert076/doclane/backend/utils/config"
 )
 
-func GetRequestTemplatesByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := utils.GetUserIDFromContext(r.Context())
+func GetRequestTemplatesHandler(w http.ResponseWriter, r *http.Request) {
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	templates, err := config.RequestTemplateService.GetRequestTemplatesByProfessionalID(r.Context(), userID)
+	templates, err := config.RequestTemplateService.GetRequestTemplates(r.Context(), *claims)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -24,7 +24,7 @@ func GetRequestTemplatesByProfessionalHandler(w http.ResponseWriter, r *http.Req
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "RequestTemplates retrieved successfully.",
+		Msg:     "Templates retrieved successfully.",
 		Data:    templates,
 	})
 }

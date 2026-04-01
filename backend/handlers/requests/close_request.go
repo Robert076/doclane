@@ -12,7 +12,7 @@ import (
 )
 
 func CloseRequestHandler(w http.ResponseWriter, r *http.Request) {
-	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -22,10 +22,12 @@ func CloseRequestHandler(w http.ResponseWriter, r *http.Request) {
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnprocessableContent{Msg: "Invalid ID received."})
+		return
 	}
 
-	if err := config.RequestService.CloseRequest(r.Context(), jwtUserId, idInt); err != nil {
+	if err := config.RequestService.CloseRequest(r.Context(), *claims, idInt); err != nil {
 		utils.WriteError(w, err)
+		return
 	}
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{

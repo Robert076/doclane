@@ -11,6 +11,12 @@ import (
 )
 
 func GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
+	userClaims, err := utils.GetClaimsFromContext(r.Context())
+	if err != nil {
+		utils.WriteError(w, err)
+		return
+	}
+
 	id := chi.URLParam(r, "id")
 	idInt, err := strconv.Atoi(id)
 	if err != nil {
@@ -18,7 +24,7 @@ func GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := config.UserService.GetUserByID(r.Context(), idInt)
+	user, err := config.UserService.GetUserByID(r.Context(), *userClaims, idInt)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

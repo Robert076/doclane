@@ -35,11 +35,10 @@ func (repo *UserRepo) GetUsers(
 		"email":      "email",
 		"created_at": "created_at",
 		"updated_at": "updated_at",
-		"role":       "role",
 	}
 
 	query := `
-        SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at
+        SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at
         FROM users
     `
 
@@ -50,11 +49,11 @@ func (repo *UserRepo) GetUsers(
 	if search != nil && *search != "" {
 		searchPattern := "%" + strings.ToLower(*search) + "%"
 		query += ` WHERE (
-            LOWER(email) LIKE $` + strconv.Itoa(argIndex) + ` OR
-            LOWER(first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
-            LOWER(last_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
-            LOWER(first_name || ' ' || last_name) LIKE $` + strconv.Itoa(argIndex) + `
-        )`
+			LOWER(email) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(last_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(first_name || ' ' || last_name) LIKE $` + strconv.Itoa(argIndex) + `
+			)`
 		args = append(args, searchPattern)
 		argIndex++
 	}
@@ -99,7 +98,7 @@ func (repo *UserRepo) GetUsers(
 			&user.LastName,
 			&user.PasswordHash,
 			&user.Role,
-			&user.ProfessionalID,
+			&user.DepartmentID,
 			&user.IsActive,
 			&user.LastNotified,
 			&user.CreatedAt,
@@ -112,178 +111,93 @@ func (repo *UserRepo) GetUsers(
 		users = append(users, user)
 	}
 
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return users, nil
+	return users, rows.Err()
 }
 
 func (repo *UserRepo) GetUserByID(ctx context.Context, id int) (models.User, error) {
-	var user models.User
+	query := `SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at
+	FROM users
+	WHERE id = $1`
 
-	err := repo.db.QueryRowContext(ctx,
-		`SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at
-		FROM users
-		WHERE id = $1`,
-		id,
-	).Scan(
+	var user models.User
+	err := repo.db.QueryRowContext(ctx, query, id).Scan(
 		&user.ID,
 		&user.Email,
 		&user.FirstName,
 		&user.LastName,
 		&user.PasswordHash,
 		&user.Role,
-		&user.ProfessionalID,
+		&user.DepartmentID,
 		&user.IsActive,
 		&user.LastNotified,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
 
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return models.User{}, errors.ErrNotFound{Msg: "User not found."}
-		}
-
-		return models.User{}, err
+	if err == sql.ErrNoRows {
+		return models.User{}, errors.ErrNotFound{Msg: "User not found."}
 	}
 
-	return user, nil
+	return user, err
 }
 
 func (repo *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
-	var user models.User
+	query := `SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at
+	FROM users
+	WHERE email = $1`
 
-	err := repo.db.QueryRowContext(ctx,
-		`SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at
-			FROM users
-			WHERE email = $1`,
-		email,
-	).Scan(
+	var user models.User
+	err := repo.db.QueryRowContext(ctx, query, email).Scan(
 		&user.ID,
 		&user.Email,
 		&user.FirstName,
 		&user.LastName,
 		&user.PasswordHash,
 		&user.Role,
-		&user.ProfessionalID,
+		&user.DepartmentID,
 		&user.IsActive,
 		&user.LastNotified,
 		&user.CreatedAt,
 		&user.UpdatedAt,
 	)
 
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return models.User{}, errors.ErrNotFound{Msg: "User not found."}
-		}
-
-		return models.User{}, err
+	if err == sql.ErrNoRows {
+		return models.User{}, errors.ErrNotFound{Msg: "User not found."}
 	}
 
-	return user, nil
-}
-
-func (repo *UserRepo) GetUsersByProfessionalID(
-	ctx context.Context,
-	professionalID int,
-	limit *int,
-	offset *int,
-) ([]models.User, error) {
-	users := []models.User{}
-
-	query := `
-        SELECT id, email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at
-        FROM users
-        WHERE professional_id = $1 AND is_active = true;
-    `
-
-	args := []interface{}{professionalID}
-	argIndex := 2
-
-	if limit != nil {
-		query += " LIMIT $" + strconv.Itoa(argIndex)
-		args = append(args, *limit)
-		argIndex++
-	}
-
-	if offset != nil {
-		query += " OFFSET $" + strconv.Itoa(argIndex)
-		args = append(args, *offset)
-	}
-
-	rows, err := repo.db.QueryContext(ctx, query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	for rows.Next() {
-		var user models.User
-		err := rows.Scan(
-			&user.ID,
-			&user.Email,
-			&user.FirstName,
-			&user.LastName,
-			&user.PasswordHash,
-			&user.Role,
-			&user.ProfessionalID,
-			&user.IsActive,
-			&user.LastNotified,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-		)
-		if err != nil {
-			return nil, err
-		}
-		users = append(users, user)
-	}
-
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-
-	return users, nil
+	return user, err
 }
 
 func (repo *UserRepo) AddUser(ctx context.Context, user models.User) (int, error) {
-	var id int
+	query := `INSERT INTO users (email, first_name, last_name, password_hash, role, department_id, is_active, last_notified)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		RETURNING id`
 
-	err := repo.db.QueryRowContext(ctx,
-		`INSERT INTO users (email, first_name, last_name, password_hash, role, professional_id, is_active, last_notified, created_at, updated_at)
-				 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-				 RETURNING id`,
+	var id int
+	err := repo.db.QueryRowContext(ctx, query,
 		user.Email,
-		&user.FirstName,
-		&user.LastName,
+		user.FirstName,
+		user.LastName,
 		user.PasswordHash,
 		user.Role,
-		user.ProfessionalID,
+		user.DepartmentID,
 		user.IsActive,
 		user.LastNotified,
-		user.CreatedAt,
-		user.UpdatedAt,
 	).Scan(&id)
 
-	if err != nil {
-		return 0, err
-	}
-
-	return id, nil
+	return id, err
 }
 
 func (repo *UserRepo) DeactivateUser(ctx context.Context, userId int) error {
-	_, err := repo.db.ExecContext(ctx,
-		`UPDATE users SET is_active=false WHERE id=$1`,
-		userId,
-	)
+	query := `UPDATE users SET is_active=false WHERE id=$1`
+
+	_, err := repo.db.ExecContext(ctx, query, userId)
 	return err
 }
 
 func (repo *UserRepo) NotifyUser(ctx context.Context, userId int, time time.Time) error {
-	_, err := repo.db.ExecContext(ctx,
-		`UPDATE users SET last_notified=$1 WHERE id=$2`,
-		time, userId)
+	query := `UPDATE users SET last_notified=$1 WHERE id=$2`
+
+	_, err := repo.db.ExecContext(ctx, query, time, userId)
 	return err
 }

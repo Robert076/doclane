@@ -21,30 +21,6 @@ type uploadedFile struct {
 	mimeType  string
 }
 
-func (s *RequestTemplateService) checkUserOwnsTemplate(ctx context.Context, jwtUserID int, requestTemplateID int) (*models.RequestTemplate, error) {
-	requestTemplate, err := s.templateRepo.GetRequestTemplateByID(ctx, requestTemplateID)
-	if err != nil {
-		s.logger.Error("failed to retrieve template by id",
-			slog.Int("template_id", requestTemplateID),
-			slog.Int("user_id", jwtUserID),
-			slog.Any("error", err),
-		)
-
-		return nil, err
-	}
-
-	if requestTemplate.CreatedBy != jwtUserID {
-		s.logger.Warn("unauthorized access attempted for a request template",
-			slog.Int("template_id", requestTemplateID),
-			slog.Int("user_id", jwtUserID),
-		)
-
-		return nil, errors.ErrForbidden{Msg: "This template does not belong to you."}
-	}
-
-	return &requestTemplate, nil
-}
-
 func validateRequestTemplatePatchDTO(dto models.RequestTemplateDTOPatch) error {
 	if dto.Title != nil {
 		if strings.TrimSpace(*dto.Title) == "" {
@@ -82,7 +58,11 @@ func (s *RequestTemplateService) uploadExampleFiles(
 		cleanupCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		for _, u := range uploads {
-			if err := s.fileStorage.DeleteFile(cleanupCtx, u.s3Key, &u.versionID); err != nil {
+			var vID *string
+			if u.versionID != "" {
+				vID = &u.versionID
+			}
+			if err := s.fileStorage.DeleteFile(cleanupCtx, u.s3Key, vID); err != nil {
 				s.logger.Error("s3 cleanup failed during rollback",
 					slog.String("key", u.s3Key),
 					slog.Any("error", err),
@@ -159,4 +139,31 @@ func (s *RequestTemplateService) insertTemplateWithDocsTx(
 		return nil
 	})
 	return templateID, err
+}
+
+func (s *RequestTemplateService) checkUserCanAccessTemplate(ctx context.Context, claims types.JWTClaims, requestTemplateID int) (*models.RequestTemplate, error) {
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, requestTemplateID)
+	if err != nil {
+		s.logger.Error("error getting template from db",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("template_id", requestTemplateID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	if claims.IsAdmin() {
+		return &template, nil
+	}
+
+	isDepartmentMatch := claims.DepartmentID != nil && *claims.DepartmentID == template.DepartmentID
+	if !isDepartmentMatch {
+		s.logger.Warn("unauthorized access attempted for template",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("template_id", requestTemplateID),
+		)
+		return nil, errors.ErrForbidden{Msg: "You don't have access to this template."}
+	}
+
+	return &template, nil
 }

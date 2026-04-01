@@ -18,32 +18,77 @@ func NewRequestTemplateRepo(db *sql.DB) *RequestTemplateRepo {
 	return &RequestTemplateRepo{db: db}
 }
 
-func (r *RequestTemplateRepo) GetRequestTemplatesByProfessionalID(ctx context.Context, professionalID int) ([]models.RequestTemplate, error) {
+func (r *RequestTemplateRepo) GetRequestTemplatesByDepartment(ctx context.Context, departmentID int) ([]models.RequestTemplateDTORead, error) {
 	query := `
-        SELECT id, title, description, is_recurring, recurrence_cron, created_by, created_at, updated_at, is_closed
-        FROM document_request_templates
-        WHERE created_by = $1
-        ORDER BY created_at DESC
-    `
-	rows, err := r.db.QueryContext(ctx, query, professionalID)
+		SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
+			t.created_by, t.created_at, t.updated_at, t.is_closed,
+			u.first_name, u.last_name
+		FROM document_request_templates t
+		JOIN users u ON u.id = t.created_by
+		WHERE t.department_id = $1
+		ORDER BY t.created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query, departmentID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	templates := make([]models.RequestTemplate, 0)
+	templates := make([]models.RequestTemplateDTORead, 0)
 	for rows.Next() {
-		var t models.RequestTemplate
+		var t models.RequestTemplateDTORead
 		if err := rows.Scan(
 			&t.ID,
 			&t.Title,
 			&t.Description,
+			&t.DepartmentID,
 			&t.IsRecurring,
 			&t.RecurrenceCron,
 			&t.CreatedBy,
 			&t.CreatedAt,
 			&t.UpdatedAt,
 			&t.IsClosed,
+			&t.AuthorFirstName,
+			&t.AuthorLastName,
+		); err != nil {
+			return nil, err
+		}
+		templates = append(templates, t)
+	}
+	return templates, rows.Err()
+}
+
+func (r *RequestTemplateRepo) GetAllRequestTemplates(ctx context.Context) ([]models.RequestTemplateDTORead, error) {
+	query := `
+		SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
+			t.created_by, t.created_at, t.updated_at, t.is_closed,
+			u.first_name, u.last_name
+		FROM document_request_templates t
+		JOIN users u ON u.id = t.created_by
+		ORDER BY t.created_at DESC
+	`
+	rows, err := r.db.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	templates := make([]models.RequestTemplateDTORead, 0)
+	for rows.Next() {
+		var t models.RequestTemplateDTORead
+		if err := rows.Scan(
+			&t.ID,
+			&t.Title,
+			&t.Description,
+			&t.DepartmentID,
+			&t.IsRecurring,
+			&t.RecurrenceCron,
+			&t.CreatedBy,
+			&t.CreatedAt,
+			&t.UpdatedAt,
+			&t.IsClosed,
+			&t.AuthorFirstName,
+			&t.AuthorLastName,
 		); err != nil {
 			return nil, err
 		}
@@ -55,14 +100,15 @@ func (r *RequestTemplateRepo) GetRequestTemplatesByProfessionalID(ctx context.Co
 func (r *RequestTemplateRepo) GetRequestTemplateByID(ctx context.Context, id int) (models.RequestTemplate, error) {
 	var t models.RequestTemplate
 	query := `
-        SELECT id, title, description, is_recurring, recurrence_cron, created_by, created_at, updated_at, is_closed
-        FROM document_request_templates
-        WHERE id = $1
-    `
+		SELECT id, title, description, department_id, is_recurring, recurrence_cron, created_by, created_at, updated_at, is_closed
+		FROM document_request_templates
+		WHERE id = $1
+	`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&t.ID,
 		&t.Title,
 		&t.Description,
+		&t.DepartmentID,
 		&t.IsRecurring,
 		&t.RecurrenceCron,
 		&t.CreatedBy,
@@ -76,13 +122,14 @@ func (r *RequestTemplateRepo) GetRequestTemplateByID(ctx context.Context, id int
 func (r *RequestTemplateRepo) AddRequestTemplate(ctx context.Context, tmp models.RequestTemplate) (int, error) {
 	var id int
 	query := `
-		INSERT INTO document_request_templates (title, description, is_recurring, recurrence_cron, created_by, is_closed)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO document_request_templates (title, description, department_id, is_recurring, recurrence_cron, created_by, is_closed)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 	err := r.db.QueryRowContext(ctx, query,
 		tmp.Title,
 		tmp.Description,
+		tmp.DepartmentID,
 		tmp.IsRecurring,
 		tmp.RecurrenceCron,
 		tmp.CreatedBy,
@@ -94,13 +141,14 @@ func (r *RequestTemplateRepo) AddRequestTemplate(ctx context.Context, tmp models
 func (r *RequestTemplateRepo) AddRequestTemplateWithTx(ctx context.Context, tx *sql.Tx, tmp models.RequestTemplate) (int, error) {
 	var id int
 	query := `
-        INSERT INTO document_request_templates (title, description, is_recurring, recurrence_cron, created_by, is_closed)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id
-    `
+		INSERT INTO document_request_templates (title, description, department_id, is_recurring, recurrence_cron, created_by, is_closed)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id
+	`
 	err := tx.QueryRowContext(ctx, query,
 		tmp.Title,
 		tmp.Description,
+		tmp.DepartmentID,
 		tmp.IsRecurring,
 		tmp.RecurrenceCron,
 		tmp.CreatedBy,
@@ -110,29 +158,17 @@ func (r *RequestTemplateRepo) AddRequestTemplateWithTx(ctx context.Context, tx *
 }
 
 func (r *RequestTemplateRepo) CloseRequestTemplate(ctx context.Context, id int) error {
-	query := `
-		UPDATE document_request_templates SET is_closed=true WHERE id=$1
-	`
-
-	_, err := r.db.ExecContext(ctx, query, id)
+	_, err := r.db.ExecContext(ctx, `UPDATE document_request_templates SET is_closed=true WHERE id=$1`, id)
 	return err
 }
 
 func (r *RequestTemplateRepo) ReopenRequestTemplate(ctx context.Context, id int) error {
-	query := `
-		UPDATE document_request_templates SET is_closed=false WHERE id=$1
-	`
-
-	_, err := r.db.ExecContext(ctx, query, id)
+	_, err := r.db.ExecContext(ctx, `UPDATE document_request_templates SET is_closed=false WHERE id=$1`, id)
 	return err
 }
 
 func (r *RequestTemplateRepo) DeleteRequestTemplate(ctx context.Context, id int) error {
-	query := `
-		DELETE FROM document_request_templates WHERE id = $1
-	`
-
-	_, err := r.db.ExecContext(ctx, query, id)
+	_, err := r.db.ExecContext(ctx, `DELETE FROM document_request_templates WHERE id = $1`, id)
 	return err
 }
 

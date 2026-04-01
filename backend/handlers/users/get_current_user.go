@@ -9,13 +9,13 @@ import (
 )
 
 func GetCurrentUserHandler(w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetUserIDFromContext(r.Context())
+	userClaims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
-	user, err := config.UserService.GetUserByID(r.Context(), userId)
+	user, err := config.UserService.GetUserByID(r.Context(), *userClaims, userClaims.UserID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

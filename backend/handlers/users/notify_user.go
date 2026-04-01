@@ -19,19 +19,19 @@ func NotifyUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	jwtUserID, err := utils.GetUserIDFromContext(r.Context())
+	userClaims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
-	err = config.UserService.NotifyUser(r.Context(), jwtUserID, idInt)
+	err = config.UserService.NotifyUser(r.Context(), *userClaims, idInt)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
-	u, err := config.UserService.GetUserByID(r.Context(), idInt)
+	u, err := config.UserService.GetUserByID(r.Context(), *userClaims, idInt)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

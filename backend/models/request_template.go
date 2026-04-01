@@ -6,6 +6,7 @@ type RequestTemplate struct {
 	ID             int       `db:"id" json:"id"`
 	Title          string    `db:"title" json:"title"`
 	Description    *string   `db:"description,omitempty" json:"description,omitempty"`
+	DepartmentID   int       `db:"department_id" json:"department_id"`
 	IsRecurring    bool      `db:"is_recurring" json:"is_recurring"`
 	CreatedBy      int       `db:"created_by" json:"created_by"`
 	CreatedAt      time.Time `db:"created_at" json:"created_at"`
@@ -16,7 +17,8 @@ type RequestTemplate struct {
 
 type RequestTemplateDTORead struct {
 	RequestTemplate
-	AuthorName *string
+	AuthorFirstName *string
+	AuthorLastName  *string
 }
 
 type RequestTemplateDTOPatch struct {

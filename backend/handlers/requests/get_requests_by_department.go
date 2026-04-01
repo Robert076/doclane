@@ -1,4 +1,4 @@
-package template_handler
+package request_handler
 
 import (
 	"net/http"
@@ -11,21 +11,27 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func GetRequestTemplateByIDHandler(w http.ResponseWriter, r *http.Request) {
+func GetRequestsByDepartmentHandler(w http.ResponseWriter, r *http.Request) {
 	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	templateIDStr := chi.URLParam(r, "id")
-	templateID, err := strconv.Atoi(templateIDStr)
+	departmentIDStr := chi.URLParam(r, "id")
+	departmentID, err := strconv.Atoi(departmentIDStr)
 	if err != nil {
-		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid template ID format."})
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid department ID format."})
 		return
 	}
 
-	template, err := config.RequestTemplateService.GetRequestTemplateByID(r.Context(), *claims, templateID)
+	search := r.URL.Query().Get("search")
+	var searchPtr *string
+	if search != "" {
+		searchPtr = &search
+	}
+
+	reqs, err := config.RequestService.GetRequestsByDepartment(r.Context(), *claims, departmentID, searchPtr)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -33,7 +39,7 @@ func GetRequestTemplateByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "RequestTemplate retrieved successfully.",
-		Data:    template,
+		Msg:     "Requests retrieved successfully.",
+		Data:    reqs,
 	})
 }

@@ -10,111 +10,118 @@ import (
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
+	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 )
 
 type RequestService struct {
-	requestRepo     repositories.IRequestRepo
-	userRepo        repositories.IUserRepo
-	expectedDocRepo repositories.IExpectedDocumentRepo
-	txManager       repositories.ITxManager
-	fileStorage     IFileStorageService
-	logger          *slog.Logger
+	requestRepo         repositories.IRequestRepo
+	templateRepo        repositories.IRequestTemplateRepo
+	expectedDocRepo     repositories.IExpectedDocumentRepo
+	expectedDocTmplRepo repositories.IExpectedDocumentTemplateRepo
+	txManager           repositories.ITxManager
+	fileStorage         IFileStorageService
+	logger              *slog.Logger
 }
 
-func NewRequestService(requestRepo repositories.IRequestRepo, userRepo repositories.IUserRepo, expectedDocRepo repositories.IExpectedDocumentRepo, txManager repositories.ITxManager, logger *slog.Logger, fileStorage IFileStorageService) *RequestService {
+func NewRequestService(
+	requestRepo repositories.IRequestRepo,
+	templateRepo repositories.IRequestTemplateRepo,
+	expectedDocRepo repositories.IExpectedDocumentRepo,
+	expectedDocTmplRepo repositories.IExpectedDocumentTemplateRepo,
+	txManager repositories.ITxManager,
+	logger *slog.Logger,
+	fileStorage IFileStorageService,
+) *RequestService {
 	return &RequestService{
-		requestRepo:     requestRepo,
-		userRepo:        userRepo,
-		expectedDocRepo: expectedDocRepo,
-		txManager:       txManager,
-		logger:          logger,
-		fileStorage:     fileStorage,
+		requestRepo:         requestRepo,
+		templateRepo:        templateRepo,
+		expectedDocRepo:     expectedDocRepo,
+		expectedDocTmplRepo: expectedDocTmplRepo,
+		txManager:           txManager,
+		logger:              logger,
+		fileStorage:         fileStorage,
 	}
 }
 
-func (service *RequestService) AddRequest(
-	ctx context.Context,
-	jwtUserID int,
-	dto models.RequestDTOCreate,
-) (*int, error) {
+func (service *RequestService) AddRequest(ctx context.Context, claims types.JWTClaims, dto models.RequestDTOCreate) (*int, error) {
 	if err := ValidateRequestInput(dto); err != nil {
-		service.logger.Warn("document request create failed because it did not pass validations",
-			slog.Int("user_id", jwtUserID),
-			slog.Any("error", err))
+		service.logger.Warn("request creation failed because it did not pass validations",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 
-	client, err := service.userRepo.GetUserByID(ctx, dto.ClientID)
+	template, err := service.templateRepo.GetRequestTemplateByID(ctx, dto.TemplateID)
 	if err != nil {
-		service.logger.Warn("client lookup failed for document request",
-			slog.Int("client_id", dto.ClientID),
-			slog.Int("requested_by", jwtUserID),
+		service.logger.Warn("template not found for request creation",
+			slog.Int("template_id", dto.TemplateID),
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Any("error", err),
 		)
-		return nil, errors.ErrNotFound{Msg: "Client not found."}
+		return nil, errors.ErrNotFound{Msg: "Template not found."}
 	}
 
-	if client.ProfessionalID == nil || *client.ProfessionalID != jwtUserID {
-		service.logger.Warn("unauthorized attempt to add request to unassigned client",
-			slog.Int("professional_id", jwtUserID),
-			slog.Int("client_id", dto.ClientID),
+	expectedDocTemplates, err := service.expectedDocTmplRepo.GetByRequestTemplateID(ctx, dto.TemplateID)
+	if err != nil {
+		service.logger.Error("failed to fetch expected document templates",
+			slog.Int("template_id", dto.TemplateID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
 		)
-		return nil, errors.ErrForbidden{Msg: "This client is not assigned to you."}
+		return nil, err
 	}
 
-	nextDueAt := ComputeNextDueAt(dto.DueDate, dto.RecurrenceCron)
+	expectedDocs := make([]models.ExpectedDocument, len(expectedDocTemplates))
+	for i, edt := range expectedDocTemplates {
+		expectedDocs[i] = models.ExpectedDocument{
+			Title:           edt.Title,
+			Description:     edt.Description,
+			Status:          "pending",
+			ExampleFilePath: edt.ExampleFilePath,
+			ExampleMimeType: edt.ExampleMimeType,
+		}
+	}
 
+	nextDueAt := ComputeNextDueAt(dto.DueDate, template.RecurrenceCron)
 	req := models.Request{
-		ProfessionalID: jwtUserID,
 		RequestBase: models.RequestBase{
-			ClientID:       dto.ClientID,
-			Title:          dto.Title,
-			Description:    dto.Description,
-			IsRecurring:    dto.IsRecurring,
-			RecurrenceCron: dto.RecurrenceCron,
+			Assignee:       claims.UserID,
+			DepartmentID:   template.DepartmentID,
+			Title:          template.Title,
+			Description:    template.Description,
+			IsRecurring:    template.IsRecurring,
+			RecurrenceCron: template.RecurrenceCron,
 			IsScheduled:    dto.IsScheduled,
 			ScheduledFor:   dto.ScheduledFor,
 			NextDueAt:      nextDueAt,
-			LastUploadedAt: dto.LastUploadedAt,
+			LastUploadedAt: nil,
 			DueDate:        dto.DueDate,
 		},
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		RequestTemplateID: &dto.TemplateID,
 	}
-
-	uploadedExamples, err := service.getUploadedExamples(ctx, dto)
-	if err != nil {
-		return nil, err
-	}
-
-	expectedDocs := getExpectedDocuments(dto, uploadedExamples)
 
 	id, err := service.createRequestTransaction(ctx, req, expectedDocs)
 	if err != nil {
-		service.logger.Error("failed to create document request",
+		service.logger.Error("failed to create request",
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Any("error", err),
-			slog.Int("professional_id", jwtUserID),
-			slog.Int("client_id", dto.ClientID),
 		)
-
-		service.removeUploadedExamples(ctx, uploadedExamples)
 		return nil, err
 	}
 
-	service.logger.Info("document request created",
+	service.logger.Info("request created successfully",
 		slog.Int("request_id", *id),
-		slog.Int("expected_documents", len(dto.ExpectedDocuments)),
+		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("template_id", dto.TemplateID),
+		slog.Int("department_id", template.DepartmentID),
 	)
 	return id, nil
 }
 
-func (s *RequestService) GetRequestByID(
-	ctx context.Context,
-	jwtUserID int,
-	requestID int,
-) (*models.RequestDTORead, error) {
-	req, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, requestID)
+func (s *RequestService) GetRequestByID(ctx context.Context, claims types.JWTClaims, requestID int) (*models.RequestDTORead, error) {
+	req, err := s.checkUserIsParticipantOfRequest(ctx, claims, requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -123,60 +130,31 @@ func (s *RequestService) GetRequestByID(
 	if err != nil {
 		s.logger.Error("failed to get expected documents for request",
 			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 	req.ExpectedDocuments = expectedDocs
-
 	req.Status = ComputeStatus(req.LastUploadedAt, req.NextDueAt, req.ExpectedDocuments)
 
 	return req, nil
 }
 
-func (service *RequestService) GetRequestsByProfessional(
-	ctx context.Context,
-	jwtUserID int,
-	search *string,
-) ([]models.RequestDTORead, error) {
-	return service.getRequestsByRole(ctx, jwtUserID, "PROFESSIONAL", search, service.requestRepo.GetRequestsByProfessionalWithExpectedDocs)
-}
-
-func (service *RequestService) GetRequestsByClient(
-	ctx context.Context,
-	jwtUserID int,
-	search *string,
-) ([]models.RequestDTORead, error) {
-	return service.getRequestsByRole(ctx, jwtUserID, "CLIENT", search, service.requestRepo.GetRequestsByClientWithExpectedDocs)
-}
-
-func (service *RequestService) getRequestsByRole(
-	ctx context.Context,
-	jwtUserID int,
-	requiredRole string,
-	search *string,
-	fetchFunc func(context.Context, int, *string) ([]models.RequestDTORead, error),
-) ([]models.RequestDTORead, error) {
-	user, err := service.userRepo.GetUserByID(ctx, jwtUserID)
-	if err != nil {
-		service.logger.Error("failed to fetch user for document requests",
-			slog.Int("user_id", jwtUserID),
-			slog.Any("error", err),
+func (service *RequestService) GetRequestsByAssignee(ctx context.Context, claims types.JWTClaims, assigneeID int, search *string) ([]models.RequestDTORead, error) {
+	if !claims.IsAdmin() && assigneeID != claims.UserID {
+		service.logger.Warn("unauthorized access attempt to requests by assignee",
+			slog.Int("assignee_id", assigneeID),
+			slog.Int("jwt_user_id", claims.UserID),
 		)
-		return nil, err
+		return nil, errors.ErrForbidden{Msg: "You are not allowed to view these requests."}
 	}
 
-	if user.Role != requiredRole {
-		service.logger.Warn("user tried to access other role's endpoint for document requests",
-			slog.Int("user_id", jwtUserID),
-			slog.String("role", user.Role))
-		return nil, errors.ErrForbidden{Msg: fmt.Sprintf("This is a %s endpoint.", requiredRole)}
-	}
-
-	reqs, err := fetchFunc(ctx, jwtUserID, search)
+	reqs, err := service.requestRepo.GetRequestsByAssigneeWithExpectedDocs(ctx, assigneeID, search)
 	if err != nil {
-		service.logger.Error("failed to fetch document requests from repo",
-			slog.Int("client_id", jwtUserID),
+		service.logger.Error("error when retrieving requests by assignee",
+			slog.Int("assignee_id", assigneeID),
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -186,72 +164,148 @@ func (service *RequestService) getRequestsByRole(
 		reqs[i].Status = ComputeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt, reqs[i].ExpectedDocuments)
 	}
 
+	service.logger.Info("retrieved requests by assignee successfully",
+		slog.Int("assignee_id", assigneeID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
 	return reqs, nil
 }
 
-func (s *RequestService) PatchRequest(
-	ctx context.Context,
-	jwtUserID int,
-	requestID int,
-	updatedDTO models.RequestDTOPatch,
-) error {
+func (service *RequestService) GetRequestsByDepartment(ctx context.Context, claims types.JWTClaims, departmentID int, search *string) ([]models.RequestDTORead, error) {
+	isMemberOfDepartment := claims.DepartmentID != nil && *claims.DepartmentID == departmentID
+	if !claims.IsAdmin() && !isMemberOfDepartment {
+		service.logger.Warn("unauthorized access attempt to requests by department",
+			slog.Int("department_id", departmentID),
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return nil, errors.ErrForbidden{Msg: "You are not allowed to view these requests."}
+	}
+
+	reqs, err := service.requestRepo.GetRequestsByDepartmentWithExpectedDocs(ctx, departmentID, search)
+	if err != nil {
+		service.logger.Error("error when retrieving requests by department",
+			slog.Int("department_id", departmentID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	for i := range reqs {
+		reqs[i].Status = ComputeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt, reqs[i].ExpectedDocuments)
+	}
+
+	service.logger.Info("retrieved requests by department successfully",
+		slog.Int("department_id", departmentID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return reqs, nil
+}
+
+func (service *RequestService) ForwardRequestToDepartment(ctx context.Context, claims types.JWTClaims, requestID int, departmentID int) error {
+	if !claims.IsAdmin() {
+		service.logger.Warn("unauthorized attempt to forward request",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("request_id", requestID),
+		)
+		return errors.ErrForbidden{Msg: "Only admins can forward requests to departments."}
+	}
+
+	if err := service.requestRepo.ForwardRequestToDepartment(ctx, requestID, departmentID); err != nil {
+		service.logger.Error("failed to forward request to department",
+			slog.Int("request_id", requestID),
+			slog.Int("department_id", departmentID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	service.logger.Info("request forwarded to department successfully",
+		slog.Int("request_id", requestID),
+		slog.Int("department_id", departmentID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return nil
+}
+
+func (s *RequestService) PatchRequest(ctx context.Context, claims types.JWTClaims, requestID int, updatedDTO models.RequestDTOPatch) error {
 	if err := ValidatePatchDTO(updatedDTO); err != nil {
-		s.logger.Warn("patch validation failed",
-			slog.Int("user_id", jwtUserID),
+		s.logger.Warn("request patch validation failed",
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Int("request_id", requestID),
 			slog.Any("error", err),
 		)
 		return err
 	}
 
-	if _, err := s.checkUserIsProfessionalOfRequest(ctx, jwtUserID, requestID); err != nil {
+	if _, err := s.checkUserCanEditRequest(ctx, claims, requestID); err != nil {
 		return err
 	}
 
 	if err := s.requestRepo.UpdateRequestTitle(ctx, requestID, updatedDTO.Title); err != nil {
-		s.logger.Error("failed to update document request title",
+		s.logger.Error("failed to update request title",
 			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.String("new_title", updatedDTO.Title),
 			slog.Any("error", err),
 		)
 		return err
 	}
 
-	s.logger.Info("document request patched successfully",
+	s.logger.Info("request patched successfully",
 		slog.Int("request_id", requestID),
+		slog.Int("jwt_user_id", claims.UserID),
 		slog.String("new_title", updatedDTO.Title),
 	)
-
 	return nil
 }
 
-func (s *RequestService) ReopenRequest(
-	ctx context.Context,
-	jwtUserID int,
-	requestID int,
-) error {
-	if _, err := s.checkUserIsProfessionalOfRequest(ctx, jwtUserID, requestID); err != nil {
+func (s *RequestService) ReopenRequest(ctx context.Context, claims types.JWTClaims, requestID int) error {
+	if _, err := s.checkUserCanEditRequest(ctx, claims, requestID); err != nil {
 		return err
 	}
 
-	return s.requestRepo.ReopenRequest(ctx, requestID)
+	if err := s.requestRepo.ReopenRequest(ctx, requestID); err != nil {
+		s.logger.Error("error when trying to reopen request",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	s.logger.Info("reopened request successfully",
+		slog.Int("request_id", requestID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return nil
 }
 
-func (s *RequestService) CloseRequest(
-	ctx context.Context,
-	jwtUserID int,
-	requestID int,
-) error {
-	if _, err := s.checkUserIsProfessionalOfRequest(ctx, jwtUserID, requestID); err != nil {
+func (s *RequestService) CloseRequest(ctx context.Context, claims types.JWTClaims, requestID int) error {
+	if _, err := s.checkUserCanEditRequest(ctx, claims, requestID); err != nil {
 		return err
 	}
 
-	return s.requestRepo.CloseRequest(ctx, requestID)
+	if err := s.requestRepo.CloseRequest(ctx, requestID); err != nil {
+		s.logger.Error("error when trying to close request",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	s.logger.Info("closed request successfully",
+		slog.Int("request_id", requestID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return nil
 }
 
 func (s *RequestService) AddDocument(
 	ctx context.Context,
-	jwtUserID int,
+	claims types.JWTClaims,
 	requestID int,
 	expectedDocID int,
 	fileName string,
@@ -263,11 +317,12 @@ func (s *RequestService) AddDocument(
 		return nil, err
 	}
 
-	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, requestID); err != nil {
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, requestID); err != nil {
 		return nil, err
 	}
+
 	s.logger.Info("attempting file upload",
-		slog.Int("user_id", jwtUserID),
+		slog.Int("jwt_user_id", claims.UserID),
 		slog.Int("request_id", requestID),
 		slog.String("file_name", fileName),
 	)
@@ -293,7 +348,7 @@ func (s *RequestService) AddDocument(
 		FileSize:           &fileSize,
 		S3VersionID:        result.VersionId,
 		UploadedAt:         time.Now(),
-		UploadedBy:         &jwtUserID,
+		UploadedBy:         &claims.UserID,
 	}
 
 	id, err := s.requestRepo.AddDocument(ctx, fileModel)
@@ -314,61 +369,56 @@ func (s *RequestService) AddDocument(
 		return nil, errors.ErrInternalServerError{Msg: fmt.Sprintf("Metadata save failed, file removed from storage. %v", err)}
 	}
 
-	uploadedFile, err := s.requestRepo.GetFileByIDExtended(ctx, id)
-	if err != nil {
-		s.logger.Error("error getting uploaded file",
-			slog.Int("id", id),
-			slog.Any("err", err),
-		)
-		return nil, errors.ErrInternalServerError{Msg: fmt.Sprintf("Error getting uploaded file: %v", err)}
-	}
-
-	if uploadedFile.AuthorRole == "CLIENT" {
+	// plain members uploading triggers status update
+	if claims.Role == types.RoleMember && !claims.IsDepartmentMember() {
 		s.requestRepo.SetFileUploaded(ctx, requestID)
 		if expectedDocID != 0 {
 			s.expectedDocRepo.UpdateExpectedDocumentStatus(ctx, expectedDocID, "uploaded", nil)
 		}
 	}
 
-	s.logger.Info("file upload successful", slog.Int("file_id", id))
+	s.logger.Info("file upload successful",
+		slog.Int("file_id", id),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
 	return &id, nil
 }
 
-func (s *RequestService) GetFilesByRequest(
-	ctx context.Context,
-	jwtUserID int,
-	requestID int,
-) ([]models.DocumentDTORead, error) {
-	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, requestID); err != nil {
+func (s *RequestService) GetFilesByRequest(ctx context.Context, claims types.JWTClaims, requestID int) ([]models.DocumentDTORead, error) {
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, requestID); err != nil {
 		return nil, err
 	}
 
 	files, err := s.requestRepo.GetFilesByRequest(ctx, requestID)
 	if err != nil {
-		s.logger.Error("failed to fetch files", slog.Int("request_id", requestID), slog.Any("error", err))
+		s.logger.Error("failed to fetch files",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 
-	s.logger.Info("files retrieved successfully", slog.Int("request_id", requestID), slog.Int("count", len(files)))
+	s.logger.Info("files retrieved successfully",
+		slog.Int("request_id", requestID),
+		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("count", len(files)),
+	)
 	return files, nil
 }
 
-func (s *RequestService) GetFilePresignedURL(
-	ctx context.Context,
-	jwtUserID int,
-	fileID int,
-) (*string, error) {
+func (s *RequestService) GetFilePresignedURL(ctx context.Context, claims types.JWTClaims, fileID int) (*string, error) {
 	file, err := s.requestRepo.GetFileByID(ctx, fileID)
 	if err != nil {
 		s.logger.Error("could not fetch file by id",
-			slog.Int("user_id", jwtUserID),
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Int("file_id", fileID),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
-	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, file.RequestID); err != nil {
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, file.RequestID); err != nil {
 		return nil, err
 	}
 
@@ -376,17 +426,15 @@ func (s *RequestService) GetFilePresignedURL(
 	if err != nil {
 		s.logger.Error("s3 presign failed",
 			slog.Int("file_id", fileID),
-			slog.Any("error", err))
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 	return &presignedURL, nil
 }
 
-func (s *RequestService) GetExamplePresignedURL(
-	ctx context.Context,
-	jwtUserID int,
-	expectedDocID int,
-) (*string, error) {
+func (s *RequestService) GetExamplePresignedURL(ctx context.Context, claims types.JWTClaims, expectedDocID int) (*string, error) {
 	expectedDoc, err := s.expectedDocRepo.GetExpectedDocumentByID(ctx, expectedDocID)
 	if err != nil {
 		return nil, errors.ErrNotFound{Msg: "Expected document not found."}
@@ -396,7 +444,7 @@ func (s *RequestService) GetExamplePresignedURL(
 		return nil, errors.ErrNotFound{Msg: "This document has no example file."}
 	}
 
-	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, expectedDoc.RequestID); err != nil {
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, expectedDoc.RequestID); err != nil {
 		return nil, err
 	}
 
@@ -404,6 +452,7 @@ func (s *RequestService) GetExamplePresignedURL(
 	if err != nil {
 		s.logger.Error("s3 presign failed for example file",
 			slog.Int("expected_doc_id", expectedDocID),
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err

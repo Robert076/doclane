@@ -3,6 +3,7 @@ package template_handler
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/types"
@@ -15,7 +16,7 @@ func AddRequestTemplateWithDocumentsHandler(w http.ResponseWriter, r *http.Reque
 	const maxRequestSize = 100 << 20 // 100MB to allow multiple files
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
 
-	userID, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -31,6 +32,11 @@ func AddRequestTemplateWithDocumentsHandler(w http.ResponseWriter, r *http.Reque
 	description := r.FormValue("description")
 	isRecurring := r.FormValue("is_recurring") == "true"
 	recurrenceCron := r.FormValue("recurrence_cron")
+	departmentID := r.FormValue("department_id")
+	departmentIDInt, err := strconv.Atoi(departmentID)
+	if err != nil {
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid department id."})
+	}
 
 	if title == "" {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: "Title is required."})
@@ -38,9 +44,10 @@ func AddRequestTemplateWithDocumentsHandler(w http.ResponseWriter, r *http.Reque
 	}
 
 	template := models.RequestTemplate{
-		Title:       title,
-		Description: &description,
-		IsRecurring: isRecurring,
+		Title:        title,
+		Description:  &description,
+		IsRecurring:  isRecurring,
+		DepartmentID: departmentIDInt,
 	}
 	if recurrenceCron != "" {
 		template.RecurrenceCron = &recurrenceCron
@@ -74,7 +81,7 @@ func AddRequestTemplateWithDocumentsHandler(w http.ResponseWriter, r *http.Reque
 		docs = append(docs, input)
 	}
 
-	id, err := config.RequestTemplateService.AddRequestTemplateWithDocuments(r.Context(), userID, template, docs)
+	id, err := config.RequestTemplateService.AddRequestTemplateWithDocuments(r.Context(), *claims, template, docs)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

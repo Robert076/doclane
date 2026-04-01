@@ -12,7 +12,7 @@ import (
 )
 
 func DeactivateUserHandler(w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetUserIDFromContext(r.Context())
+	userClaims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -30,7 +30,7 @@ func DeactivateUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := config.UserService.DeactivateUser(r.Context(), userId, idInt); err != nil {
+	if err := config.UserService.DeactivateUser(r.Context(), *userClaims, idInt); err != nil {
 		utils.WriteError(w, err)
 		return
 	}

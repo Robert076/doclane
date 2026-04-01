@@ -9,6 +9,8 @@ import (
 	"github.com/Robert076/doclane/backend/handlers/auth"
 	auth_middleware "github.com/Robert076/doclane/backend/handlers/auth/middleware"
 	comment_handler "github.com/Robert076/doclane/backend/handlers/comments"
+	department_handler "github.com/Robert076/doclane/backend/handlers/departments"
+	insertadmin_handler "github.com/Robert076/doclane/backend/handlers/insert-admin"
 	invitation_handler "github.com/Robert076/doclane/backend/handlers/invitation"
 	request_handler "github.com/Robert076/doclane/backend/handlers/requests"
 	template_handler "github.com/Robert076/doclane/backend/handlers/templates"
@@ -53,9 +55,9 @@ func buildRouter() (http.Handler, *chi.Mux) {
 
 	r.Route("/api/auth", func(r chi.Router) {
 		r.Post("/login", auth.LoginHandler)
-		r.Post("/register/professional", auth.RegisterProfessionalHandler)
-		r.Post("/register/client", auth.RegisterClientHandler)
+		r.Post("/register", auth.RegisterHandler)
 		r.Post("/logout", auth.LogoutHandler)
+		r.Post("/insert-admin", insertadmin_handler.InsertAdminHandler)
 	})
 
 	r.Post("/api/invitations/validate", invitation_handler.ValidateInvitationCodeHandler)
@@ -69,14 +71,14 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Get("/{id}", user_handler.GetUserByIDHandler)
 			r.Post("/notify/{id}", user_handler.NotifyUserHandler)
 			r.Get("/me", user_handler.GetCurrentUserHandler)
-			r.Get("/my-clients", user_handler.GetClientsByProfessionalHandler)
 			r.Post("/deactivate/{id}", user_handler.DeactivateUserHandler)
 		})
 
-		r.Route("/document-requests", func(r chi.Router) {
+		r.Route("/requests", func(r chi.Router) {
 			r.Post("/", request_handler.AddRequestHandler)
-			r.Get("/professional/my-requests", request_handler.GetRequestsByProfessionalHandler)
-			r.Get("/client/my-requests", request_handler.GetRequestsByClientHandler)
+			r.Get("/assignee/{id}", request_handler.GetRequestsByAssigneeHandler)
+			r.Get("/department/{id}", request_handler.GetRequestsByDepartmentHandler)
+			r.Post("/forward/{id}", request_handler.ForwardRequestToDepartmentHandler)
 			r.Patch("/expected-documents/{id}/status", request_handler.PatchExpectedDocumentStatusHandler)
 			r.Get("/expected-documents/{id}/presign-example", request_handler.GetExamplePresignedURLHandler)
 
@@ -90,22 +92,19 @@ func buildRouter() (http.Handler, *chi.Mux) {
 					r.Get("/{commentID}", comment_handler.GetCommentByID)
 					r.Post("/", comment_handler.AddCommentHandler)
 				})
-
 				r.Route("/files", func(r chi.Router) {
 					r.Get("/", request_handler.GetFilesByRequestHandler)
 					r.Post("/", request_handler.AddDocumentHandler)
 					r.Get("/{fileId}/presign", request_handler.GetFilePresignedURLHandler)
 				})
 			})
-
 		})
 
 		r.Route("/templates", func(r chi.Router) {
 			r.Post("/", template_handler.AddRequestTemplateWithDocumentsHandler)
-			r.Get("/", template_handler.GetRequestTemplatesByProfessionalHandler)
+			r.Get("/", template_handler.GetRequestTemplatesHandler)
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", template_handler.GetRequestTemplateByIDHandler)
-				r.Post("/instantiate", template_handler.InstantiateRequestTemplateHandler)
 				r.Patch("/", template_handler.PatchRequestTemplateHandler)
 				r.Delete("/", template_handler.DeleteRequestTemplateHandler)
 				r.Route("/expected-documents", func(r chi.Router) {
@@ -116,6 +115,11 @@ func buildRouter() (http.Handler, *chi.Mux) {
 				r.Post("/archive", template_handler.CloseRequestTemplateHandler)
 				r.Post("/unarchive", template_handler.ReopenRequestTemplateHandler)
 			})
+		})
+
+		r.Route("/departments", func(r chi.Router) {
+			r.Get("/", department_handler.GetAllDepartmentsHandler)
+			r.Post("/", department_handler.CreateDepartmentHandler)
 		})
 
 		r.Route("/invitations", func(r chi.Router) {

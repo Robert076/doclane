@@ -3,18 +3,21 @@ package auth
 import (
 	"encoding/json"
 	"net/http"
-	"time"
 
 	"github.com/Robert076/doclane/backend/services"
 	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
-	"github.com/Robert076/doclane/backend/types/requests"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/config"
 )
 
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
+}
+
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	req := requests.LoginRequest{}
+	req := LoginRequest{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid request body."})
 		return
@@ -31,7 +34,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	token, err := utils.GenerateJWT(user)
+	token, err := utils.GenerateJWT(*user)
 	if err != nil {
 		utils.WriteError(w, errors.ErrInternalServerError{Msg: "Could not generate session."})
 		return
@@ -40,11 +43,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_cookie",
 		Value:    token,
-		Path:     "/",
-		SameSite: http.SameSiteLaxMode,
-		Secure:   false,
 		HttpOnly: true,
-		Expires:  time.Now().Add(time.Hour * 24),
+		Path:     "/",
+		MaxAge:   60 * 60 * 24, // 24 hours
 	})
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{

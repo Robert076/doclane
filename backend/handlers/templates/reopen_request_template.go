@@ -12,7 +12,7 @@ import (
 )
 
 func ReopenRequestTemplateHandler(w http.ResponseWriter, r *http.Request) {
-	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -24,7 +24,7 @@ func ReopenRequestTemplateHandler(w http.ResponseWriter, r *http.Request) {
 		utils.WriteError(w, errors.ErrUnprocessableContent{Msg: "Invalid ID received."})
 	}
 
-	if err := config.RequestTemplateService.ReopenRequestTemplate(r.Context(), jwtUserId, idInt); err != nil {
+	if err := config.RequestTemplateService.ReopenRequestTemplate(r.Context(), *claims, idInt); err != nil {
 		utils.WriteError(w, err)
 	}
 

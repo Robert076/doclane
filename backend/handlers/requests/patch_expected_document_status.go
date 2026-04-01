@@ -21,7 +21,7 @@ func PatchExpectedDocumentStatusHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	userID, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -33,7 +33,7 @@ func PatchExpectedDocumentStatusHandler(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	updatedDoc, err := config.ExpectedDocumentService.UpdateExpectedDocumentStatus(r.Context(), userID, docID, req.Status, req.RejectionReason)
+	updatedDoc, err := config.ExpectedDocumentService.UpdateExpectedDocumentStatus(r.Context(), *claims, docID, req.Status, req.RejectionReason)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

@@ -12,7 +12,7 @@ import (
 )
 
 func GenerateInvitationCodeHandler(w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -30,7 +30,7 @@ func GenerateInvitationCodeHandler(w http.ResponseWriter, r *http.Request) {
 
 	code, err := config.InvitationCodeService.CreateInvitationCode(
 		r.Context(),
-		userId,
+		*claims,
 		dto.ExpiresInDays,
 	)
 	if err != nil {

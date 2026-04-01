@@ -12,7 +12,7 @@ import (
 )
 
 func DeleteExpectedDocumentTemplateHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -34,7 +34,7 @@ func DeleteExpectedDocumentTemplateHandler(w http.ResponseWriter, r *http.Reques
 
 	if err := config.RequestTemplateService.DeleteExpectedDocumentTemplate(
 		r.Context(),
-		userID,
+		*claims,
 		expectedDocRequestTemplateID,
 		templateID,
 	); err != nil {

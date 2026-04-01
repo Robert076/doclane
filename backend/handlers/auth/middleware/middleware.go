@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/config"
@@ -32,9 +33,9 @@ func AuthGuard(next http.Handler) http.Handler {
 			tokenString = jwtCookie.Value
 		}
 
-		claims := &utils.CustomClaims{}
+		claims := &types.JWTClaims{}
 		token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
-			return []byte(config.JWTSecret), nil
+			return []byte(utils.JWTSecret), nil
 		})
 
 		if err != nil || !token.Valid {
@@ -53,14 +54,14 @@ func AuthGuard(next http.Handler) http.Handler {
 
 func MustBeActive(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		claims, ok := r.Context().Value(utils.ClaimsKey).(*utils.CustomClaims)
+		claims, ok := r.Context().Value(utils.ClaimsKey).(*types.JWTClaims)
 		if !ok {
 			config.Logger.Error("middleware context error: claims not found")
 			utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 			return
 		}
 
-		user, err := config.UserService.GetUserByID(r.Context(), claims.UserID)
+		user, err := config.UserService.GetUserByID(r.Context(), *claims, claims.UserID)
 		if err != nil {
 			config.Logger.Error("database error in MustBeActive check",
 				slog.Int("user_id", claims.UserID),

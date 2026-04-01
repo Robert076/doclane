@@ -11,16 +11,17 @@ import (
 
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/services"
+	"github.com/Robert076/doclane/backend/utils"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
-var JWTSecret string
 var Logger *slog.Logger
 var UserService *services.UserService
 var RequestService *services.RequestService
+var DepartmentService *services.DepartmentService
 var InvitationCodeService *services.InvitationCodeService
 var ExpectedDocumentService *services.ExpectedDocumentService
 var RequestTemplateService *services.RequestTemplateService
@@ -28,21 +29,18 @@ var RequestCommentService *services.RequestCommentService
 var S3Client *s3.Client
 
 func init() {
-	// Load .env file if present — ignored in Lambda since env vars are injected directly
 	godotenv.Load("../../.env")
-
 	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
-
 	db := initDB()
-	JWTSecret = requireEnv("JWT_SECRET")
 
 	// Initialize repositories
 	userRepo := repositories.NewUserRepo(db)
-	documentRepo := repositories.NewRequestRepo(db)
+	requestRepo := repositories.NewRequestRepo(db)
+	departmentRepo := repositories.NewDepartmentRepo(db)
 	invitationRepo := repositories.NewInvitationCodeRepo(db)
 	expectedDocumentRepo := repositories.NewExpectedDocRepo(db)
 	requestTemplateRepo := repositories.NewRequestTemplateRepo(db)
-	expectedDocumentRequestTemplateRepo := repositories.NewExpectedDocumentTemplateRepo(db)
+	expectedDocumentTemplateRepo := repositories.NewExpectedDocumentTemplateRepo(db)
 	requestCommentRepo := repositories.NewRequestCommentRepo(db)
 	txManager := repositories.NewTxManager(db)
 
@@ -54,36 +52,35 @@ func init() {
 	}
 
 	// Initialize services
-	fileStorage := services.NewFileStorageService(S3Client, requireEnv("S3_BUCKET_NAME"), Logger)
+	fileStorage := services.NewFileStorageService(S3Client, utils.RequireEnv("S3_BUCKET_NAME"), Logger)
 	UserService = services.NewUserService(userRepo, Logger)
-	RequestService = services.NewRequestService(documentRepo, userRepo, expectedDocumentRepo, txManager, Logger, fileStorage)
-	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, userRepo, Logger)
-	ExpectedDocumentService = services.NewExpectedDocumentService(expectedDocumentRepo, documentRepo, Logger)
+	RequestService = services.NewRequestService(requestRepo, requestTemplateRepo, expectedDocumentRepo, expectedDocumentTemplateRepo, txManager, Logger, fileStorage)
+	DepartmentService = services.NewDepartmentService(departmentRepo, Logger)
+	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, Logger)
+	ExpectedDocumentService = services.NewExpectedDocumentService(expectedDocumentRepo, requestRepo, Logger)
 	RequestTemplateService = services.NewRequestTemplateService(
 		requestTemplateRepo,
-		expectedDocumentRequestTemplateRepo,
+		expectedDocumentTemplateRepo,
 		expectedDocumentRepo,
-		documentRepo,
-		userRepo,
+		requestRepo,
 		txManager,
 		fileStorage,
 		Logger,
 	)
 	RequestCommentService = services.NewRequestCommentService(
 		requestCommentRepo,
-		documentRepo,
-		userRepo,
+		requestRepo,
 		Logger,
 	)
 }
 
 func initDB() *sql.DB {
-	host := requireEnv("DB_HOST")
-	user := requireEnv("DB_USER")
-	name := requireEnv("DB_NAME")
-	password := requireEnv("DB_PASSWORD")
-
+	host := utils.RequireEnv("DB_HOST")
+	user := utils.RequireEnv("DB_USER")
+	name := utils.RequireEnv("DB_NAME")
+	password := utils.RequireEnv("DB_PASSWORD")
 	port := 5432
+
 	if p := os.Getenv("DB_PORT"); p != "" {
 		var err error
 		port, err = strconv.Atoi(p)
@@ -93,7 +90,7 @@ func initDB() *sql.DB {
 	}
 
 	psqlInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s dbname=%s password=%s sslmode=disable",
+		"host=%s port=%d user=%s dbname=%s password=%s sslmode=disable timezone=UTC",
 		host, port, user, name, password,
 	)
 
@@ -116,13 +113,4 @@ func newS3Client() (*s3.Client, error) {
 		return nil, err
 	}
 	return s3.NewFromConfig(cfg), nil
-}
-
-// requireEnv gets an env var and fatals if it's not set
-func requireEnv(key string) string {
-	val := os.Getenv(key)
-	if val == "" {
-		log.Fatalf("%s env var is not set", key)
-	}
-	return val
 }

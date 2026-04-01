@@ -7,61 +7,74 @@ import (
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
+	"github.com/Robert076/doclane/backend/types"
 )
 
 type RequestCommentService struct {
 	commentRepo repositories.IRequestCommentRepo
 	requestRepo repositories.IRequestRepo
-	userRepo    repositories.IUserRepo
 	logger      *slog.Logger
 }
 
 func NewRequestCommentService(
 	commentRepo repositories.IRequestCommentRepo,
 	requestRepo repositories.IRequestRepo,
-	userRepo repositories.IUserRepo,
 	logger *slog.Logger,
 ) *RequestCommentService {
 	return &RequestCommentService{
 		commentRepo: commentRepo,
 		requestRepo: requestRepo,
-		userRepo:    userRepo,
 		logger:      logger,
 	}
 }
 
-func (s *RequestCommentService) GetCommentByID(ctx context.Context, jwtUserID int, commentID int) (*models.RequestCommentDTO, error) {
-	comm, err := s.checkUserHasAccessToReadComment(ctx, jwtUserID, commentID)
-	return comm, err
+func (s *RequestCommentService) GetCommentByID(ctx context.Context, claims types.JWTClaims, commentID int) (*models.RequestCommentDTO, error) {
+	return s.checkUserHasAccessToReadComment(ctx, claims, commentID)
 }
 
-func (s *RequestCommentService) GetCommentsByRequestID(ctx context.Context, jwtUserID int, requestID int) ([]models.RequestCommentDTO, error) {
-	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, requestID); err != nil {
+func (s *RequestCommentService) GetCommentsByRequestID(ctx context.Context, claims types.JWTClaims, requestID int) ([]models.RequestCommentDTO, error) {
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, requestID); err != nil {
 		return nil, err
 	}
 
 	comments, err := s.commentRepo.GetCommentsByRequestID(ctx, requestID)
-	return comments, err
+	if err != nil {
+		s.logger.Error("failed to get comments by request",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+	return comments, nil
 }
 
-func (s *RequestCommentService) AddComment(ctx context.Context, jwtUserID int, requestID int, comment models.RequestComment) (*int, error) {
+func (s *RequestCommentService) AddComment(ctx context.Context, claims types.JWTClaims, requestID int, comment models.RequestComment) (*int, error) {
 	if err := s.validateComment(comment); err != nil {
 		return nil, err
 	}
 
-	if err := s.checkUserIsNotSpamming(ctx, jwtUserID); err != nil {
+	if err := s.checkUserIsNotSpamming(ctx, claims.UserID); err != nil {
 		return nil, err
 	}
 
-	comment.UserID = jwtUserID
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, requestID); err != nil {
+		return nil, err
+	}
+
+	comment.UserID = claims.UserID
 	comment.RequestID = requestID
 	comment.CreatedAt = time.Now().UTC()
 	comment.UpdatedAt = time.Now().UTC()
 
-	if _, err := s.checkUserIsParticipantOfRequest(ctx, jwtUserID, requestID); err != nil {
+	id, err := s.commentRepo.AddComment(ctx, comment)
+	if err != nil {
+		s.logger.Error("failed to add comment",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
-
-	id, err := s.commentRepo.AddComment(ctx, comment)
-	return &id, err
+	return &id, nil
 }

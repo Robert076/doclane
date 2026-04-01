@@ -12,7 +12,7 @@ import (
 )
 
 func GetFilePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
-	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -25,7 +25,7 @@ func GetFilePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := config.RequestService.GetFilePresignedURL(r.Context(), jwtUserId, fileID)
+	url, err := config.RequestService.GetFilePresignedURL(r.Context(), *claims, fileID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

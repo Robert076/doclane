@@ -1,6 +1,7 @@
 package request_handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -11,7 +12,7 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-func GetFilesByRequestHandler(w http.ResponseWriter, r *http.Request) {
+func ForwardRequestToDepartmentHandler(w http.ResponseWriter, r *http.Request) {
 	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
@@ -25,15 +26,26 @@ func GetFilesByRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	files, err := config.RequestService.GetFilesByRequest(r.Context(), *claims, requestID)
-	if err != nil {
+	var body struct {
+		DepartmentID int `json:"department_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Invalid request body."})
+		return
+	}
+
+	if body.DepartmentID == 0 {
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "department_id is required."})
+		return
+	}
+
+	if err := config.RequestService.ForwardRequestToDepartment(r.Context(), *claims, requestID, body.DepartmentID); err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Files retrieved successfully.",
-		Data:    files,
+		Msg:     "Request forwarded to department successfully.",
 	})
 }

@@ -12,7 +12,7 @@ import (
 )
 
 func GetRequestByIDHandler(w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -25,7 +25,7 @@ func GetRequestByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	docReq, err := config.RequestService.GetRequestByID(r.Context(), userId, id)
+	docReq, err := config.RequestService.GetRequestByID(r.Context(), *claims, id)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

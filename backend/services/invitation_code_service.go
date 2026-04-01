@@ -11,23 +11,21 @@ import (
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
+	"github.com/Robert076/doclane/backend/types"
 	"github.com/Robert076/doclane/backend/types/errors"
 )
 
 type InvitationCodeService struct {
 	invitationRepo repositories.IInvitationCodeRepo
-	userRepo       repositories.IUserRepo
 	logger         *slog.Logger
 }
 
 func NewInvitationCodeService(
 	invitationRepo repositories.IInvitationCodeRepo,
-	userRepo repositories.IUserRepo,
 	logger *slog.Logger,
 ) *InvitationCodeService {
 	return &InvitationCodeService{
 		invitationRepo: invitationRepo,
-		userRepo:       userRepo,
 		logger:         logger,
 	}
 }
@@ -43,38 +41,28 @@ func generateInvitationCode() (string, error) {
 
 func (s *InvitationCodeService) CreateInvitationCode(
 	ctx context.Context,
-	jwtUserID int,
+	claims types.JWTClaims,
 	expiresInDays int,
 ) (string, error) {
-	user, err := s.userRepo.GetUserByID(ctx, jwtUserID)
+	if !claims.IsAdmin() {
+		s.logger.Warn("non-admin attempted to create invitation code",
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return "", errors.ErrForbidden{Msg: "Only admins can generate invitation codes."}
+	}
+
+	existingCodes, err := s.invitationRepo.GetInvitationCodesByCreator(ctx, claims.UserID)
 	if err != nil {
-		s.logger.Error("failed to fetch user for invitation code creation",
-			slog.Int("user_id", jwtUserID),
+		s.logger.Error("error getting codes for user",
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return "", err
 	}
 
-	if user.Role != "PROFESSIONAL" {
-		s.logger.Warn("non-professional attempted to create invitation code",
-			slog.Int("user_id", jwtUserID),
-			slog.String("role", user.Role),
-		)
-		return "", errors.ErrForbidden{Msg: "Only professionals can generate invitation codes."}
-	}
-
-	existingCodes, err := s.invitationRepo.GetInvitationCodesByProfessional(ctx, jwtUserID)
-	if err != nil {
-		s.logger.Error("error getting codes for professional",
-			slog.Int("user_id", jwtUserID),
-			slog.Any("error", err),
-		)
-	}
-
 	if len(existingCodes) >= 3 {
 		s.logger.Warn("user tried to generate too many active invitation codes",
-			slog.Int("user_id", jwtUserID),
-			slog.Any("error", err),
+			slog.Int("jwt_user_id", claims.UserID),
 		)
 		return "", errors.ErrBadRequest{Msg: "Only 3 active codes are allowed at one time."}
 	}
@@ -93,11 +81,10 @@ func (s *InvitationCodeService) CreateInvitationCode(
 		expiresAt = &expiry
 	}
 
-	err = s.invitationRepo.CreateInvitationCode(ctx, code, jwtUserID, expiresAt)
-	if err != nil {
+	if err = s.invitationRepo.CreateInvitationCode(ctx, code, claims.UserID, expiresAt); err != nil {
 		s.logger.Error("failed to save invitation code to database",
 			slog.String("code", code),
-			slog.Int("professional_id", jwtUserID),
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return "", errors.ErrInternalServerError{Msg: "Failed to save invitation code."}
@@ -105,27 +92,26 @@ func (s *InvitationCodeService) CreateInvitationCode(
 
 	s.logger.Info("invitation code created successfully",
 		slog.String("code", code),
-		slog.Int("professional_id", jwtUserID),
+		slog.Int("jwt_user_id", claims.UserID),
 	)
-
 	return code, nil
 }
 
-func (s *InvitationCodeService) GetInvitationCodesByProfessional(
+func (s *InvitationCodeService) GetInvitationCodes(
 	ctx context.Context,
-	jwtUserID int,
+	claims types.JWTClaims,
 ) ([]models.InvitationCode, error) {
-	if err := s.checkUserIsProfessional(ctx, jwtUserID); err != nil {
-		return nil, err
+	if !claims.IsAdmin() {
+		return nil, errors.ErrForbidden{Msg: "Only admins can view invitation codes."}
 	}
 
-	codes, err := s.invitationRepo.GetInvitationCodesByProfessional(ctx, jwtUserID)
+	codes, err := s.invitationRepo.GetInvitationCodesByCreator(ctx, claims.UserID)
 	if err != nil {
-		s.logger.Error("failed to fetch invitation codes from repo",
-			slog.Int("professional_id", jwtUserID),
+		s.logger.Error("failed to fetch invitation codes",
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Any("error", err),
 		)
-		return nil, errors.ErrInternalServerError{Msg: fmt.Sprintf("Could not fetch codes. %v", err)}
+		return nil, err
 	}
 
 	validCodes, err := s.deleteExpiredCodes(ctx, codes)
@@ -134,31 +120,30 @@ func (s *InvitationCodeService) GetInvitationCodesByProfessional(
 	}
 
 	s.logger.Info("invitation codes retrieved successfully",
-		slog.Int("professional_id", jwtUserID),
+		slog.Int("jwt_user_id", claims.UserID),
 		slog.Int("count", len(validCodes)),
 	)
-
 	return validCodes, nil
 }
 
 func (s *InvitationCodeService) ValidateAndUseInvitationCode(
 	ctx context.Context,
 	code string,
-) (int, error) {
+) error {
 	invCode, err := s.invitationRepo.GetInvitationCodeByCode(ctx, code)
 	if err != nil {
 		s.logger.Warn("invitation code not found",
 			slog.String("code", code),
 			slog.Any("error", err),
 		)
-		return 0, errors.ErrNotFound{Msg: "Invalid invitation code."}
+		return errors.ErrNotFound{Msg: "Invalid invitation code."}
 	}
 
 	if invCode.UsedAt != nil {
 		s.logger.Warn("attempted to use already-used invitation code",
 			slog.String("code", code),
 		)
-		return 0, errors.ErrBadRequest{Msg: "This invitation code has already been used."}
+		return errors.ErrBadRequest{Msg: "This invitation code has already been used."}
 	}
 
 	if invCode.ExpiresAt != nil && time.Now().After(*invCode.ExpiresAt) {
@@ -166,67 +151,41 @@ func (s *InvitationCodeService) ValidateAndUseInvitationCode(
 			slog.String("code", code),
 			slog.Time("expired_at", *invCode.ExpiresAt),
 		)
-		return 0, errors.ErrBadRequest{Msg: "This invitation code has expired."}
+		return errors.ErrBadRequest{Msg: "This invitation code has expired."}
 	}
 
-	err = s.invitationRepo.InvalidateCode(ctx, invCode.ID)
-	if err != nil {
+	if err = s.invitationRepo.InvalidateCode(ctx, invCode.ID); err != nil {
 		s.logger.Error("failed to invalidate invitation code",
 			slog.Int("code_id", invCode.ID),
 			slog.Any("error", err),
 		)
-		return 0, errors.ErrInternalServerError{Msg: "Failed to process invitation code."}
+		return errors.ErrInternalServerError{Msg: "Failed to process invitation code."}
 	}
 
 	s.logger.Info("invitation code used successfully",
 		slog.String("code", code),
-		slog.Int("professional_id", invCode.ProfessionalID),
+		slog.Int("created_by", invCode.CreatedBy),
 	)
-
-	return invCode.ProfessionalID, nil
-}
-
-func (s *InvitationCodeService) GetInvitationCodeByCode(
-	ctx context.Context,
-	code string,
-) (models.InvitationCode, error) {
-	invCode, err := s.invitationRepo.GetInvitationCodeByCode(ctx, code)
-	if err != nil {
-		s.logger.Warn("invitation code lookup failed",
-			slog.String("code", code),
-			slog.Any("error", err),
-		)
-		return models.InvitationCode{}, errors.ErrNotFound{Msg: "Invalid invitation code."}
-	}
-
-	if invCode.UsedAt != nil {
-		return models.InvitationCode{}, errors.ErrBadRequest{Msg: "This invitation code has already been used."}
-	}
-
-	if invCode.ExpiresAt != nil && time.Now().After(*invCode.ExpiresAt) {
-		return models.InvitationCode{}, errors.ErrBadRequest{Msg: "This invitation code has expired."}
-	}
-
-	return invCode, nil
+	return nil
 }
 
 func (s *InvitationCodeService) DeleteInvitationCode(
 	ctx context.Context,
-	jwtUserID int,
+	claims types.JWTClaims,
 	codeID int,
 ) error {
-	if err := s.checkUserIsProfessional(ctx, jwtUserID); err != nil {
+	if !claims.IsAdmin() {
+		return errors.ErrForbidden{Msg: "Only admins can delete invitation codes."}
+	}
+
+	if _, err := s.checkUserOwnsInvitationCode(ctx, claims.UserID, codeID); err != nil {
 		return err
 	}
 
-	if _, err := s.checkUserOwnsInvitationCode(ctx, jwtUserID, codeID); err != nil {
-		return err
-	}
-
-	err := s.invitationRepo.InvalidateCode(ctx, codeID)
-	if err != nil {
+	if err := s.invitationRepo.DeleteCode(ctx, codeID); err != nil {
 		s.logger.Error("failed to delete invitation code",
 			slog.Int("code_id", codeID),
+			slog.Int("jwt_user_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return errors.ErrInternalServerError{Msg: "Failed to delete invitation code."}
@@ -234,25 +193,7 @@ func (s *InvitationCodeService) DeleteInvitationCode(
 
 	s.logger.Info("invitation code deleted successfully",
 		slog.Int("code_id", codeID),
-		slog.Int("professional_id", jwtUserID),
+		slog.Int("jwt_user_id", claims.UserID),
 	)
-
-	return nil
-}
-
-func (s *InvitationCodeService) ReactivateCode(ctx context.Context, code string) error {
-	err := s.invitationRepo.ReactivateCode(ctx, code)
-	if err != nil {
-		s.logger.Error("failed to reactivate invitation code",
-			slog.String("code", code),
-			slog.Any("error", err),
-		)
-		return errors.ErrInternalServerError{Msg: "Failed to reactivate invitation code."}
-	}
-
-	s.logger.Warn("invitation code reactivated due to failed registration",
-		slog.String("code", code),
-	)
-
 	return nil
 }

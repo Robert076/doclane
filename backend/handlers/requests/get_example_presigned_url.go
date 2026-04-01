@@ -12,7 +12,7 @@ import (
 )
 
 func GetExamplePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
-	jwtUserID, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -25,7 +25,7 @@ func GetExamplePresignedURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	url, err := config.RequestService.GetExamplePresignedURL(r.Context(), jwtUserID, expectedDocID)
+	url, err := config.RequestService.GetExamplePresignedURL(r.Context(), *claims, expectedDocID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

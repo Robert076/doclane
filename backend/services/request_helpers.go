@@ -15,24 +15,16 @@ import (
 )
 
 func ValidateRequestInput(dto models.RequestDTOCreate) error {
-	if len(dto.Title) < 3 || len(dto.Title) > 30 {
-		return errors.ErrBadRequest{Msg: "Title must be between 3 and 40 characters."}
+	if dto.TemplateID == 0 {
+		return errors.ErrBadRequest{Msg: "A template must be provided."}
 	}
 
 	if dto.DueDate != nil && dto.DueDate.Before(time.Now()) {
 		return errors.ErrBadRequest{Msg: "Due date cannot be in the past."}
 	}
 
-	if dto.IsRecurring == true && dto.RecurrenceCron == nil {
-		return errors.ErrUnprocessableContent{Msg: "A request that is marked as recurring (is_recurring = true) should have a recurrence_cron field that is not null."}
-	}
-
-	if dto.IsScheduled == true && dto.ScheduledFor == nil {
-		return errors.ErrUnprocessableContent{Msg: "A request that is marked as scheduled (is_scheduled = true) should have a scheduled_for field that is not null."}
-	}
-
-	if len(dto.ExpectedDocuments) == 0 {
-		return errors.ErrUnprocessableContent{Msg: "Must provide at least 1 expected document for a new request."}
+	if dto.IsScheduled && dto.ScheduledFor == nil {
+		return errors.ErrUnprocessableContent{Msg: "A request marked as scheduled must have a scheduled_for field."}
 	}
 
 	return nil
@@ -83,7 +75,6 @@ func ValidatePatchDTO(dto models.RequestDTOPatch) error {
 }
 
 func ValidateRequestTemplateInput(template models.RequestTemplate) error {
-	fmt.Print(template.Title)
 	if len(template.Title) < 3 || len(template.Title) > 30 {
 		return errors.ErrBadRequest{Msg: "Title must be between 3 and 30 characters."}
 	}
@@ -122,38 +113,49 @@ func ComputeNextDueAt(dueDate *time.Time, cronExpr *string) *time.Time {
 	return &next
 }
 
-func (s *RequestService) checkUserIsProfessionalOfRequest(ctx context.Context, jwtUserID int, requestID int) (*models.RequestDTORead, error) {
+func (s *RequestService) checkUserCanEditRequest(ctx context.Context, claims types.JWTClaims, requestID int) (*models.RequestDTORead, error) {
 	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
 	if err != nil {
 		s.logger.Error("error getting request from db",
-			slog.Int("user_id", jwtUserID),
+			slog.Int("user_id", claims.UserID),
 			slog.Int("request_id", requestID),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
-	if req.ProfessionalID != jwtUserID {
-		return nil, errors.ErrForbidden{Msg: "You don't have access to the request."}
+	if claims.IsAdmin() {
+		return &req, nil
+	}
+
+	isAllowedToEdit := claims.DepartmentID != nil && *claims.DepartmentID == req.DepartmentID
+	if !isAllowedToEdit {
+		return nil, errors.ErrForbidden{Msg: "You don't have access to edit the request."}
 	}
 
 	return &req, nil
 }
 
-func (s *RequestService) checkUserIsParticipantOfRequest(ctx context.Context, jwtUserID int, requestID int) (*models.RequestDTORead, error) {
+func (s *RequestService) checkUserIsParticipantOfRequest(ctx context.Context, claims types.JWTClaims, requestID int) (*models.RequestDTORead, error) {
 	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
 	if err != nil {
 		s.logger.Error("error getting request from db",
-			slog.Int("user_id", jwtUserID),
+			slog.Int("user_id", claims.UserID),
 			slog.Int("request_id", requestID),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
-	if req.ProfessionalID != jwtUserID && req.ClientID != jwtUserID {
+	if claims.IsAdmin() {
+		return &req, nil
+	}
+
+	isDepartmentMatch := claims.DepartmentID != nil && *claims.DepartmentID == req.DepartmentID
+	isAssignee := req.Assignee == claims.UserID
+	if !isDepartmentMatch && !isAssignee {
 		s.logger.Warn("unauthorized access attempted for request",
-			slog.Int("user_id", jwtUserID),
+			slog.Int("user_id", claims.UserID),
 			slog.Int("request_id", requestID),
 		)
 		return nil, errors.ErrForbidden{Msg: "You don't have access to this request."}

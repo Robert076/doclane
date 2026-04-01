@@ -1,4 +1,4 @@
-package request_handler
+package department_handler
 
 import (
 	"net/http"
@@ -9,22 +9,14 @@ import (
 	"github.com/Robert076/doclane/backend/utils/config"
 )
 
-func GetRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
-	jwtUserId, err := utils.GetUserIDFromContext(r.Context())
+func GetAllDepartmentsHandler(w http.ResponseWriter, r *http.Request) {
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	q := r.URL.Query()
-	var searchPtr *string
-
-	// search
-	if s := q.Get("search"); s != "" {
-		searchPtr = &s
-	}
-
-	reqs, err := config.RequestService.GetRequestsByProfessional(r.Context(), jwtUserId, searchPtr)
+	departments, err := config.DepartmentService.GetAllDepartments(r.Context(), *claims)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -32,7 +24,7 @@ func GetRequestsByProfessionalHandler(w http.ResponseWriter, r *http.Request) {
 
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     "Professional document requests retrieved successfully.",
-		Data:    reqs,
+		Msg:     "Departments retrieved successfully.",
+		Data:    departments,
 	})
 }

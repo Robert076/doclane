@@ -12,7 +12,7 @@ import (
 )
 
 func GetExpectedDocumentTemplatesByRequestTemplateIDHandler(w http.ResponseWriter, r *http.Request) {
-	userID, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -25,7 +25,7 @@ func GetExpectedDocumentTemplatesByRequestTemplateIDHandler(w http.ResponseWrite
 		return
 	}
 
-	expectedDocumentRequestTemplates, err := config.RequestTemplateService.GetExpectedDocumentTemplatesByRequestTemplateID(r.Context(), userID, idInt)
+	expectedDocumentRequestTemplates, err := config.RequestTemplateService.GetExpectedDocumentTemplatesByRequestTemplateID(r.Context(), *claims, idInt)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

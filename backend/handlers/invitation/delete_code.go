@@ -12,7 +12,7 @@ import (
 )
 
 func DeleteInvitationCodeHandler(w http.ResponseWriter, r *http.Request) {
-	userId, err := utils.GetUserIDFromContext(r.Context())
+	claims, err := utils.GetClaimsFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -25,7 +25,7 @@ func DeleteInvitationCodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = config.InvitationCodeService.DeleteInvitationCode(r.Context(), userId, codeID)
+	err = config.InvitationCodeService.DeleteInvitationCode(r.Context(), *claims, codeID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

@@ -23,11 +23,7 @@ func ValidateInvitationCodeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invCode, err := config.InvitationCodeService.GetInvitationCodeByCode(
-		r.Context(),
-		dto.Code,
-	)
-	if err != nil {
+	if err := config.InvitationCodeService.ValidateAndUseInvitationCode(r.Context(), dto.Code); err != nil {
 		utils.WriteError(w, err)
 		return
 	}
@@ -35,6 +31,5 @@ func ValidateInvitationCodeHandler(w http.ResponseWriter, r *http.Request) {
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
 		Msg:     "Invitation code is valid.",
-		Data:    map[string]int{"professional_id": invCode.ProfessionalID},
 	})
 }
