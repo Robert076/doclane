@@ -4,13 +4,11 @@ import { useRouter } from "next/navigation";
 import { Request, RequestStatus, User } from "@/types";
 import StatusBadge from "../../Pages/RequestsComponents/StatusBadge";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import HighlightText from "../../OtherComponents/HighlightText/HighlightText";
 import { formatDate } from "@/lib/client/formatDate";
 import BaseDashboardCard from "@/components/CardComponents/BaseDashboardCard/BaseDashboardCard";
 import { useRequestActions } from "@/hooks/useRequestActions";
-import RequestBodyProfessional from "@/components/Pages/RequestsComponents/RequestBodyProfessional";
-import RequestBodyClient from "@/components/Pages/RequestsComponents/RequestBodyClient";
 import Modal from "@/components/Modals/Modal";
+import HighlightText from "@/components/OtherComponents/HighlightText/HighlightText";
 
 interface RequestProps {
         request: Request;
@@ -24,6 +22,7 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
         const { closeReq, reopenReq } = useRequestActions(request.id);
         const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
+        const canManage = user.role === "admin" || user.department_id !== null;
         const isOverdue = request.status === "overdue";
         const isScheduledFuture =
                 request.is_scheduled &&
@@ -45,7 +44,7 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                                                 className="scheduled-badge"
                                                                 title={`Programată pentru ${formatDate(request.scheduled_for!)}`}
                                                         >
-                                                                Scheduled
+                                                                Programată
                                                         </span>
                                                 )}
                                         </>
@@ -59,6 +58,7 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                 footer={
                                         <RequestFooter
                                                 archived={archived}
+                                                canManage={canManage}
                                                 onView={() =>
                                                         router.push(
                                                                 `/dashboard/requests/${request.id}`,
@@ -70,49 +70,56 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                 }
                                 isHighlighted={isOverdue}
                         >
-                                {user.role === "PROFESSIONAL" ? (
-                                        <RequestBodyProfessional
-                                                request={request}
-                                                searchTerm={searchTerm}
-                                        />
-                                ) : (
-                                        <RequestBodyClient
-                                                request={request}
-                                                searchTerm={searchTerm}
-                                        />
-                                )}
+                                <RequestBody request={request} searchTerm={searchTerm} />
                         </BaseDashboardCard>
 
                         <Modal
                                 isOpen={isCloseModalOpen}
                                 onClose={() => setIsCloseModalOpen(false)}
                                 onConfirm={closeReq}
-                                title={"Arhivează dosarul"}
+                                title="Arhivează dosarul"
                         >
-                                <ArchiveRequestContent title={request.title} />
+                                <p className="modal-text">
+                                        Eşti sigur că vrei să arhivezi dosarul{" "}
+                                        <strong>{request.title}</strong>?
+                                </p>
+                                <p className="modal-subtext">
+                                        Această acțiune va marca dosarul ca arhivat.
+                                        Solicitantul nu va mai putea adăuga documente. Acțiunea
+                                        este reversibilă.
+                                </p>
                         </Modal>
                 </>
         );
 }
 
-function ArchiveRequestContent({ title }: { title: string }) {
+function RequestBody({ request, searchTerm }: { request: Request; searchTerm?: string }) {
         return (
-                <>
-                        <p className="modal-text">
-                                Eşti sigur că vrei să arhivezi dosarul <strong>{title}</strong>
-                                ?
+                <div className="request-body">
+                        <p className="request-body-assignee">
+                                <HighlightText
+                                        text={`${request.assignee_first_name} ${request.assignee_last_name}`}
+                                        search={searchTerm}
+                                />
                         </p>
-
-                        <p className="modal-subtext">
-                                Această acțiune va marca dosarul ca arhivat. Solicitantul nu va
-                                mai putea adăuga documente. Acțiunea este reversibilă.
+                        <p className="request-body-email">
+                                <HighlightText
+                                        text={request.assignee_email}
+                                        search={searchTerm}
+                                />
                         </p>
-                </>
+                        {request.due_date && (
+                                <p className="request-body-due">
+                                        Termen: {formatDate(request.due_date)}
+                                </p>
+                        )}
+                </div>
         );
 }
 
 interface RequestFooterProps {
         archived?: boolean;
+        canManage: boolean;
         onView: () => void;
         onClose: () => void;
         onReopen: () => void;
@@ -120,19 +127,20 @@ interface RequestFooterProps {
 
 const RequestFooter: React.FC<RequestFooterProps> = ({
         archived,
+        canManage,
         onView,
         onClose,
         onReopen,
 }) => {
         if (archived) {
-                return (
+                return canManage ? (
                         <ButtonPrimary
                                 text="Redeschide dosar"
                                 variant="ghost"
                                 fullWidth
                                 onClick={onReopen}
                         />
-                );
+                ) : null;
         }
 
         return (
@@ -143,12 +151,14 @@ const RequestFooter: React.FC<RequestFooterProps> = ({
                                 fullWidth
                                 onClick={onView}
                         />
-                        <ButtonPrimary
-                                text="Închide dosar"
-                                variant="ghost"
-                                fullWidth
-                                onClick={onClose}
-                        />
+                        {canManage && (
+                                <ButtonPrimary
+                                        text="Închide dosar"
+                                        variant="ghost"
+                                        fullWidth
+                                        onClick={onClose}
+                                />
+                        )}
                 </>
         );
 };

@@ -1,11 +1,11 @@
 "use client";
-import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import { ExpectedDocumentTemplate } from "@/types";
 import { useState } from "react";
 import toast from "react-hot-toast";
 import "./TemplateDetailsExpectedDocuments.css";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import { presignTemplateExample } from "@/lib/api/templates";
+import { MdFileOpen } from "react-icons/md";
 
 export default function TemplateDetailsExpectedDocuments({
         documents,
@@ -14,21 +14,29 @@ export default function TemplateDetailsExpectedDocuments({
         documents: ExpectedDocumentTemplate[];
         templateID: number;
 }) {
-        const [isLoadingExample, setIsLoadingExample] = useState<boolean>(false);
+        const [loadingId, setLoadingId] = useState<number | null>(null);
+
         const handleViewExample = async (id: number) => {
-                setIsLoadingExample(true);
+                setLoadingId(id);
+                const loadingToast = toast.loading("Se deschide exemplul...");
+
                 try {
                         const res = await presignTemplateExample(templateID, id);
-                        console.log(res);
-                        if (!res.success) {
-                                toast.error("Nu s-a putut deschide exemplul.");
-                                return;
+
+                        if (!res.success || !res.data) {
+                                throw new Error(
+                                        res.error ||
+                                                res.message ||
+                                                "Nu s-a putut încărca exemplul.",
+                                );
                         }
-                        window.open(res.data?.url, "_blank");
-                } catch {
-                        toast.error("Nu s-a putut deschide exemplul.");
+
+                        toast.dismiss(loadingToast);
+                        window.open(res.data, "_blank", "noopener,noreferrer");
+                } catch (error: unknown) {
+                        toast.error(error instanceof Error ? error.message : "Eroare necunoscuta", { id: loadingToast });
                 } finally {
-                        setIsLoadingExample(false);
+                        setLoadingId(null);
                 }
         };
 
@@ -37,20 +45,36 @@ export default function TemplateDetailsExpectedDocuments({
                         <SectionTitle text="Documente şablon" />
                         {documents.map((document: ExpectedDocumentTemplate) => (
                                 <div className="template-expected-document" key={document.id}>
-                                        <div className="title">{document.title}</div>
-                                        {document.example_file_path && (
-                                                <div className="view-button-template">
-                                                        <ButtonPrimary
-                                                                variant="primary"
-                                                                text="Vezi exemplu"
-                                                                onClick={() => {
+                                        <div className="template-expected-document-info">
+                                                <span className="template-expected-document-title">
+                                                        {document.title}
+                                                </span>
+                                                {document.description && (
+                                                        <span className="template-expected-document-description">
+                                                                {document.description}
+                                                        </span>
+                                                )}
+                                                {document.example_file_path && (
+                                                        <button
+                                                                type="button"
+                                                                className="expected-document-slot-example-btn"
+                                                                onClick={() =>
                                                                         handleViewExample(
                                                                                 document.id,
-                                                                        );
-                                                                }}
-                                                        />
-                                                </div>
-                                        )}
+                                                                        )
+                                                                }
+                                                                disabled={
+                                                                        loadingId ===
+                                                                        document.id
+                                                                }
+                                                        >
+                                                                <MdFileOpen />
+                                                                {loadingId === document.id
+                                                                        ? "Se încarcă..."
+                                                                        : "Vezi exemplu"}
+                                                        </button>
+                                                )}
+                                        </div>
                                 </div>
                         ))}
                 </div>

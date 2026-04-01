@@ -5,30 +5,22 @@ export default function middleware(request: NextRequest) {
         const token = request.cookies.get("auth_cookie")?.value;
         const { pathname } = request.nextUrl;
 
-        if (
-                !token &&
-                pathname !== "/login" &&
-                pathname !== "/register-client" &&
-                pathname !== "/register-professional"
-        ) {
+        if (!token && pathname !== "/login" && pathname !== "/register") {
                 const url = request.nextUrl.clone();
                 url.pathname = "/login";
                 url.searchParams.set("callbackUrl", pathname);
-                console.log(1);
                 return NextResponse.redirect(url);
         }
 
         if (token && pathname === "/login") {
                 const url = request.nextUrl.clone();
                 url.pathname = "/dashboard/requests";
-                console.log(2);
                 return NextResponse.redirect(url);
         }
 
         if (token && pathname === "/") {
                 const url = request.nextUrl.clone();
                 url.pathname = "/dashboard/requests";
-                console.log(3);
                 return NextResponse.redirect(url);
         }
 

@@ -1,7 +1,6 @@
 "use server";
 import { APIResponse, User } from "@/types";
 import { doclaneHTTPHelper } from "./core";
-import { getRequestById } from "./requests";
 
 export async function getCurrentUser(): Promise<APIResponse<User>> {
         return doclaneHTTPHelper("/users/me", {
@@ -9,34 +8,39 @@ export async function getCurrentUser(): Promise<APIResponse<User>> {
         });
 }
 
-export async function getUserById(userId: string): Promise<APIResponse> {
+export async function getUserById(userId: number): Promise<APIResponse<User>> {
         return doclaneHTTPHelper(`/users/${userId}`, {
                 method: "GET",
         });
 }
 
-export async function getClientsByProfessional(): Promise<APIResponse<User[]>> {
-        return doclaneHTTPHelper(`/users/my-clients`, { method: "GET" });
+export async function getUsers(params?: {
+        search?: string;
+        limit?: number;
+        offset?: number;
+        orderBy?: string;
+        order?: "asc" | "desc";
+}): Promise<APIResponse<User[]>> {
+        const query = new URLSearchParams();
+        if (params?.search) query.append("search", params.search);
+        if (params?.limit) query.append("limit", params.limit.toString());
+        if (params?.offset) query.append("offset", params.offset.toString());
+        if (params?.orderBy) query.append("order_by", params.orderBy);
+        if (params?.order) query.append("order", params.order);
+
+        const qs = query.toString();
+        return doclaneHTTPHelper(`/users${qs ? `?${qs}` : ""}`, { method: "GET" });
 }
 
 export async function deactivateUser(userId: number): Promise<APIResponse> {
         return doclaneHTTPHelper(`/users/deactivate/${userId}`, {
                 method: "POST",
-                revalidate: "/dashboard/clients",
+                revalidate: "/dashboard/users",
         });
 }
 
-export async function sendEmail(requestId: number): Promise<APIResponse> {
-        const responseRequest = await getRequestById(requestId.toString());
-        if (responseRequest.success === false || !responseRequest.data) {
-                return responseRequest;
-        }
-
-        const request = responseRequest.data;
-
-        const response = await doclaneHTTPHelper(`/users/notify/${request.client_id}`, {
+export async function notifyUser(userId: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/users/notify/${userId}`, {
                 method: "POST",
         });
-
-        return response;
 }

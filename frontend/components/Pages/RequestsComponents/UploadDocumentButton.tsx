@@ -2,14 +2,13 @@
 import { useRef, useState } from "react";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import { useRouter } from "next/navigation";
-
 import { toast } from "react-hot-toast";
-import { UI_TEXT } from "@/locales/ro";
 import { uploadDocument } from "@/lib/api/requests";
 
 const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];
+
 interface Props {
-        requestId: string;
+        requestId: number;
         expectedDocumentId?: number;
 }
 
@@ -41,9 +40,9 @@ export default function UploadDocumentButton({ requestId, expectedDocumentId }: 
                                         throw err;
                                 }),
                         {
-                                loading: "Uploading document...",
-                                success: "Document uploaded successfully!",
-                                error: (err) => `Error: ${err.message}`,
+                                loading: "Se încarcă documentul...",
+                                success: "Document încărcat cu succes!",
+                                error: (err) => `Eroare: ${err.message}`,
                         },
                 );
         };
@@ -58,11 +57,7 @@ export default function UploadDocumentButton({ requestId, expectedDocumentId }: 
                                 accept={ALLOWED_EXTENSIONS.join(",")}
                         />
                         <ButtonPrimary
-                                text={
-                                        isUploading
-                                                ? UI_TEXT.buttons.uploadDocument.inProgress
-                                                : UI_TEXT.buttons.uploadDocument.normal
-                                }
+                                text={isUploading ? "Se încarcă..." : "Încarcă document"}
                                 variant="primary"
                                 fullWidth
                                 disabled={isUploading}

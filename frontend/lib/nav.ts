@@ -3,17 +3,13 @@ import {
         MdDashboard,
         MdPeople,
         MdSettings,
-        MdHome,
         MdArchive,
-        MdHelp,
         MdHelpCenter,
-        MdAddBox,
         MdEditDocument,
-        MdEditRoad,
-        MdEditSquare,
-        MdUnarchive,
-        MdOutlineArchive,
         MdOutlineSendAndArchive,
+        MdApartment,
+        MdHome,
+        MdInbox,
 } from "react-icons/md";
 
 export interface NavItem {
@@ -23,29 +19,28 @@ export interface NavItem {
 }
 
 export const SIDEBAR_CONFIG: Record<string, NavItem[]> = {
-        PROFESSIONAL: [
+        admin: [
                 { label: "Dosare", href: "/dashboard/requests", icon: MdDashboard },
                 {
                         label: "Dosare arhivate",
                         href: "/dashboard/archived-requests",
                         icon: MdArchive,
                 },
-                {
-                        label: "Şabloane",
-                        href: "/dashboard/templates",
-                        icon: MdEditDocument,
-                },
+                { label: "Şabloane", href: "/dashboard/templates", icon: MdEditDocument },
                 {
                         label: "Şabloane arhivate",
                         href: "/dashboard/archived-templates",
                         icon: MdOutlineSendAndArchive,
                 },
-                { label: "Solicitanți", href: "/dashboard/clients", icon: MdPeople },
+                { label: "Utilizatori", href: "/dashboard/users", icon: MdPeople },
+                { label: "Departamente", href: "/dashboard/departments", icon: MdApartment },
                 { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
                 { label: "Ajutor", href: "/dashboard/help", icon: MdHelpCenter },
         ],
-        CLIENT: [
-                { label: "My Portal", href: "/dashboard/requests", icon: MdHome },
-                { label: "Settings", href: "/dashboard/settings", icon: MdSettings },
+        member: [
+                { label: "Portal", href: "/dashboard/requests", icon: MdHome },
+                { label: "Şabloane", href: "/dashboard/templates", icon: MdEditDocument },
+                { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
+                { label: "Ajutor", href: "/dashboard/help", icon: MdHelpCenter },
         ],
 };

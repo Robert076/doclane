@@ -6,7 +6,7 @@ import RejectDocumentModal from "./RejectDocumentModal";
 import { ExpectedDocumentStatus } from "@/types";
 
 interface DocumentSlotActionsProps {
-        isProfessional: boolean;
+        canManage: boolean;
         status: ExpectedDocumentStatus;
         hasFiles: boolean;
         isLoading: boolean;
@@ -19,7 +19,7 @@ interface DocumentSlotActionsProps {
 }
 
 export default function DocumentSlotActions({
-        isProfessional,
+        canManage,
         status,
         hasFiles,
         isLoading,
@@ -32,18 +32,17 @@ export default function DocumentSlotActions({
 }: DocumentSlotActionsProps) {
         const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
 
-        if (!isProfessional) {
-                if (status === "approved") return null;
+        if (!canManage) {
+                if (status === "accepted") return null;
                 return (
                         <UploadDocumentButton
-                                requestId={requestId.toString()}
+                                requestId={requestId}
                                 expectedDocumentId={expectedDocumentId}
                         />
                 );
         }
 
-        // Professional views
-        if (status === "approved" || status === "rejected") {
+        if (status === "accepted" || status === "rejected") {
                 return (
                         <ButtonPrimary
                                 text={isLoading ? "..." : "Anulează"}

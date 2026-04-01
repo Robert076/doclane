@@ -18,7 +18,6 @@ export async function doclaneHTTPHelper<T = unknown>(
         endpoint: string,
         options: HTTPOptions,
 ): Promise<APIResponse<T>> {
-        console.log(BACKEND_URL);
         const { method = "GET", body, formData, revalidate } = options;
         const fetchUrl = `${BACKEND_URL}${endpoint}`;
 

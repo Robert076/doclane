@@ -2,22 +2,25 @@
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import Input from "@/components/InputComponents/Input";
 import TextArea from "@/components/InputComponents/TextArea";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./CreateTemplateForm.css";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import CronInput from "@/components/Pages/ClientsComponents/CronInput";
-import { RecurrenceUnit } from "@/types";
+import { RecurrenceUnit, Department } from "@/types";
 import RadioInput from "@/components/InputComponents/RadioInput";
+import { createTemplate } from "@/lib/api/templates";
+import { getDepartments } from "@/lib/api/departments";
+import { buildCronExpression } from "@/lib/cron";
+import CronInput from "@/components/InputComponents/CronInput";
 import ExpectedDocumentsList, {
         ExpectedDocumentInput,
-} from "@/components/Pages/ClientsComponents/ExpectedDocumentsList";
-import { addExpectedDocumentTemplate, createTemplate } from "@/lib/api/templates";
-import { buildCronExpression } from "@/lib/cron";
+} from "@/components/InputComponents/ExpectedDocumentList";
 
 const CreateTemplateForm = () => {
         const [title, setTitle] = useState("");
         const [description, setDescription] = useState("");
+        const [departmentID, setDepartmentID] = useState<number | null>(null);
+        const [departments, setDepartments] = useState<Department[]>([]);
         const [isNoneSelected, setIsNoneSelected] = useState(true);
         const [isRecurring, setIsRecurring] = useState(false);
         const [unit, setUnit] = useState<RecurrenceUnit>("month");
@@ -28,9 +31,19 @@ const CreateTemplateForm = () => {
         ]);
         const router = useRouter();
 
+        useEffect(() => {
+                getDepartments().then((res) => {
+                        if (res.success && res.data) setDepartments(res.data);
+                });
+        }, []);
+
         const validateForm = () => {
                 if (!title) {
-                        toast.error("Completează titlul şablonului.");
+                        toast.error("Completează titlul șablonului.");
+                        return false;
+                }
+                if (!departmentID) {
+                        toast.error("Selectează un departament.");
                         return false;
                 }
                 if (expectedDocuments.some((doc) => !doc.title)) {
@@ -49,31 +62,23 @@ const CreateTemplateForm = () => {
                                 const res = await createTemplate({
                                         title,
                                         description: description || undefined,
+                                        department_id: departmentID!,
                                         is_recurring: isRecurring,
                                         recurrence_cron: isRecurring
                                                 ? buildCronExpression(unit, hour, minute)
                                                 : undefined,
+                                        expected_documents: expectedDocuments.map((ed) => ({
+                                                title: ed.title,
+                                                description: ed.description,
+                                                example_file: ed.exampleFile,
+                                        })),
                                 });
-
-                                if (!res.success || !res.data) throw new Error(res.error);
-
-                                const templateID = res.data;
-
-                                for (const ed of expectedDocuments) {
-                                        const addRes = await addExpectedDocumentTemplate(
-                                                templateID,
-                                                ed.title,
-                                                ed.description,
-                                                ed.exampleFile,
-                                        );
-                                        if (!addRes.success) throw new Error(addRes.error);
-                                }
-
+                                if (!res.success) throw new Error(res.error);
                                 router.push("/dashboard/templates");
                         })(),
                         {
-                                loading: "Se creează şablonul...",
-                                success: "Şablon creat cu succes!",
+                                loading: "Se creează șablonul...",
+                                success: "Șablon creat cu succes!",
                                 error: (err) => `Eroare: ${err.message}`,
                         },
                 );
@@ -82,17 +87,34 @@ const CreateTemplateForm = () => {
         return (
                 <form className="add-form" onSubmit={handleSubmit}>
                         <Input
-                                label="Titlul şablonului"
-                                placeholder="Scrie titlul şablonului..."
+                                label="Titlul șablonului"
+                                placeholder="Scrie titlul șablonului..."
                                 value={title}
                                 onChange={(e: any) => setTitle(e.target.value)}
                         />
                         <TextArea
-                                label="Descrierea şablonului"
-                                placeholder="Scrie descrierea şablonului..."
+                                label="Descrierea șablonului"
+                                placeholder="Scrie descrierea șablonului..."
                                 value={description}
                                 onChange={(e: any) => setDescription(e.target.value)}
                         />
+                        <div className="form-field">
+                                <label className="form-label">Departament</label>
+                                <select
+                                        className="form-select"
+                                        value={departmentID ?? ""}
+                                        onChange={(e) =>
+                                                setDepartmentID(Number(e.target.value))
+                                        }
+                                >
+                                        <option value="">Selectează departamentul...</option>
+                                        {departments.map((d) => (
+                                                <option key={d.id} value={d.id}>
+                                                        {d.name}
+                                                </option>
+                                        ))}
+                                </select>
+                        </div>
                         <div className="radio-inputs-time">
                                 <RadioInput
                                         isChecked={isNoneSelected}
@@ -100,7 +122,7 @@ const CreateTemplateForm = () => {
                                                 setIsNoneSelected(e.target.checked);
                                                 setIsRecurring(false);
                                         }}
-                                        label="Fără recurenţă"
+                                        label="Fără recurență"
                                 />
                                 <RadioInput
                                         isChecked={isRecurring}
@@ -127,7 +149,7 @@ const CreateTemplateForm = () => {
                         />
                         <div className="button-group">
                                 <ButtonPrimary
-                                        text="Crează şablon"
+                                        text="Creează șablon"
                                         onClick={handleSubmit}
                                         type="button"
                                 />

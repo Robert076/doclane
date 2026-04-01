@@ -6,12 +6,11 @@ import { DocumentFile, ExpectedDocument } from "@/types";
 import ExpectedDocumentSlot from "../ExpectedDocumentSlot/ExpectedDocumentSlot";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import PaginationFooter from "./_components/PaginationFooter";
-import { UI_TEXT } from "@/locales/ro";
 
 interface FileSectionProps {
         files: DocumentFile[];
         expectedDocuments: ExpectedDocument[];
-        requestId: string;
+        requestId: number;
 }
 
 const ITEMS_PER_PAGE = 2;
@@ -29,29 +28,28 @@ export default function FileSection({
         if (expectedDocuments.length === 0) {
                 return (
                         <NotFound
-                                text="No expected documents found."
-                                subtext="The professional has not added any expected documents yet."
+                                text="Nu există documente așteptate."
+                                subtext="Dosarul nu are niciun document atașat."
                         />
                 );
         }
 
         return (
                 <section className="details-card files-section">
-                        <SectionTitle text={UI_TEXT.request.details.files} />
+                        <SectionTitle text="Documente" />
                         <div className="files-stack">
-                                {currentDocs.map((ed) => {
-                                        const uploadedFiles = files.filter(
-                                                (f) => f.expected_document_id === ed.id,
-                                        );
-                                        return (
-                                                <ExpectedDocumentSlot
-                                                        key={ed.id}
-                                                        expectedDocument={ed}
-                                                        requestId={requestId}
-                                                        uploadedFiles={uploadedFiles}
-                                                />
-                                        );
-                                })}
+                                {currentDocs.map((ed) => (
+                                        <ExpectedDocumentSlot
+                                                key={ed.id}
+                                                expectedDocument={ed}
+                                                requestId={requestId}
+                                                uploadedFiles={files.filter(
+                                                        (f) =>
+                                                                f.expected_document_id ===
+                                                                ed.id,
+                                                )}
+                                        />
+                                ))}
                         </div>
                         {totalPages > 1 && (
                                 <PaginationFooter

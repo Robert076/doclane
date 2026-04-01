@@ -1,19 +1,18 @@
 import { updateExpectedDocumentStatus } from "@/lib/api/requests";
 import { useState } from "react";
-
-type DocumentStatus = "approved" | "rejected" | "uploaded" | "pending";
+import { ExpectedDocumentStatus } from "@/types";
 
 export function useDocumentStatus(
-        expectedDocumentId: string,
-        requestId: string,
+        expectedDocumentId: number,
+        requestId: number,
         hasFiles: boolean,
 ) {
         const [isLoading, setIsLoading] = useState(false);
 
-        const updateStatus = async (status: DocumentStatus, reason?: string) => {
+        const updateStatus = async (status: ExpectedDocumentStatus, reason?: string) => {
                 setIsLoading(true);
                 await updateExpectedDocumentStatus(
-                        +expectedDocumentId,
+                        expectedDocumentId,
                         status,
                         requestId,
                         reason,
@@ -21,7 +20,7 @@ export function useDocumentStatus(
                 setIsLoading(false);
         };
 
-        const approve = () => updateStatus("approved");
+        const approve = () => updateStatus("accepted");
         const reject = (reason: string) => updateStatus("rejected", reason);
         const reset = () => updateStatus(hasFiles ? "uploaded" : "pending");
 

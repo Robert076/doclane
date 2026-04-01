@@ -3,46 +3,41 @@ import "./TemplateDetailsActions.css";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import toast from "react-hot-toast";
-import { Template, User } from "@/types";
+import { Template } from "@/types";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import AssignClientModal from "./AssignClientModal";
+import { useUser } from "@/context/UserContext";
 import EditTemplateModal from "./EditTemplateModal";
-import { instantiateTemplate, patchTemplate } from "@/lib/api/templates";
+import { patchTemplate } from "@/lib/api/templates";
+import { createRequest } from "@/lib/api/requests";
 
-export default function TemplateActions({
+export default function TemplateDetailsActions({
         id,
-        clients,
         template,
 }: {
-        id: string;
-        clients: User[];
+        id: number;
         template: Template;
 }) {
-        const [isInstantiateModalOpen, setIsInstantiateModalOpen] = useState(false);
         const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+        const [isSubmitting, setIsSubmitting] = useState(false);
         const router = useRouter();
+        const user = useUser();
+        const canManage = user.role === "admin" || user.department_id !== null;
 
-        const handleInstantiateConfirm = async (client: User) => {
-                toast.promise(
-                        instantiateTemplate(+id, {
-                                client_id: +client.id,
-                                is_scheduled: false,
-                        }),
-                        {
-                                loading: "Se generează dosarul...",
-                                success: (res) => {
-                                        if (!res.success) throw new Error(res.error);
-                                        router.push("/dashboard/templates");
-                                        return "Dosar generat cu succes!";
-                                },
-                                error: (err) => `Eroare: ${err.message}`,
-                        },
-                );
+        const handleSubmitRequest = async () => {
+                setIsSubmitting(true);
+                const response = await createRequest({ template_id: id });
+                setIsSubmitting(false);
+                if (response.success) {
+                        toast.success("Cerere depusă cu succes!");
+                        router.push("/dashboard/requests");
+                } else {
+                        toast.error(response.message);
+                }
         };
 
         const handleEditConfirm = async (data: { title?: string; description?: string }) => {
-                toast.promise(patchTemplate(+id, data), {
+                toast.promise(patchTemplate(id, data), {
                         loading: "Se salvează...",
                         success: (res) => {
                                 if (!res.success) throw new Error(res.error);
@@ -58,26 +53,29 @@ export default function TemplateActions({
                         <aside className="template-actions">
                                 <SectionTitle text="Acțiuni" />
                                 <div className="template-action-buttons">
-                                        <ButtonPrimary
-                                                text="Generează dosar"
-                                                fullWidth={true}
-                                                onClick={() => setIsInstantiateModalOpen(true)}
-                                        />
-                                        <ButtonPrimary
-                                                text="Editează șablon"
-                                                fullWidth={true}
-                                                variant="ghost"
-                                                onClick={() => setIsEditModalOpen(true)}
-                                        />
+                                        {canManage ? (
+                                                <ButtonPrimary
+                                                        text="Editează șablon"
+                                                        fullWidth
+                                                        variant="ghost"
+                                                        onClick={() =>
+                                                                setIsEditModalOpen(true)
+                                                        }
+                                                />
+                                        ) : (
+                                                <ButtonPrimary
+                                                        text={
+                                                                isSubmitting
+                                                                        ? "Se trimite..."
+                                                                        : "Depune cerere"
+                                                        }
+                                                        fullWidth
+                                                        disabled={isSubmitting}
+                                                        onClick={handleSubmitRequest}
+                                                />
+                                        )}
                                 </div>
                         </aside>
-
-                        <AssignClientModal
-                                isOpen={isInstantiateModalOpen}
-                                onClose={() => setIsInstantiateModalOpen(false)}
-                                onConfirm={handleInstantiateConfirm}
-                                clients={clients}
-                        />
                         <EditTemplateModal
                                 isOpen={isEditModalOpen}
                                 onClose={() => setIsEditModalOpen(false)}

@@ -1,10 +1,9 @@
 import { notFound } from "next/navigation";
-import TemplateDetailsHeader from "../../../../components/Pages/TemplatesComponents/TemplateDetailsHeader";
-import TemplateActions from "../../../../components/Pages/TemplatesComponents/TemplateDetailsActions";
-import TemplateDetailsSummary from "../../../../components/Pages/TemplatesComponents/TemplateDetailsSummary";
-import TemplateDetailsExpectedDocuments from "../../../../components/Pages/TemplatesComponents/TemplateDetailsExpectedDocuments";
+import TemplateDetailsHeader from "@/components/Pages/TemplatesComponents/TemplateDetailsHeader";
+import TemplateDetailsActions from "@/components/Pages/TemplatesComponents/TemplateDetailsActions";
+import TemplateDetailsSummary from "@/components/Pages/TemplatesComponents/TemplateDetailsSummary";
+import TemplateDetailsExpectedDocuments from "@/components/Pages/TemplatesComponents/TemplateDetailsExpectedDocuments";
 import { getTemplateByID, getExpectedDocumentTemplatesByTemplate } from "@/lib/api/templates";
-import { getClientsByProfessional } from "@/lib/api/users";
 
 interface PageProps {
         params: Promise<{ id: string }>;
@@ -13,21 +12,12 @@ interface PageProps {
 export default async function TemplateDetailsPage({ params }: PageProps) {
         const { id } = await params;
 
-        const [templateResponse, clientsResponse, expectedDocumentsResponse] =
-                await Promise.all([
-                        getTemplateByID(+id),
-                        getClientsByProfessional(),
-                        getExpectedDocumentTemplatesByTemplate(+id),
-                ]);
+        const [templateResponse, expectedDocumentsResponse] = await Promise.all([
+                getTemplateByID(+id),
+                getExpectedDocumentTemplatesByTemplate(+id),
+        ]);
 
-        if (
-                !templateResponse ||
-                !clientsResponse ||
-                !templateResponse.data ||
-                !clientsResponse.data ||
-                !expectedDocumentsResponse ||
-                !expectedDocumentsResponse.data
-        ) {
+        if (!templateResponse?.data || !expectedDocumentsResponse?.data) {
                 notFound();
         }
 
@@ -40,15 +30,11 @@ export default async function TemplateDetailsPage({ params }: PageProps) {
                                 <div className="main-content">
                                         <TemplateDetailsSummary data={data} />
                                         <TemplateDetailsExpectedDocuments
-                                                templateID={templateResponse.data.id}
+                                                templateID={data.id}
                                                 documents={expectedDocumentsResponse.data}
                                         />
                                 </div>
-                                <TemplateActions
-                                        id={id}
-                                        clients={clientsResponse.data}
-                                        template={data}
-                                />
+                                <TemplateDetailsActions id={+id} template={data} />
                         </div>
                 </div>
         );

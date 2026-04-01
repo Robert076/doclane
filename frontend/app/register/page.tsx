@@ -2,10 +2,10 @@
 import { useState } from "react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
-import RegisterClientForm from "@/components/AuthComponents/RegisterForm/RegisterClientForm";
-import { signUpClient } from "@/lib/api/auth";
+import { register } from "@/lib/api/auth";
+import RegisterClientForm from "@/components/AuthComponents/RegisterForm/RegisterForm";
 
-const LoginPage = () => {
+export default function RegisterPage() {
         const [email, setEmail] = useState("");
         const [password, setPassword] = useState("");
         const [invitationCode, setInvitationCode] = useState("");
@@ -14,22 +14,21 @@ const LoginPage = () => {
         const router = useRouter();
 
         const handleRegister = async () => {
-                const loadingToastID = toast.loading("Signing up...");
-
-                const response = await signUpClient(
+                const loadingToastID = toast.loading("Se creează contul...");
+                const response = await register(
                         email,
                         password,
                         invitationCode,
                         firstName,
                         lastName,
                 );
-
                 toast.dismiss(loadingToastID);
+
                 if (response.success) {
-                        toast.success("Signed up successfully!");
-                        router.push("/dashboard/requests");
+                        toast.success("Cont creat cu succes!");
+                        router.push("/login");
                 } else {
-                        toast.error("Failed to sign up: " + response.message);
+                        toast.error(response.message);
                 }
         };
 
@@ -52,6 +51,4 @@ const LoginPage = () => {
                         </div>
                 </div>
         );
-};
-
-export default LoginPage;
+}

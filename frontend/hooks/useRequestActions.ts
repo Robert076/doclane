@@ -1,6 +1,5 @@
 import { closeRequest, reopenRequest } from "@/lib/api/requests";
 import { useState } from "react";
-
 import toast from "react-hot-toast";
 
 export const useRequestActions = (requestId: number) => {
@@ -13,9 +12,9 @@ export const useRequestActions = (requestId: number) => {
                         success: (res) => {
                                 setLoading(false);
                                 if (!res.success) throw new Error(res.message);
-                                return "Dosar închis cu success.";
+                                return "Dosar închis cu succes.";
                         },
-                        error: (err) => {
+                        error: () => {
                                 setLoading(false);
                                 return "Ceva nu a mers bine.";
                         },
@@ -31,7 +30,7 @@ export const useRequestActions = (requestId: number) => {
                                 if (!res.success) throw new Error(res.message);
                                 return "Dosar redeschis.";
                         },
-                        error: (err) => {
+                        error: () => {
                                 setLoading(false);
                                 return "Ceva nu a mers bine.";
                         },

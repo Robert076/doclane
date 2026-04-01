@@ -1,8 +1,7 @@
 "use client";
 import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import "./RegisterForm.css";
-import { MdLogin, MdLock } from "react-icons/md";
-import Separator from "@/components/OtherComponents/Separators/Separator/Separator";
+import { MdLogin } from "react-icons/md";
 import Logo from "@/components/OtherComponents/Logo/Logo";
 import Input from "@/components/InputComponents/Input";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
@@ -12,7 +11,7 @@ import { useRouter } from "next/navigation";
 import LoginFormFooter from "../LoginFormFooter/LoginFormFooter";
 import LoginFormHeader from "../LoginFormHeader/LoginFormHeader";
 
-interface RegisterClientFormProps {
+interface RegisterFormProps {
         email: string;
         setEmail: Dispatch<SetStateAction<string>>;
         password: string;
@@ -26,7 +25,7 @@ interface RegisterClientFormProps {
         handleRegister: () => void;
 }
 
-const RegisterClientForm: React.FC<RegisterClientFormProps> = ({
+const RegisterForm: React.FC<RegisterFormProps> = ({
         email,
         setEmail,
         password,
@@ -42,10 +41,7 @@ const RegisterClientForm: React.FC<RegisterClientFormProps> = ({
         const router = useRouter();
         const [showErrors, setShowErrors] = useState(false);
 
-        const isValidEmail = (email: string) => {
-                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-                return emailRegex.test(email);
-        };
+        const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
         const isFormValid = useMemo(() => {
                 return (
@@ -68,75 +64,71 @@ const RegisterClientForm: React.FC<RegisterClientFormProps> = ({
         return (
                 <div className="register-form">
                         <LoginFormHeader
-                                title="Welcome to your Portal"
-                                subtitle="Please enter your details to sign up to Doclane."
+                                title="Bun venit pe Portal"
+                                subtitle="Introduceți datele pentru a vă crea un cont pe Doclane."
                         />
                         <Input
                                 label="Email:"
                                 value={email}
                                 onChange={(e: any) => setEmail(e.target.value)}
-                                placeholder="Your email address here"
+                                placeholder="Adresa ta de email"
                         />
                         {showErrors && !isValidEmail(email) && (
-                                <p className="register-form-error">
-                                        Please enter a valid email
-                                </p>
+                                <p className="register-form-error">Introdu un email valid.</p>
                         )}
                         <Input
-                                label="Password:"
-                                placeholder="Your password here"
+                                label="Parolă:"
+                                placeholder="Parola ta"
                                 value={password}
                                 onChange={(e: any) => setPassword(e.target.value)}
                                 isPassword={true}
                         />
                         {showErrors && password.length === 0 && (
-                                <p className="register-form-error">Password is required</p>
+                                <p className="register-form-error">Parola este obligatorie.</p>
                         )}
                         <Input
-                                label="First name:"
-                                placeholder="Your first name here"
+                                label="Prenume:"
+                                placeholder="Prenumele tău"
                                 value={firstName}
                                 onChange={(e: any) => setFirstName(e.target.value)}
                         />
                         {showErrors && firstName.trim().length < 3 && (
                                 <p className="register-form-error">
-                                        First name must be at least 3 characters
+                                        Prenumele trebuie să aibă cel puțin 3 caractere.
                                 </p>
                         )}
                         <Input
-                                label="Last name:"
-                                placeholder="Your last name here"
+                                label="Nume:"
+                                placeholder="Numele tău"
                                 value={lastName}
                                 onChange={(e: any) => setLastName(e.target.value)}
                         />
                         {showErrors && lastName.trim().length < 3 && (
                                 <p className="register-form-error">
-                                        Last name must be at least 3 characters
+                                        Numele trebuie să aibă cel puțin 3 caractere.
                                 </p>
                         )}
                         <Input
-                                label="Invitation code:"
-                                placeholder="Your invitation code here"
+                                label="Cod de invitație:"
+                                placeholder="Codul tău de invitație"
                                 value={invitationCode}
                                 onChange={(e: any) => setInvitationCode(e.target.value)}
                         />
                         {showErrors && invitationCode.trim().length === 0 && (
                                 <p className="register-form-error">
-                                        Invitation code is required
+                                        Codul de invitație este obligatoriu.
                                 </p>
                         )}
-                        <ButtonPrimary text="Sign up" onClick={handleSubmit} />
-                        <SeparatorWithText text="Already have an account?" />
+                        <ButtonPrimary text="Înregistrează-te" onClick={handleSubmit} />
+                        <SeparatorWithText text="Ai deja un cont?" />
                         <ClickableCard
-                                text="Log in"
+                                text="Autentifică-te"
                                 icon={<MdLogin size={20} />}
-                                onClick={() => {
-                                        router.push("/login");
-                                }}
+                                onClick={() => router.push("/login")}
                         />
                         <LoginFormFooter />
                 </div>
         );
 };
 
-export default RegisterClientForm;
+export default RegisterForm;

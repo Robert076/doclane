@@ -6,29 +6,24 @@ import { useUser } from "@/context/UserContext";
 import { SIDEBAR_CONFIG } from "@/lib/nav";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import Separator from "@/components/OtherComponents/Separators/Separator/Separator";
-import "./Sidebar.css";
 import Logo from "@/components/OtherComponents/Logo/Logo";
 import { UI_TEXT } from "@/locales/ro";
 import { logout } from "@/lib/api/auth";
+import "./Sidebar.css";
 
 export default function Sidebar() {
         const pathname = usePathname();
         const user = useUser();
-        const links = SIDEBAR_CONFIG[user.role] || [];
+        const links = SIDEBAR_CONFIG[user.role] ?? [];
+
         const [isOpen, setIsOpen] = useState(false);
 
-        // Close sidebar on route change (mobile)
         useEffect(() => {
                 setIsOpen(false);
         }, [pathname]);
 
-        // Prevent body scroll when sidebar is open on mobile
         useEffect(() => {
-                if (isOpen) {
-                        document.body.style.overflow = "hidden";
-                } else {
-                        document.body.style.overflow = "";
-                }
+                document.body.style.overflow = isOpen ? "hidden" : "";
                 return () => {
                         document.body.style.overflow = "";
                 };
@@ -36,7 +31,6 @@ export default function Sidebar() {
 
         return (
                 <>
-                        {/* Hamburger button — only visible on mobile */}
                         <button
                                 className="sidebar-hamburger"
                                 onClick={() => setIsOpen((prev) => !prev)}
@@ -48,7 +42,6 @@ export default function Sidebar() {
                                 <span className={`hamburger-bar ${isOpen ? "open" : ""}`} />
                         </button>
 
-                        {/* Overlay — only visible on mobile when sidebar is open */}
                         {isOpen && (
                                 <div
                                         className="sidebar-overlay"
@@ -83,13 +76,16 @@ export default function Sidebar() {
                                                 );
                                         })}
                                 </nav>
+
                                 <div className="sidebar-footer">
                                         <div className="sidebar-user-info">
                                                 <p className="sidebar-user-email">
                                                         {user.email}
                                                 </p>
-                                                <span className="sidebar-user-role text-3xl">
-                                                        {user.role.toLowerCase()}
+                                                <span className="sidebar-user-role">
+                                                        {user.role === "admin"
+                                                                ? "Administrator"
+                                                                : "Membru"}
                                                 </span>
                                         </div>
                                         <ButtonPrimary

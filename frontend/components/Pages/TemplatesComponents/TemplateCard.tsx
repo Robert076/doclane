@@ -1,18 +1,18 @@
 "use client";
 import React, { useState } from "react";
 import { Template } from "@/types";
-
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import HighlightText from "@/components/OtherComponents/HighlightText/HighlightText";
 import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/client/formatDate";
-import { UI_TEXT } from "@/locales/ro";
 import toast from "react-hot-toast";
 import BaseDashboardCard from "@/components/CardComponents/BaseDashboardCard/BaseDashboardCard";
 import { archiveTemplate, deleteTemplate, unarchiveTemplate } from "@/lib/api/templates";
+import { createRequest } from "@/lib/api/requests";
 import DeleteTemplateModal from "./DeleteTemplateModal";
-import "./TemplateCard.css";
 import Modal from "@/components/Modals/Modal";
+import { useUser } from "@/context/UserContext";
+import "./TemplateCard.css";
 
 interface TemplateCardProps {
         template: Template;
@@ -22,75 +22,97 @@ interface TemplateCardProps {
 
 const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archived }) => {
         const router = useRouter();
-        const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-        const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false); // ✅ nou
+        const user = useUser();
+        const canManage = user.role === "admin" || user.department_id !== null;
 
-        const handleView = () => {
-                router.push(`/dashboard/templates/${template.id}`);
+        const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+        const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
+        const [isSubmitting, setIsSubmitting] = useState(false);
+
+        const handleView = () => router.push(`/dashboard/templates/${template.id}`);
+
+        const handleSubmitRequest = async () => {
+                setIsSubmitting(true);
+                const response = await createRequest({ template_id: template.id });
+                setIsSubmitting(false);
+                if (response.success) {
+                        toast.success("Cerere depusă cu succes!");
+                        router.push("/dashboard/requests");
+                } else {
+                        toast.error(response.message);
+                }
         };
 
         const handleArchive = async () => {
-                const loadingToastID = toast.loading(UI_TEXT.common.loading);
+                const id = toast.loading("Se arhivează...");
                 const response = await archiveTemplate(template.id);
-                toast.dismiss(loadingToastID);
-
-                if (response.success) {
-                        toast.success("Şablon arhivat cu success!");
-                } else {
-                        toast.error(response.message);
-                }
+                toast.dismiss(id);
+                response.success
+                        ? toast.success("Șablon arhivat cu succes!")
+                        : toast.error(response.message);
         };
 
         const handleUnarchive = async () => {
-                const loadingToastID = toast.loading(UI_TEXT.common.loading);
+                const id = toast.loading("Se restaurează...");
                 const response = await unarchiveTemplate(template.id);
-                toast.dismiss(loadingToastID);
-
-                if (response.success) {
-                        toast.success("Şablon restaurat cu success!");
-                } else {
-                        toast.error(response.message);
-                }
+                toast.dismiss(id);
+                response.success
+                        ? toast.success("Șablon restaurat cu succes!")
+                        : toast.error(response.message);
         };
 
         const handleDelete = async () => {
-                const loadingToastID = toast.loading(UI_TEXT.common.loading);
+                const id = toast.loading("Se șterge...");
                 const response = await deleteTemplate(template.id);
-                toast.dismiss(loadingToastID);
-
-                if (response.success) {
-                        toast.success("Şablon şters definitiv cu success!");
-                } else {
-                        toast.error(response.message);
-                }
+                toast.dismiss(id);
+                response.success
+                        ? toast.success("Șablon șters definitiv cu succes!")
+                        : toast.error(response.message);
         };
 
         const footer =
                 archived === false ? (
                         <>
-                                <ButtonPrimary
-                                        text="Vezi şablon"
-                                        variant="ghost"
-                                        fullWidth
-                                        onClick={handleView}
-                                />
-                                <ButtonPrimary
-                                        text="Arhivează şablon"
-                                        variant="ghost"
-                                        fullWidth
-                                        onClick={() => setIsArchiveModalOpen(true)} // ✅ modificat
-                                />
+                                {canManage && (
+                                        <ButtonPrimary
+                                                text="Vezi șablon"
+                                                variant="ghost"
+                                                fullWidth
+                                                onClick={handleView}
+                                        />
+                                )}
+                                {!canManage && (
+                                        <ButtonPrimary
+                                                text={
+                                                        isSubmitting
+                                                                ? "Se trimite..."
+                                                                : "Depune cerere"
+                                                }
+                                                variant="primary"
+                                                fullWidth
+                                                disabled={isSubmitting}
+                                                onClick={handleSubmitRequest}
+                                        />
+                                )}
+                                {canManage && (
+                                        <ButtonPrimary
+                                                text="Arhivează șablon"
+                                                variant="ghost"
+                                                fullWidth
+                                                onClick={() => setIsArchiveModalOpen(true)}
+                                        />
+                                )}
                         </>
                 ) : archived === true ? (
                         <>
                                 <ButtonPrimary
-                                        text="Restaurare şablon"
+                                        text="Restaurare șablon"
                                         variant="ghost"
                                         fullWidth
                                         onClick={handleUnarchive}
                                 />
                                 <ButtonPrimary
-                                        text="Şterge definitiv"
+                                        text="Șterge definitiv"
                                         variant="ghost"
                                         fullWidth
                                         onClick={() => setIsDeleteModalOpen(true)}
@@ -118,11 +140,10 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                                         {formatDate(template.created_at)}
                                                 </span>
                                         </div>
-
                                         {template.description && (
                                                 <div className="template-info-item">
                                                         <span className="template-label">
-                                                                {UI_TEXT.common.description}
+                                                                Descriere
                                                         </span>
                                                         <span className="template-value">
                                                                 <HighlightText
@@ -141,12 +162,12 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                 isOpen={isArchiveModalOpen}
                                 onClose={() => setIsArchiveModalOpen(false)}
                                 onConfirm={handleArchive}
-                                title="Arhivează şablon"
+                                title="Arhivează șablon"
                         >
                                 <p>
-                                        Eşti sigur că vrei să arhivezi şablonul{" "}
+                                        Ești sigur că vrei să arhivezi șablonul{" "}
                                         <strong>„{template.title}"</strong>? Îl vei putea
-                                        restaura ulterior din secţiunea de arhivă.
+                                        restaura ulterior din secțiunea de arhivă.
                                 </p>
                         </Modal>
 

@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import DetailCardsActionSidebar from "@/components/Pages/RequestsComponents/RequestDetailsActions";
+import RequestDetailsActions from "@/components/Pages/RequestsComponents/RequestDetailsActions";
 import RequestDetailsHeader from "@/components/Pages/RequestsComponents/RequestDetailsHeader";
 import RequestTabs from "@/components/Pages/RequestsComponents/RequestTabs";
 import { getRequestById, getFilesByRequestId, getCommentsByRequest } from "@/lib/api/requests";
@@ -10,33 +10,33 @@ interface PageProps {
 
 export default async function RequestDetailsPage({ params }: PageProps) {
         const { id } = await params;
-        const [request, filesResponse, commentsResponse] = await Promise.all([
-                getRequestById(id),
-                getFilesByRequestId(id),
-                getCommentsByRequest(+id),
+        const requestId = parseInt(id);
+
+        const [requestResponse, filesResponse, commentsResponse] = await Promise.all([
+                getRequestById(requestId),
+                getFilesByRequestId(requestId),
+                getCommentsByRequest(requestId),
         ]);
 
-        if (!request || !request.data) {
-                notFound();
-        }
+        if (!requestResponse.success || !requestResponse.data) notFound();
 
-        const data = request.data;
-        const files = filesResponse?.data || [];
-        const comments = commentsResponse?.data || [];
+        const request = requestResponse.data;
+        const files = filesResponse?.data ?? [];
+        const comments = commentsResponse?.data ?? [];
 
         return (
                 <div className="details-container">
-                        <RequestDetailsHeader data={data} />
+                        <RequestDetailsHeader data={request} />
                         <div className="details-grid">
                                 <div className="main-content">
                                         <RequestTabs
-                                                data={data}
+                                                data={request}
                                                 files={files}
                                                 comments={comments}
-                                                requestId={id}
+                                                requestId={requestId}
                                         />
                                 </div>
-                                <DetailCardsActionSidebar id={id} />
+                                <RequestDetailsActions assignee={request.assignee} />
                         </div>
                 </div>
         );

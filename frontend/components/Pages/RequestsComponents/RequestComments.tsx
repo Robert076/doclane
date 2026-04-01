@@ -6,7 +6,7 @@ import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPri
 import TextArea from "@/components/InputComponents/TextArea";
 import PaginationFooter from "@/components/FileSectionComponents/FileSection/_components/PaginationFooter";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
-import { RequestCommentDTO } from "@/types";
+import { RequestComment } from "@/types";
 import { addComment } from "@/lib/api/requests";
 import { formatDate } from "@/lib/client/formatDate";
 import toast from "react-hot-toast";
@@ -15,8 +15,8 @@ import "./RequestComments.css";
 const COMMENTS_PER_PAGE = 5;
 
 interface RequestCommentsProps {
-        comments: RequestCommentDTO[];
-        requestId: string;
+        comments: RequestComment[];
+        requestId: number;
 }
 
 export default function RequestComments({
@@ -43,7 +43,7 @@ export default function RequestComments({
                         return;
                 }
                 startTransition(async () => {
-                        const res = await addComment(+requestId, trimmed);
+                        const res = await addComment(requestId, trimmed);
                         if (res.success) {
                                 toast.success("Comentariu adăugat.");
                                 setText("");
@@ -57,7 +57,6 @@ export default function RequestComments({
         return (
                 <div className="comments-section">
                         <SectionTitle text="Comentarii" />
-
                         <div className="comment-compose">
                                 <TextArea
                                         value={text}
@@ -114,7 +113,6 @@ export default function RequestComments({
                                                         </li>
                                                 ))}
                                         </ul>
-
                                         {totalPages > 1 && (
                                                 <PaginationFooter
                                                         currentPage={currentPage}

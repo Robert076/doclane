@@ -6,24 +6,32 @@ export interface APIResponse<T = unknown> {
 }
 
 export interface User {
-        id: string;
+        id: number;
         email: string;
         role: UserRole;
-        professional_id?: string | null;
+        department_id?: number | null;
         is_active: boolean;
         created_at: string;
         updated_at: string;
+        last_notified?: string | null;
         first_name: string;
         last_name: string;
 }
 
+export interface Department {
+        id: number;
+        name: string;
+        created_at: string;
+        updated_at: string;
+}
+
 export interface Request {
         id: number;
-        professional_id: number;
-        client_id: number;
-        client_email: string;
-        client_first_name: string;
-        client_last_name: string;
+        assignee: number;
+        assignee_email: string;
+        assignee_first_name: string;
+        assignee_last_name: string;
+        department_id: number;
         title: string;
         description?: string | null;
         due_date?: string | null;
@@ -34,7 +42,7 @@ export interface Request {
         next_due_at?: string | null;
         last_uploaded_at?: string | null;
         is_closed: boolean;
-        template_id?: number | null;
+        template_id: number;
         status: RequestStatus;
         created_at: string;
         updated_at: string;
@@ -45,9 +53,13 @@ export interface Template {
         id: number;
         title: string;
         description?: string | null;
+        department_id: number;
+        department_name: string;
         is_recurring: boolean;
         recurrence_cron?: string | null;
         created_by: number;
+        author_first_name?: string | null;
+        author_last_name?: string | null;
         created_at: string;
         updated_at: string;
         is_closed: boolean;
@@ -62,6 +74,17 @@ export interface ExpectedDocumentTemplate {
         example_mime_type?: string | null;
 }
 
+export interface ExpectedDocument {
+        id: number;
+        document_request_id: number;
+        title: string;
+        description: string;
+        status: ExpectedDocumentStatus;
+        rejection_reason?: string | null;
+        example_file_path?: string | null;
+        example_mime_type?: string | null;
+}
+
 export interface DocumentFile {
         id: number;
         document_request_id: number;
@@ -71,24 +94,13 @@ export interface DocumentFile {
         file_size: number;
         expected_document_id: number;
         uploaded_at: string;
-        s3_version_id?: string;
+        s3_version_id?: string | null;
         uploaded_by: number;
         uploaded_by_first_name: string;
         uploaded_by_last_name: string;
 }
 
-export interface ExpectedDocument {
-        id: number;
-        document_request_id: number;
-        title: string;
-        description: string;
-        status: ExpectedDocumentStatus;
-        rejection_reason: string;
-        example_file_path?: string | null;
-        example_mime_type?: string | null;
-}
-
-interface RequestCommentDTO {
+export interface RequestComment {
         id: number;
         request_id: number;
         user_id: number;
@@ -99,15 +111,18 @@ interface RequestCommentDTO {
         user_last_name: string;
 }
 
-export type RequestStatus = "pending" | "uploaded" | "overdue";
-export type UserRole = "CLIENT" | "PROFESSIONAL";
-
-export interface PresignedURL {
-        url: string;
+export interface InvitationCode {
+        id: number;
+        code: string;
+        created_by: number;
+        used_at?: string | null;
+        expires_at?: string | null;
+        created_at: string;
 }
 
-export const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];
-
+export type RequestStatus = "pending" | "uploaded" | "overdue";
+export type UserRole = "admin" | "member";
+export type ExpectedDocumentStatus = "accepted" | "rejected" | "uploaded" | "pending";
 export type RecurrenceUnit = "day" | "week" | "month" | "year";
 
-export type ExpectedDocumentStatus = "approved" | "rejected" | "uploaded" | "pending";
+export const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];

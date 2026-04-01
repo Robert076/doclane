@@ -1,50 +1,34 @@
 "use client";
-
 import { Request } from "@/types";
 import Link from "next/link";
-import "./RequestDetailsHeader.css";
 import { MdEdit, MdCheck, MdClose } from "react-icons/md";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import { useUser } from "@/context/UserContext";
+import { patchRequest } from "@/lib/api/requests";
+import "./RequestDetailsHeader.css";
 
-export default function DetailsHeader({ data }: { data: Request }) {
+export default function RequestDetailsHeader({ data }: { data: Request }) {
+        const user = useUser();
         const [isEditing, setIsEditing] = useState(false);
         const [title, setTitle] = useState(data.title);
 
+        const canEdit = user.role === "admin" || user.department_id !== null;
+
         const handleSave = async () => {
                 if (!title.trim()) {
-                        toast.error("Title cannot be empty");
+                        toast.error("Titlul nu poate fi gol.");
                         return;
                 }
 
-                const updatePromise = fetch(`/api/backend/document-requests/${data.id}`, {
-                        method: "PATCH",
-                        credentials: "include",
-                        headers: {
-                                "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ title }),
-                }).then(async (res) => {
-                        if (!res.ok) {
-                                const errorData = await res.json();
-                                throw new Error(errorData.error || "Failed to update title");
-                        }
-                        return res.json();
-                });
-
-                toast.promise(updatePromise, {
-                        loading: "Updating title...",
-                        success: "Title updated successfully!",
-                        error: (err) => `Failed: ${err.message}`,
-                });
-
-                updatePromise
-                        .then(() => {
-                                setIsEditing(false);
-                        })
-                        .catch(() => {
-                                setTitle(data.title);
-                        });
+                const response = await patchRequest(data.id, { title });
+                if (response.success) {
+                        toast.success("Titlul a fost actualizat.");
+                        setIsEditing(false);
+                } else {
+                        toast.error(response.message);
+                        setTitle(data.title);
+                }
         };
 
         const handleCancel = () => {
@@ -91,12 +75,16 @@ export default function DetailsHeader({ data }: { data: Request }) {
                                 ) : (
                                         <div className="title-display-container">
                                                 <h1>{title}</h1>
-                                                <button
-                                                        onClick={() => setIsEditing(true)}
-                                                        className="icon-button edit-button"
-                                                >
-                                                        <MdEdit />
-                                                </button>
+                                                {canEdit && (
+                                                        <button
+                                                                onClick={() =>
+                                                                        setIsEditing(true)
+                                                                }
+                                                                className="icon-button edit-button"
+                                                        >
+                                                                <MdEdit />
+                                                        </button>
+                                                )}
                                         </div>
                                 )}
                         </div>

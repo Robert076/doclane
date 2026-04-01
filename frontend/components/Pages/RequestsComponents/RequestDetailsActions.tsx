@@ -1,31 +1,21 @@
 "use client";
-import { useState } from "react";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import toast from "react-hot-toast";
 import { UI_TEXT } from "@/locales/ro";
+import { notifyUser } from "@/lib/api/users";
+import { useUser } from "@/context/UserContext";
 import "./RequestDetailsActions.css";
-import { sendEmail } from "@/lib/api/users";
-import { addComment } from "@/lib/api/requests"; // you'll add this
 
-export default function RequestDetailsActions({ id }: { id: string }) {
-        const [comment, setComment] = useState("");
-        const [submitting, setSubmitting] = useState(false);
+export default function RequestDetailsActions({ assignee }: { assignee: number }) {
+        const user = useUser();
 
-        const handleAddComment = async () => {
-                const trimmed = comment.trim();
-                if (trimmed.length < 3) {
-                        toast.error("Comentariul trebuie să aibă cel puțin 3 caractere.");
-                        return;
-                }
-                setSubmitting(true);
-                const response = await addComment(+id, trimmed);
-                setSubmitting(false);
+        const handleNotification = async () => {
+                const response = await notifyUser(assignee);
                 if (response.success) {
-                        toast.success("Comentariu adăugat.");
-                        setComment("");
+                        toast.success(response.message, { duration: 4000 });
                 } else {
-                        toast.error(response.message);
+                        toast.error(response.message, { duration: 4000 });
                 }
         };
 
@@ -33,21 +23,14 @@ export default function RequestDetailsActions({ id }: { id: string }) {
                 <aside className="actions-sidebar details-card">
                         <SectionTitle text="Acțiuni" />
                         <div className="action-buttons">
-                                <ButtonPrimary
-                                        text={UI_TEXT.buttons.sendNotification.normal}
-                                        fullWidth={true}
-                                        onClick={() => handleNotification(+id)}
-                                />
+                                {(user.role === "admin" || user.department_id !== null) && (
+                                        <ButtonPrimary
+                                                text={UI_TEXT.buttons.sendNotification.normal}
+                                                fullWidth={true}
+                                                onClick={handleNotification}
+                                        />
+                                )}
                         </div>
                 </aside>
         );
 }
-
-const handleNotification = async (id: number) => {
-        const response = await sendEmail(id);
-        if (response.success === true) {
-                toast.success(response.message, { duration: 4000 });
-        } else {
-                toast.error(response.message, { duration: 4000 });
-        }
-};

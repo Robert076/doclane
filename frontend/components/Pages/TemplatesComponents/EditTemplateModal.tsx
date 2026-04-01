@@ -5,7 +5,7 @@ import Modal from "@/components/Modals/Modal";
 import Input from "@/components/InputComponents/Input";
 import TextArea from "@/components/InputComponents/TextArea";
 import RadioInput from "@/components/InputComponents/RadioInput";
-import CronInput from "@/components/Pages/ClientsComponents/CronInput";
+import CronInput from "@/components/InputComponents/CronInput";
 import { buildCronExpression, parseCronExpression } from "@/lib/cron";
 
 interface EditTemplateModalProps {
@@ -48,7 +48,6 @@ export default function EditTemplateModal({
                 if (description !== (template.description ?? ""))
                         payload.description = description;
                 if (isRecurring !== template.is_recurring) payload.is_recurring = isRecurring;
-
                 if (isRecurring) {
                         const cron = buildCronExpression(unit, hour, minute);
                         if (cron !== template.recurrence_cron) payload.recurrence_cron = cron;
@@ -89,7 +88,7 @@ export default function EditTemplateModal({
                                                 setIsNoneSelected(e.target.checked);
                                                 setIsRecurring(false);
                                         }}
-                                        label="Fără recurenţă"
+                                        label="Fără recurență"
                                 />
                                 <RadioInput
                                         isChecked={isRecurring}

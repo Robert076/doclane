@@ -1,17 +1,65 @@
 import { doclaneHTTPHelper } from "@/lib/api/core";
-import { APIResponse, Template, ExpectedDocumentTemplate, PresignedURL } from "@/types";
+import { APIResponse, Template, ExpectedDocumentTemplate } from "@/types";
 
-export async function createTemplate(payload: object): Promise<APIResponse<number>> {
+export async function createTemplate(payload: {
+        title: string;
+        description?: string;
+        department_id: number;
+        is_recurring: boolean;
+        recurrence_cron?: string;
+        expected_documents: Array<{
+                title: string;
+                description: string;
+                example_file?: File;
+        }>;
+}): Promise<APIResponse<number>> {
+        const formData = new FormData();
+        formData.append("title", payload.title);
+        if (payload.description) formData.append("description", payload.description);
+        formData.append("department_id", payload.department_id.toString());
+        formData.append("is_recurring", payload.is_recurring.toString());
+        if (payload.recurrence_cron)
+                formData.append("recurrence_cron", payload.recurrence_cron);
+
+        payload.expected_documents.forEach((doc, i) => {
+                formData.append(`expected_documents[${i}][title]`, doc.title);
+                formData.append(`expected_documents[${i}][description]`, doc.description);
+                if (doc.example_file) {
+                        formData.append(
+                                `expected_documents[${i}][example_file]`,
+                                doc.example_file,
+                        );
+                }
+        });
+
         return doclaneHTTPHelper("/templates", {
                 method: "POST",
-                body: payload,
+                formData,
                 revalidate: "/dashboard/templates",
         });
 }
 
 export async function getTemplates(): Promise<APIResponse<Template[]>> {
-        return doclaneHTTPHelper("/templates", {
-                method: "GET",
+        return doclaneHTTPHelper("/templates", { method: "GET" });
+}
+
+export async function getTemplateByID(id: number): Promise<APIResponse<Template>> {
+        return doclaneHTTPHelper(`/templates/${id}`, { method: "GET" });
+}
+
+export async function patchTemplate(
+        id: number,
+        payload: {
+                title?: string;
+                description?: string;
+                is_recurring?: boolean;
+                recurrence_cron?: string;
+        },
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/templates/${id}`, {
+                method: "PATCH",
+                body: payload,
+                revalidate: `/dashboard/templates/${id}`,
         });
 }
 
@@ -32,43 +80,7 @@ export async function unarchiveTemplate(id: number): Promise<APIResponse> {
 export async function deleteTemplate(id: number): Promise<APIResponse> {
         return doclaneHTTPHelper(`/templates/${id}`, {
                 method: "DELETE",
-                revalidate: "dashboard/archived-templates",
-        });
-}
-
-export async function instantiateTemplate(
-        templateID: number,
-        payload: {
-                client_id: number;
-                is_scheduled: boolean;
-                scheduled_for?: string;
-                due_date?: string;
-        },
-): Promise<APIResponse> {
-        return doclaneHTTPHelper(`/templates/${templateID}/instantiate`, {
-                method: "POST",
-                body: payload,
-                revalidate: "/dashboard/requests",
-        });
-}
-
-export async function addExpectedDocumentTemplate(
-        templateID: number,
-        title: string,
-        description: string,
-        exampleFile?: File,
-): Promise<APIResponse> {
-        const formData = new FormData();
-        formData.append("title", title);
-        formData.append("description", description);
-        if (exampleFile) {
-                formData.append("example_file", exampleFile);
-        }
-
-        return doclaneHTTPHelper(`/templates/${templateID}/expected-documents`, {
-                method: "POST",
-                formData,
-                revalidate: `/dashboard/templates/${templateID}`,
+                revalidate: "/dashboard/templates",
         });
 }
 
@@ -96,29 +108,9 @@ export async function deleteExpectedDocumentTemplate(
 export async function presignTemplateExample(
         templateID: number,
         docID: number,
-): Promise<APIResponse<PresignedURL>> {
+): Promise<APIResponse<string>> {
         return doclaneHTTPHelper(
                 `/templates/${templateID}/expected-documents/${docID}/presign-example`,
                 { method: "GET" },
         );
-}
-
-export async function getTemplateByID(id: number): Promise<APIResponse<Template>> {
-        return doclaneHTTPHelper(`/templates/${id}`, { method: "GET" });
-}
-
-export async function patchTemplate(
-        id: number,
-        payload: {
-                title?: string;
-                description?: string;
-                is_recurring?: boolean;
-                recurrence_cron?: string;
-        },
-): Promise<APIResponse> {
-        return doclaneHTTPHelper(`/templates/${id}`, {
-                method: "PATCH",
-                body: payload,
-                revalidate: `/dashboard/templates/${id}`,
-        });
 }

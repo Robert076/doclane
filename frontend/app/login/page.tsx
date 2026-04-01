@@ -4,6 +4,7 @@ import "./style.css";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import LoginForm from "@/components/AuthComponents/LoginForm/LoginForm";
+import { login } from "@/lib/api/auth";
 
 const LoginPage = () => {
         const [email, setEmail] = useState("");
@@ -11,19 +12,11 @@ const LoginPage = () => {
         const router = useRouter();
 
         const handleLogin = async () => {
-                const loginPromise = fetch("/api/backend/auth/login", {
-                        method: "POST",
-                        credentials: "include",
-                        headers: {
-                                "Content-Type": "application/json",
-                        },
-                        body: JSON.stringify({ email, password }),
-                }).then(async (res) => {
-                        if (!res.ok) {
-                                const errorData = await res.json();
-                                throw new Error(errorData.error || "Login failed");
+                const loginPromise = login(email, password).then((res) => {
+                        if (!res.success) {
+                                throw new Error(res.message || "Login failed");
                         }
-                        return res.json();
+                        return res;
                 });
 
                 toast.promise(loginPromise, {
@@ -32,9 +25,8 @@ const LoginPage = () => {
                         error: (err) => `Login failed: ${err.message}`,
                 });
 
-                loginPromise.then((_) => {
-                        router.push("/dashboard/requests");
-                });
+                await loginPromise;
+                router.push("/dashboard/requests");
         };
 
         return (

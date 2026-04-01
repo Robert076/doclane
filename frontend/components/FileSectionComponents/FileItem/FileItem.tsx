@@ -46,11 +46,10 @@ export default function FileItem({ file }: FileItemProps) {
                                 );
                         }
 
-                        // Închidem toast-ul de loading și deschidem tab-ul
                         toast.dismiss(loadingToast);
-                        window.open(res.data.url, "_blank", "noopener,noreferrer");
-                } catch (error: any) {
-                        toast.error(error.message, { id: loadingToast });
+                        window.open(res.data, "_blank", "noopener,noreferrer");
+                } catch (error: unknown) {
+                        toast.error(error instanceof Error ? error.message : "Eroare necunoscuta", { id: loadingToast });
                 } finally {
                         setIsRequesting(false);
                 }

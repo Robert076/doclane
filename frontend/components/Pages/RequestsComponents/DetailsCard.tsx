@@ -3,36 +3,35 @@ import "./DetailsCard.css";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import StatusBadge from "@/components/Pages/RequestsComponents/StatusBadge";
 import { formatDate } from "@/lib/client/formatDate";
-import { UI_TEXT } from "@/locales/ro";
 import CardRow from "@/components/CardRow/CardRow";
 
 export default function DetailsCard({ data }: { data: Request }) {
         const rows = [
                 {
-                        label: UI_TEXT.roles.clientSingular,
-                        value: data.client_email,
+                        label: "Solicitant:",
+                        value: `${data.assignee_first_name} ${data.assignee_last_name} (${data.assignee_email})`,
                         isDescription: false,
                 },
                 {
-                        label: `${UI_TEXT.common.createdAt}:`,
+                        label: "Creat la:",
                         value: formatDate(data.created_at),
                         isDescription: false,
                 },
                 {
-                        label: UI_TEXT.common.status,
+                        label: "Status:",
                         value: <StatusBadge status={data.status as RequestStatus} />,
                 },
         ];
 
         if (data.due_date) {
                 rows.push({
-                        label: UI_TEXT.common.dueDate,
+                        label: "Termen limită:",
                         value: formatDate(data.due_date),
                         isDescription: false,
                 });
         } else if (data.next_due_at) {
                 rows.push({
-                        label: UI_TEXT.common.nextDueAt,
+                        label: "Următorul termen:",
                         value: formatDate(data.next_due_at),
                         isDescription: false,
                 });
@@ -40,7 +39,7 @@ export default function DetailsCard({ data }: { data: Request }) {
 
         if (data.description) {
                 rows.push({
-                        label: UI_TEXT.common.description,
+                        label: "Descriere:",
                         value: data.description,
                         isDescription: true,
                 });
@@ -48,8 +47,7 @@ export default function DetailsCard({ data }: { data: Request }) {
 
         return (
                 <section className="details-card">
-                        <SectionTitle text={UI_TEXT.request.details.title} />
-
+                        <SectionTitle text="Detalii dosar" />
                         {rows.map((row, index) => (
                                 <CardRow
                                         key={index}

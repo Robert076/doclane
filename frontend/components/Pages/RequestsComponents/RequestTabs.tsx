@@ -3,7 +3,7 @@ import { useState } from "react";
 import DetailsCard from "./DetailsCard";
 import FileSection from "@/components/FileSectionComponents/FileSection/FileSection";
 import RequestComments from "./RequestComments";
-import { Request, DocumentFile, RequestCommentDTO } from "@/types";
+import { Request, DocumentFile, RequestComment } from "@/types";
 import "./RequestTabs.css";
 
 type Tab = "details" | "files" | "comments";
@@ -11,8 +11,8 @@ type Tab = "details" | "files" | "comments";
 interface RequestTabsProps {
         data: Request;
         files: DocumentFile[];
-        comments: RequestCommentDTO[];
-        requestId: string;
+        comments: RequestComment[];
+        requestId: number;
 }
 
 export default function RequestTabs({ data, files, comments, requestId }: RequestTabsProps) {
@@ -40,14 +40,13 @@ export default function RequestTabs({ data, files, comments, requestId }: Reques
                                         Comentarii
                                 </button>
                         </div>
-
                         <div className="tab-content">
                                 {active === "details" && <DetailsCard data={data} />}
                                 {active === "files" && (
                                         <FileSection
                                                 files={files}
                                                 expectedDocuments={
-                                                        data.expected_documents || []
+                                                        data.expected_documents ?? []
                                                 }
                                                 requestId={requestId}
                                         />

@@ -1,42 +1,80 @@
 "use server";
 import {
         APIResponse,
+        ALLOWED_EXTENSIONS,
         DocumentFile,
         Request,
-        PresignedURL,
-        UserRole,
-        RequestCommentDTO,
+        RequestComment,
 } from "@/types";
 import { doclaneHTTPHelper } from "./core";
 
-export async function getRequests(role: UserRole): Promise<APIResponse<Request[]>> {
-        return doclaneHTTPHelper(`/document-requests/${role.toLowerCase()}/my-requests`, {
+export async function getAllRequests(search?: string): Promise<APIResponse<Request[]>> {
+        const qs = search ? `?search=${encodeURIComponent(search)}` : "";
+        return doclaneHTTPHelper(`/requests${qs}`, { method: "GET" });
+}
+
+export async function getRequestsByAssignee(
+        assigneeId: number,
+): Promise<APIResponse<Request[]>> {
+        return doclaneHTTPHelper(`/requests/assignee/${assigneeId}`, {
                 method: "GET",
         });
 }
 
-export async function getRequestById(requestId: string): Promise<APIResponse<Request>> {
-        return doclaneHTTPHelper(`/document-requests/${requestId}`, {
+export async function getRequestsByDepartment(
+        departmentId: number,
+): Promise<APIResponse<Request[]>> {
+        return doclaneHTTPHelper(`/requests/department/${departmentId}`, {
                 method: "GET",
+        });
+}
+
+export async function getRequestById(requestId: number): Promise<APIResponse<Request>> {
+        return doclaneHTTPHelper(`/requests/${requestId}`, {
+                method: "GET",
+        });
+}
+
+export async function createRequest(payload: {
+        template_id: number;
+        is_scheduled?: boolean;
+        scheduled_for?: string;
+        due_date?: string;
+}): Promise<APIResponse<number>> {
+        return doclaneHTTPHelper("/requests", {
+                method: "POST",
+                body: payload,
+                revalidate: "/dashboard/requests",
+        });
+}
+
+export async function forwardRequestToDepartment(
+        requestId: number,
+        departmentId: number,
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/requests/forward/${requestId}`, {
+                method: "POST",
+                body: { department_id: departmentId },
+                revalidate: `/dashboard/requests/${requestId}`,
         });
 }
 
 export async function closeRequest(requestID: number): Promise<APIResponse> {
-        return doclaneHTTPHelper(`/document-requests/${requestID}/archive`, {
+        return doclaneHTTPHelper(`/requests/${requestID}/archive`, {
                 method: "POST",
                 revalidate: "/dashboard/requests",
         });
 }
 
 export async function reopenRequest(requestID: number): Promise<APIResponse> {
-        return doclaneHTTPHelper(`/document-requests/${requestID}/unarchive`, {
+        return doclaneHTTPHelper(`/requests/${requestID}/unarchive`, {
                 method: "POST",
                 revalidate: "/dashboard/requests",
         });
 }
 
 export async function addComment(requestId: number, comment: string): Promise<APIResponse> {
-        return doclaneHTTPHelper(`/document-requests/${requestId}/comments`, {
+        return doclaneHTTPHelper(`/requests/${requestId}/comments`, {
                 method: "POST",
                 body: { comment },
                 revalidate: `/dashboard/requests/${requestId}`,
@@ -45,86 +83,24 @@ export async function addComment(requestId: number, comment: string): Promise<AP
 
 export async function getCommentsByRequest(
         requestId: number,
-): Promise<APIResponse<RequestCommentDTO[]>> {
-        return doclaneHTTPHelper(`/document-requests/${requestId}/comments`, {
+): Promise<APIResponse<RequestComment[]>> {
+        return doclaneHTTPHelper(`/requests/${requestId}/comments`, {
                 method: "GET",
-        });
-}
-
-export async function createRequest(payload: {
-        title: string;
-        description?: string;
-        client_id: number;
-        is_recurring?: boolean;
-        recurrence_cron?: string;
-        is_scheduled?: boolean;
-        scheduled_for?: string;
-        due_date?: string;
-        expected_documents: Array<{
-                title: string;
-                description: string;
-                exampleFile?: File;
-                exampleFileName?: string;
-                ExampleMimeType?: string;
-        }>;
-}): Promise<APIResponse> {
-        const hasExamples = payload.expected_documents.some((ed) => ed.exampleFile);
-
-        if (hasExamples) {
-                const formData = new FormData();
-                formData.append("title", payload.title);
-                if (payload.description) formData.append("description", payload.description);
-                formData.append("client_id", payload.client_id.toString());
-                if (payload.is_recurring) formData.append("is_recurring", "true");
-                if (payload.recurrence_cron)
-                        formData.append("recurrence_cron", payload.recurrence_cron);
-                if (payload.is_scheduled) formData.append("is_scheduled", "true");
-                if (payload.scheduled_for)
-                        formData.append("scheduled_for", payload.scheduled_for);
-                if (payload.due_date) formData.append("due_date", payload.due_date);
-
-                payload.expected_documents.forEach((ed, i) => {
-                        formData.append(`expected_documents[${i}][title]`, ed.title);
-                        formData.append(
-                                `expected_documents[${i}][description]`,
-                                ed.description,
-                        );
-                        if (ed.exampleFile) {
-                                formData.append(
-                                        `expected_documents[${i}][example_file]`,
-                                        ed.exampleFile,
-                                );
-                        }
-                });
-
-                return doclaneHTTPHelper("/document-requests", {
-                        method: "POST",
-                        formData,
-                        revalidate: "/dashboard/requests",
-                });
-        }
-
-        return doclaneHTTPHelper("/document-requests", {
-                method: "POST",
-                body: payload,
-                revalidate: "/dashboard/requests",
         });
 }
 
 export async function presignDocumentURL(
         requestId: number,
         fileId: number,
-): Promise<APIResponse<PresignedURL>> {
-        return doclaneHTTPHelper(`/document-requests/${requestId}/files/${fileId}/presign`, {
+): Promise<APIResponse<string>> {
+        return doclaneHTTPHelper(`/requests/${requestId}/files/${fileId}/presign`, {
                 method: "GET",
         });
 }
 
-export async function presignExampleURL(
-        expectedDocID: number,
-): Promise<APIResponse<PresignedURL>> {
+export async function presignExampleURL(expectedDocID: number): Promise<APIResponse<string>> {
         return doclaneHTTPHelper(
-                `/document-requests/expected-documents/${expectedDocID}/presign-example`,
+                `/requests/expected-documents/${expectedDocID}/presign-example`,
                 { method: "GET" },
         );
 }
@@ -132,12 +108,10 @@ export async function presignExampleURL(
 const MAX_FILE_SIZE = 20 * 1024 * 1024;
 
 export async function uploadDocument(
-        requestId: string,
+        requestId: number,
         file: File,
         expectedDocumentId?: number,
 ): Promise<APIResponse> {
-        const ALLOWED_EXTENSIONS = [".pdf", ".jpg", ".jpeg", ".png", ".doc", ".docx"];
-
         if (
                 !ALLOWED_EXTENSIONS.includes(
                         file.name.substring(file.name.lastIndexOf(".")).toLowerCase(),
@@ -155,7 +129,7 @@ export async function uploadDocument(
                 formData.append("expected_document_id", expectedDocumentId.toString());
         }
 
-        return doclaneHTTPHelper(`/document-requests/${requestId}/files`, {
+        return doclaneHTTPHelper(`/requests/${requestId}/files`, {
                 method: "POST",
                 formData,
                 revalidate: `/dashboard/requests/${requestId}`,
@@ -164,27 +138,35 @@ export async function uploadDocument(
 
 export async function updateExpectedDocumentStatus(
         expectedDocumentId: number,
-        status: "approved" | "rejected" | "uploaded" | "pending",
-        requestId: string,
+        status: "accepted" | "rejected" | "uploaded" | "pending",
+        requestId: number,
         rejectionReason?: string,
 ): Promise<APIResponse> {
-        return doclaneHTTPHelper(
-                `/document-requests/expected-documents/${expectedDocumentId}/status`,
-                {
-                        method: "PATCH",
-                        body: {
-                                status,
-                                ...(rejectionReason && { rejection_reason: rejectionReason }),
-                        },
-                        revalidate: `/dashboard/requests/${requestId}`,
+        return doclaneHTTPHelper(`/requests/expected-documents/${expectedDocumentId}/status`, {
+                method: "PATCH",
+                body: {
+                        status,
+                        ...(rejectionReason && { rejection_reason: rejectionReason }),
                 },
-        );
+                revalidate: `/dashboard/requests/${requestId}`,
+        });
 }
 
 export async function getFilesByRequestId(
-        requestId: string,
+        requestId: number,
 ): Promise<APIResponse<DocumentFile[]>> {
-        return doclaneHTTPHelper(`/document-requests/${requestId}/files`, {
+        return doclaneHTTPHelper(`/requests/${requestId}/files`, {
                 method: "GET",
+        });
+}
+
+export async function patchRequest(
+        requestId: number,
+        payload: { title: string },
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/requests/${requestId}`, {
+                method: "PATCH",
+                body: payload,
+                revalidate: `/dashboard/requests/${requestId}`,
         });
 }

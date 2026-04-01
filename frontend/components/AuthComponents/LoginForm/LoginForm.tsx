@@ -1,13 +1,13 @@
+"use client";
 import { Dispatch, SetStateAction } from "react";
 import "./LoginForm.css";
-
 import ClickableCard from "../ClickableCard/ClickableCard";
 import Input from "@/components/InputComponents/Input";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import SeparatorWithText from "@/components/OtherComponents/Separators/SeparatorWithText/SeparatorWithText";
 import LoginFormFooter from "../LoginFormFooter/LoginFormFooter";
 import LoginFormHeader from "../LoginFormHeader/LoginFormHeader";
-import { MdCardGiftcard, MdWork } from "react-icons/md";
+import { MdCardGiftcard } from "react-icons/md";
 import { useRouter } from "next/navigation";
 
 interface LoginFormProps {
@@ -26,49 +26,33 @@ const LoginForm: React.FC<LoginFormProps> = ({
         handleLogin,
 }) => {
         const router = useRouter();
+
         return (
                 <div className="login-form">
                         <LoginFormHeader
-                                title="Welcome to your Portal"
-                                subtitle="Please enter your details to access your secure documents and
-                                requests."
+                                title="Bun venit pe Portal"
+                                subtitle="Introduceți datele pentru a accesa documentele și cererile dvs."
                         />
-
                         <Input
                                 label="Email:"
                                 value={email}
                                 onChange={(e: any) => setEmail(e.target.value)}
-                                placeholder="Your email address here"
+                                placeholder="Adresa ta de email"
                         />
-
                         <Input
-                                label="Password:"
-                                placeholder="Your password here"
+                                label="Parolă:"
+                                placeholder="Parola ta"
                                 value={password}
                                 onChange={(e: any) => setPassword(e.target.value)}
                                 isPassword={true}
                         />
-
-                        <ButtonPrimary text="Log In" onClick={handleLogin} />
-
-                        <SeparatorWithText text="New to Doclane?" />
-
+                        <ButtonPrimary text="Autentificare" onClick={handleLogin} />
+                        <SeparatorWithText text="Nou pe Doclane?" />
                         <ClickableCard
-                                text="Redeem Invitation"
+                                text="Înregistrează-te"
                                 icon={<MdCardGiftcard size={20} />}
-                                onClick={() => {
-                                        router.push("/register-client");
-                                }}
+                                onClick={() => router.push("/register")}
                         />
-
-                        <ClickableCard
-                                text="Join as a Professional"
-                                icon={<MdWork size={20} />}
-                                onClick={() => {
-                                        router.push("/register-professional");
-                                }}
-                        />
-
                         <LoginFormFooter />
                 </div>
         );
