@@ -6,6 +6,10 @@
     position: relative; /* Necesar pentru poziționarea iconiței */
 }
 
+.input-wrapper--full-width {
+  width: 100% !important;
+}
+
 .input-wrapper label {
     margin-bottom: 5px;
     font-weight: 500;

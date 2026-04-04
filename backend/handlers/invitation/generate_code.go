@@ -31,6 +31,7 @@ func GenerateInvitationCodeHandler(w http.ResponseWriter, r *http.Request) {
 	code, err := config.InvitationCodeService.CreateInvitationCode(
 		r.Context(),
 		*claims,
+		dto.DepartmentID,
 		dto.ExpiresInDays,
 	)
 	if err != nil {

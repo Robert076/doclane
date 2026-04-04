@@ -70,7 +70,6 @@ func ValidatePatchDTO(dto models.RequestDTOPatch) error {
 	if len(dto.Title) < 3 || len(dto.Title) > 30 {
 		return errors.ErrBadRequest{Msg: "New title is too short or too long. Minimum 3 characters, maximum 30 characters."}
 	}
-
 	return nil
 }
 
@@ -109,7 +108,6 @@ func ComputeNextDueAt(dueDate *time.Time, cronExpr *string) *time.Time {
 	}
 
 	next := schedule.Next(now)
-
 	return &next
 }
 
@@ -164,59 +162,6 @@ func (s *RequestService) checkUserIsParticipantOfRequest(ctx context.Context, cl
 	return &req, nil
 }
 
-func (service *RequestService) getUploadedExamples(ctx context.Context, dto models.RequestDTOCreate) ([]types.UploadedExample, error) {
-	uploadedExamples := make([]types.UploadedExample, 0)
-
-	for i, ed := range dto.ExpectedDocuments {
-		if ed.ExampleFile == nil {
-			continue
-		}
-
-		if err := ValidateFileInfo(ed.ExampleFileName, ed.ExampleFileSize); err != nil {
-			service.removeUploadedExamples(ctx, uploadedExamples)
-			return nil, err
-		}
-
-		s3Key := service.fileStorage.GenerateS3Key(ed.ExampleFileName, "examples")
-		result, err := service.fileStorage.UploadFile(ctx, s3Key, ed.ExampleFile, ed.ExampleMimeType)
-		if err != nil {
-			service.logger.Error("s3 upload failed for example file",
-				slog.String("key", s3Key),
-				slog.Any("error", err),
-			)
-
-			service.removeUploadedExamples(ctx, uploadedExamples)
-			return nil, errors.ErrBadGateway{Msg: fmt.Sprintf("Failed to upload example file to S3. %v", err)}
-		}
-
-		uploadedExamples = append(uploadedExamples, types.UploadedExample{
-			Index:       i,
-			S3Key:       s3Key,
-			S3VersionID: result.VersionId,
-			MimeType:    ed.ExampleMimeType,
-		})
-	}
-
-	return uploadedExamples, nil
-}
-
-func getExpectedDocuments(dto models.RequestDTOCreate, uploadedExamples []types.UploadedExample) []models.ExpectedDocument {
-	expectedDocs := make([]models.ExpectedDocument, len(dto.ExpectedDocuments))
-	for i, ed := range dto.ExpectedDocuments {
-		expectedDocs[i] = models.ExpectedDocument{
-			Title:       ed.Title,
-			Description: ed.Description,
-			Status:      "pending",
-		}
-	}
-	for _, uploaded := range uploadedExamples {
-		expectedDocs[uploaded.Index].ExampleFilePath = &uploaded.S3Key
-		expectedDocs[uploaded.Index].ExampleMimeType = &uploaded.MimeType
-	}
-
-	return expectedDocs
-}
-
 func (service *RequestService) createRequestTransaction(ctx context.Context, req models.Request, expectedDocs []models.ExpectedDocument) (*int, error) {
 	var id int
 	err := service.txManager.WithTx(ctx, func(tx *sql.Tx) error {
@@ -236,20 +181,6 @@ func (service *RequestService) createRequestTransaction(ctx context.Context, req
 	})
 
 	return &id, err
-}
-
-func (service *RequestService) removeUploadedExamples(ctx context.Context, uploadedExamples []types.UploadedExample) {
-	for _, uploaded := range uploadedExamples {
-		cleanupCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
-		cleanupErr := service.fileStorage.DeleteFile(cleanupCtx, uploaded.S3Key, uploaded.S3VersionID)
-		cancel()
-		if cleanupErr != nil {
-			service.logger.Error("failed to cleanup example file after transaction failure",
-				slog.String("key", uploaded.S3Key),
-				slog.Any("error", cleanupErr),
-			)
-		}
-	}
 }
 
 func ValidateFileInfo(fileName string, fileSize int64) error {

@@ -1,29 +1,36 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Template } from "@/types";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import TemplateCard from "./TemplateCard";
-import { useSearch } from "@/hooks/useSearch";
-import { useUser } from "@/context/UserContext";
-import "./TemplatesSection.css";
 import PaginationFooter from "@/components/FileSectionComponents/FileSection/_components/PaginationFooter";
+import { useSearch } from "@/hooks/useSearch";
+import "./TemplatesSection.css";
 
 interface TemplatesSectionProps {
         templates: Template[];
+        isAdmin: boolean;
 }
 
 const ITEMS_PER_PAGE = 12;
 
-export default function TemplatesSection({ templates }: TemplatesSectionProps) {
-        const user = useUser();
+export default function TemplatesSection({ templates, isAdmin }: TemplatesSectionProps) {
+        const searchParams = useSearchParams();
         const [currentPage, setCurrentPage] = useState(1);
-        const canManage = user.role === "admin" || user.department_id !== null;
+
+        const departmentParam = searchParams.get("department");
+        const selectedDepartmentId = departmentParam ? Number(departmentParam) : null;
 
         const openTemplates = templates.filter((t) => !t.is_closed);
 
+        const departmentFiltered = selectedDepartmentId
+                ? openTemplates.filter((t) => t.department_id === selectedDepartmentId)
+                : openTemplates;
+
         const { searchInput, setSearchInput, filteredItems } = useSearch(
-                openTemplates,
+                departmentFiltered,
                 (template, search) =>
                         template.title.toLowerCase().includes(search) ||
                         (template.description ?? "").toLowerCase().includes(search),
@@ -31,7 +38,7 @@ export default function TemplatesSection({ templates }: TemplatesSectionProps) {
 
         useEffect(() => {
                 setCurrentPage(1);
-        }, [searchInput]);
+        }, [searchInput, selectedDepartmentId]);
 
         const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -42,10 +49,20 @@ export default function TemplatesSection({ templates }: TemplatesSectionProps) {
                         <NotFound
                                 text="Nu există niciun șablon încă."
                                 subtext={
-                                        canManage
+                                        isAdmin
                                                 ? "Creează primul șablon pentru a permite cetățenilor să depună cereri."
                                                 : "Nu există șabloane disponibile momentan."
                                 }
+                                background="#fff"
+                        />
+                );
+        }
+
+        if (departmentFiltered.length === 0) {
+                return (
+                        <NotFound
+                                text="Niciun șablon în acest departament."
+                                subtext="Nu există șabloane asociate departamentului selectat."
                                 background="#fff"
                         />
                 );

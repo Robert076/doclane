@@ -1,44 +1,44 @@
 "use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
+import { Department, RecurrenceUnit } from "@/types";
+import { createTemplate } from "@/lib/api/templates";
+import { buildCronExpression } from "@/lib/cron";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import Input from "@/components/InputComponents/Input";
 import TextArea from "@/components/InputComponents/TextArea";
-import { useState, useEffect } from "react";
-import "./CreateTemplateForm.css";
-import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
-import { RecurrenceUnit, Department } from "@/types";
 import RadioInput from "@/components/InputComponents/RadioInput";
-import { createTemplate } from "@/lib/api/templates";
-import { getDepartments } from "@/lib/api/departments";
-import { buildCronExpression } from "@/lib/cron";
 import CronInput from "@/components/InputComponents/CronInput";
 import ExpectedDocumentsList, {
         ExpectedDocumentInput,
 } from "@/components/InputComponents/ExpectedDocumentList";
+import "./CreateTemplateForm.css";
+import Select from "@/components/InputComponents/Select";
 
-const CreateTemplateForm = () => {
+interface Props {
+        departments: Department[];
+}
+
+const EMPTY_DOCUMENT: ExpectedDocumentInput = { title: "", description: "" };
+
+export default function CreateTemplateForm({ departments }: Props) {
+        const router = useRouter();
+
         const [title, setTitle] = useState("");
         const [description, setDescription] = useState("");
         const [departmentID, setDepartmentID] = useState<number | null>(null);
-        const [departments, setDepartments] = useState<Department[]>([]);
-        const [isNoneSelected, setIsNoneSelected] = useState(true);
         const [isRecurring, setIsRecurring] = useState(false);
         const [unit, setUnit] = useState<RecurrenceUnit>("month");
         const [hour, setHour] = useState("09");
         const [minute, setMinute] = useState("00");
         const [expectedDocuments, setExpectedDocuments] = useState<ExpectedDocumentInput[]>([
-                { title: "", description: "" },
+                EMPTY_DOCUMENT,
         ]);
-        const router = useRouter();
+        const [isSubmitting, setIsSubmitting] = useState(false);
 
-        useEffect(() => {
-                getDepartments().then((res) => {
-                        if (res.success && res.data) setDepartments(res.data);
-                });
-        }, []);
-
-        const validateForm = () => {
-                if (!title) {
+        const validate = (): boolean => {
+                if (!title.trim()) {
                         toast.error("Completează titlul șablonului.");
                         return false;
                 }
@@ -46,7 +46,7 @@ const CreateTemplateForm = () => {
                         toast.error("Selectează un departament.");
                         return false;
                 }
-                if (expectedDocuments.some((doc) => !doc.title)) {
+                if (expectedDocuments.some((doc) => !doc.title.trim())) {
                         toast.error("Completează titlul fiecărui document solicitat.");
                         return false;
                 }
@@ -55,33 +55,31 @@ const CreateTemplateForm = () => {
 
         const handleSubmit = async (e: React.FormEvent) => {
                 e.preventDefault();
-                if (!validateForm()) return;
+                if (!validate() || isSubmitting) return;
 
-                toast.promise(
-                        (async () => {
-                                const res = await createTemplate({
-                                        title,
-                                        description: description || undefined,
-                                        department_id: departmentID!,
-                                        is_recurring: isRecurring,
-                                        recurrence_cron: isRecurring
-                                                ? buildCronExpression(unit, hour, minute)
-                                                : undefined,
-                                        expected_documents: expectedDocuments.map((ed) => ({
-                                                title: ed.title,
-                                                description: ed.description,
-                                                example_file: ed.exampleFile,
-                                        })),
-                                });
-                                if (!res.success) throw new Error(res.error);
-                                router.push("/dashboard/templates");
-                        })(),
-                        {
-                                loading: "Se creează șablonul...",
-                                success: "Șablon creat cu succes!",
-                                error: (err) => `Eroare: ${err.message}`,
-                        },
-                );
+                setIsSubmitting(true);
+                const res = await createTemplate({
+                        title: title.trim(),
+                        description: description.trim() || undefined,
+                        department_id: departmentID!,
+                        is_recurring: isRecurring,
+                        recurrence_cron: isRecurring
+                                ? buildCronExpression(unit, hour, minute)
+                                : undefined,
+                        expected_documents: expectedDocuments.map((doc) => ({
+                                title: doc.title.trim(),
+                                description: doc.description.trim(),
+                                example_file: doc.exampleFile,
+                        })),
+                });
+                setIsSubmitting(false);
+
+                if (res.success) {
+                        toast.success("Șablon creat cu succes!");
+                        router.push("/dashboard/templates");
+                } else {
+                        toast.error(res.error ?? "A apărut o eroare.");
+                }
         };
 
         return (
@@ -90,46 +88,37 @@ const CreateTemplateForm = () => {
                                 label="Titlul șablonului"
                                 placeholder="Scrie titlul șablonului..."
                                 value={title}
-                                onChange={(e: any) => setTitle(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                                        setTitle(e.target.value)
+                                }
                         />
                         <TextArea
                                 label="Descrierea șablonului"
                                 placeholder="Scrie descrierea șablonului..."
                                 value={description}
-                                onChange={(e: any) => setDescription(e.target.value)}
+                                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) =>
+                                        setDescription(e.target.value)
+                                }
                         />
-                        <div className="form-field">
-                                <label className="form-label">Departament</label>
-                                <select
-                                        className="form-select"
-                                        value={departmentID ?? ""}
-                                        onChange={(e) =>
-                                                setDepartmentID(Number(e.target.value))
-                                        }
-                                >
-                                        <option value="">Selectează departamentul...</option>
-                                        {departments.map((d) => (
-                                                <option key={d.id} value={d.id}>
-                                                        {d.name}
-                                                </option>
-                                        ))}
-                                </select>
-                        </div>
+                        <Select
+                                label="Departament"
+                                value={departmentID ?? ""}
+                                onChange={(val) => setDepartmentID(Number(val) || null)}
+                                placeholder="Selectează departamentul..."
+                                options={departments.map((d) => ({
+                                        value: d.id,
+                                        label: d.name,
+                                }))}
+                        />
                         <div className="radio-inputs-time">
                                 <RadioInput
-                                        isChecked={isNoneSelected}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                setIsNoneSelected(e.target.checked);
-                                                setIsRecurring(false);
-                                        }}
+                                        isChecked={!isRecurring}
+                                        onChange={() => setIsRecurring(false)}
                                         label="Fără recurență"
                                 />
                                 <RadioInput
                                         isChecked={isRecurring}
-                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                                                setIsRecurring(e.target.checked);
-                                                setIsNoneSelected(false);
-                                        }}
+                                        onChange={() => setIsRecurring(true)}
                                         label="Recurent"
                                 />
                         </div>
@@ -149,13 +138,15 @@ const CreateTemplateForm = () => {
                         />
                         <div className="button-group">
                                 <ButtonPrimary
-                                        text="Creează șablon"
-                                        onClick={handleSubmit}
-                                        type="button"
+                                        text={
+                                                isSubmitting
+                                                        ? "Se creează..."
+                                                        : "Creează șablon"
+                                        }
+                                        type="submit"
+                                        disabled={isSubmitting}
                                 />
                         </div>
                 </form>
         );
-};
-
-export default CreateTemplateForm;
+}

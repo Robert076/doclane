@@ -1,0 +1,46 @@
+.generated-code-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.generated-code-label {
+  color: #475569;
+  font-size: var(--font-size-s);
+  line-height: 1.6;
+}
+
+.generated-code-box {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f8fafc;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  padding: 0.75rem 1rem;
+  gap: 1rem;
+}
+
+.generated-code {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1a202c;
+  letter-spacing: 0.05em;
+}
+
+.copy-btn {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius-default);
+  padding: 0.4rem 0.85rem;
+  font-size: var(--font-size-s);
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter 0.2s;
+  white-space: nowrap;
+}
+
+.copy-btn:hover {
+  filter: brightness(110%);
+}

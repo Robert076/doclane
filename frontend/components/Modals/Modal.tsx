@@ -6,17 +6,27 @@ import "./Modal.css";
 interface ModalProps {
         isOpen: boolean;
         onClose: () => void;
-        onConfirm: () => void;
+        onConfirm?: () => void;
         title: string;
         children: React.ReactNode;
+        closeOnConfirm?: boolean;
+        hideFooter?: boolean;
 }
 
-const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, children }) => {
+const Modal: React.FC<ModalProps> = ({
+        isOpen,
+        onClose,
+        onConfirm,
+        title,
+        children,
+        closeOnConfirm = true,
+        hideFooter = false,
+}) => {
         if (!isOpen) return null;
 
         const handleConfirm = () => {
-                onConfirm();
-                onClose();
+                onConfirm?.();
+                if (closeOnConfirm) onClose();
         };
 
         return (
@@ -29,18 +39,20 @@ const Modal: React.FC<ModalProps> = ({ isOpen, onClose, onConfirm, title, childr
                                         </button>
                                 </div>
                                 <div className="modal-body">{children}</div>
-                                <div className="modal-footer">
-                                        <ButtonPrimary
-                                                text="Anulează"
-                                                variant="ghost"
-                                                onClick={onClose}
-                                        />
-                                        <ButtonPrimary
-                                                text="Continuă"
-                                                variant="primary"
-                                                onClick={handleConfirm}
-                                        />
-                                </div>
+                                {!hideFooter && (
+                                        <div className="modal-footer">
+                                                <ButtonPrimary
+                                                        text="Anulează"
+                                                        variant="ghost"
+                                                        onClick={onClose}
+                                                />
+                                                <ButtonPrimary
+                                                        text="Continuă"
+                                                        variant="primary"
+                                                        onClick={handleConfirm}
+                                                />
+                                        </div>
+                                )}
                         </div>
                 </div>
         );

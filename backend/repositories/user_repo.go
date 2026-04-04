@@ -168,6 +168,43 @@ func (repo *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.
 	return user, err
 }
 
+func (repo *UserRepo) GetUsersByDepartment(ctx context.Context, departmentID int) ([]models.User, error) {
+	query := `
+		SELECT email, first_name, last_name, role, department_id, is_active, last_notified FROM users WHERE department_id = $1
+	`
+
+	rows, err := repo.db.QueryContext(ctx, query, departmentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []models.User{}
+	for rows.Next() {
+		var user models.User
+		err := rows.Scan(
+			&user.ID,
+			&user.Email,
+			&user.FirstName,
+			&user.LastName,
+			&user.PasswordHash,
+			&user.Role,
+			&user.DepartmentID,
+			&user.IsActive,
+			&user.LastNotified,
+			&user.CreatedAt,
+			&user.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		users = append(users, user)
+	}
+
+	return users, rows.Err()
+}
+
 func (repo *UserRepo) AddUser(ctx context.Context, user models.User) (int, error) {
 	query := `INSERT INTO users (email, first_name, last_name, password_hash, role, department_id, is_active, last_notified)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)

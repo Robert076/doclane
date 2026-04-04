@@ -2,14 +2,11 @@
 
 import { MdAdd, MdClose, MdUploadFile } from "react-icons/md";
 
-// Componente UI
 import Input from "@/components/InputComponents/Input";
 import TextArea from "@/components/InputComponents/TextArea";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import "./ExpectedDocumentsList.css";
+import "./ExpectedDocumentList.css";
 
-// Reutilizăm interfața din requests.ts (dacă ai mutat-o acolo, sau o declari aici dacă vrei)
-// Am extins denumirea să se potrivească
 export interface ExpectedDocumentInput {
         title: string;
         description: string;

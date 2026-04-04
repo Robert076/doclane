@@ -1,34 +1,27 @@
 "use client";
-
 import { useState } from "react";
-
-import { Request } from "@/types";
+import { Request, User } from "@/types";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
-import { UI_TEXT } from "@/locales/ro";
-import "./ArchivedRequestsSection.css";
 import RequestCard from "@/components/CardComponents/RequestCard/RequestCard";
-import { useUser } from "@/context/UserContext";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 
 type Props = {
         requests: Request[];
+        user: User;
 };
 
-const ArchivedRequestsSection = ({ requests }: Props) => {
+export default function ArchivedRequestsSection({ requests, user }: Props) {
         const [searchInput, setSearchInput] = useState("");
-        const user = useUser();
 
-        const filteredRequests = requests.filter((r) => {
-                if (r.is_closed === false) return false;
-                r.title?.toLowerCase().includes(searchInput.toLowerCase());
-                return true;
-        });
+        const filteredRequests = requests.filter((r) =>
+                r.title?.toLowerCase().includes(searchInput.toLowerCase()),
+        );
 
-        if (filteredRequests.length === 0) {
+        if (requests.length === 0) {
                 return (
                         <NotFound
-                                text="Nu ai niciun dosar arhivat încă."
-                                subtext="Aici vor apărea dosarele pe care le arhivezi."
+                                text="Nu există dosare arhivate."
+                                subtext="Dosarele arhivate vor apărea aici."
                                 background="white"
                         />
                 );
@@ -36,26 +29,30 @@ const ArchivedRequestsSection = ({ requests }: Props) => {
 
         return (
                 <div className="archived-templates">
-                        {requests.length > 0 && (
-                                <SearchBar
-                                        value={searchInput}
-                                        onChange={setSearchInput}
-                                        placeholder={UI_TEXT.common.search}
+                        <SearchBar
+                                value={searchInput}
+                                onChange={setSearchInput}
+                                placeholder="Caută dosar arhivat..."
+                        />
+                        {filteredRequests.length === 0 ? (
+                                <NotFound
+                                        text="Nu am găsit niciun dosar"
+                                        subtext="Nu există niciun rezultat care să corespundă căutării tale."
+                                        background="white"
                                 />
+                        ) : (
+                                <div className="archived-grid">
+                                        {filteredRequests.map((r) => (
+                                                <RequestCard
+                                                        key={r.id}
+                                                        user={user}
+                                                        searchTerm={searchInput}
+                                                        request={r}
+                                                        archived={true}
+                                                />
+                                        ))}
+                                </div>
                         )}
-                        <div className="archived-grid">
-                                {filteredRequests.map((r) => (
-                                        <RequestCard
-                                                key={r.id}
-                                                user={user}
-                                                searchTerm={searchInput}
-                                                request={r}
-                                                archived={true}
-                                        />
-                                ))}
-                        </div>
                 </div>
         );
-};
-
-export default ArchivedRequestsSection;
+}

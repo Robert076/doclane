@@ -44,3 +44,12 @@ export async function notifyUser(userId: number): Promise<APIResponse> {
                 method: "POST",
         });
 }
+
+export async function getUsersByDepartment(
+        departmentId: number,
+): Promise<APIResponse<User[]>> {
+        console.log(">>> getUsersByDepartment called with", departmentId);
+        return doclaneHTTPHelper(`/users/by-department?department_id=${departmentId}`, {
+                method: "GET",
+        });
+}

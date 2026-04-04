@@ -17,8 +17,9 @@ type RequestTemplate struct {
 
 type RequestTemplateDTORead struct {
 	RequestTemplate
-	AuthorFirstName *string
-	AuthorLastName  *string
+	AuthorFirstName *string `json:"author_first_name"`
+	AuthorLastName  *string `json:"author_last_name"`
+	DepartmentName  string  `json:"department_name"`
 }
 
 type RequestTemplateDTOPatch struct {

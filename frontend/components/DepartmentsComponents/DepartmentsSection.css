@@ -1,0 +1,19 @@
+.department-members-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.department-members-actions > div {
+  width: 200px;
+}
+
+.departments-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.departments-actions > div {
+  width: 200px;
+}

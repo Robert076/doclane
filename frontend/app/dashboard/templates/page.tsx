@@ -1,16 +1,24 @@
 import TemplatesSection from "../../../components/Pages/TemplatesComponents/TemplatesSection";
 import PageHeader from "@/components/PageHeader/PageHeader";
-import { notFound } from "next/navigation";
 import TemplatesActions from "../../../components/Pages/TemplatesComponents/TemplatesActions";
 import { getTemplates } from "@/lib/api/templates";
+import { getCurrentUser } from "@/lib/api/users";
+import { getDepartments } from "@/lib/api/departments";
+import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 export default async function TemplatesPage() {
-        const templatesResponse = await getTemplates();
-        if (!templatesResponse.success || !templatesResponse.data) {
-                notFound();
-        }
+        const userResponse = await getCurrentUser();
+        if (!userResponse.success || !userResponse.data) redirect("/login");
 
-        const templates = templatesResponse.data;
+        const user = userResponse.data;
+
+        const [templatesResponse, departmentsResponse] = await Promise.all([
+                getTemplates(),
+                user.role === "admin" ? getDepartments() : Promise.resolve({ data: [] }),
+        ]);
+
+        if (!templatesResponse.success || !templatesResponse.data) notFound();
 
         return (
                 <div>
@@ -18,8 +26,22 @@ export default async function TemplatesPage() {
                                 title="Şabloanele tale"
                                 subtitle="Administrează şi gestionează şabloanele tale."
                         />
-                        <TemplatesActions />
-                        <TemplatesSection templates={templates} />
+                        <TemplatesActions
+                                departments={
+                                        user.role === "admin"
+                                                ? (departmentsResponse.data ?? [])
+                                                : []
+                                }
+                        />
+                        <TemplatesSection
+                                templates={templatesResponse.data}
+                                departments={
+                                        user.role === "admin"
+                                                ? (departmentsResponse.data ?? [])
+                                                : []
+                                }
+                                isAdmin={user.role === "admin"}
+                        />
                 </div>
         );
 }

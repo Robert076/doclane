@@ -10,6 +10,7 @@ import { usePagination } from "@/hooks/usePagination";
 import { useRouter } from "next/navigation";
 import CreateDepartmentModal from "./CreateDepartmentModal";
 import DepartmentCard from "./DepartmentCard";
+import "./DepartmentsSection.css";
 
 interface DepartmentsSectionProps {
         departments: Department[];
@@ -33,11 +34,18 @@ export default function DepartmentsSection({ departments }: DepartmentsSectionPr
 
         return (
                 <div className="section">
-                        <div className="section-actions has-margin-bottom">
-                                <ButtonPrimary
-                                        text="Departament nou"
-                                        onClick={() => setIsCreateModalOpen(true)}
-                                />
+                        <div className="section-actions">
+                                <div className="departments-actions">
+                                        <div>
+                                                <ButtonPrimary
+                                                        text="Departament nou"
+                                                        fullWidth
+                                                        onClick={() =>
+                                                                setIsCreateModalOpen(true)
+                                                        }
+                                                />
+                                        </div>
+                                </div>
                         </div>
                         <SearchBar
                                 value={searchInput}

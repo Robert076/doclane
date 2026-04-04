@@ -42,43 +42,22 @@ func NewRequestTemplateService(
 }
 
 func (s *RequestTemplateService) GetRequestTemplates(ctx context.Context, claims types.JWTClaims) ([]models.RequestTemplateDTORead, error) {
-	if claims.IsAdmin() {
-		templates, err := s.templateRepo.GetAllRequestTemplates(ctx)
-		if err != nil {
-			s.logger.Error("failed to fetch all templates",
-				slog.Int("jwt_user_id", claims.UserID),
-				slog.Any("error", err),
-			)
-			return nil, err
-		}
-		s.logger.Info("fetched all templates successfully",
-			slog.Int("jwt_user_id", claims.UserID),
-		)
-		return templates, nil
-	}
-
-	if claims.DepartmentID == nil {
-		return nil, errors.ErrForbidden{Msg: "You are not part of a department."}
-	}
-
-	templates, err := s.templateRepo.GetRequestTemplatesByDepartment(ctx, *claims.DepartmentID)
+	templates, err := s.templateRepo.GetAllRequestTemplates(ctx)
 	if err != nil {
-		s.logger.Error("failed to fetch templates by department",
+		s.logger.Error("failed to fetch templates",
 			slog.Int("jwt_user_id", claims.UserID),
-			slog.Int("department_id", *claims.DepartmentID),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
-	s.logger.Info("fetched templates by department successfully",
+	s.logger.Info("fetched templates successfully",
 		slog.Int("jwt_user_id", claims.UserID),
-		slog.Int("department_id", *claims.DepartmentID),
 	)
 	return templates, nil
 }
 
-func (s *RequestTemplateService) GetRequestTemplateByID(ctx context.Context, claims types.JWTClaims, requestTemplateID int) (*models.RequestTemplate, error) {
+func (s *RequestTemplateService) GetRequestTemplateByID(ctx context.Context, claims types.JWTClaims, requestTemplateID int) (*models.RequestTemplateDTORead, error) {
 	return s.checkUserCanAccessTemplate(ctx, claims, requestTemplateID)
 }
 

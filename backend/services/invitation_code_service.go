@@ -17,15 +17,18 @@ import (
 
 type InvitationCodeService struct {
 	invitationRepo repositories.IInvitationCodeRepo
+	departmentRepo repositories.IDepartmentRepo
 	logger         *slog.Logger
 }
 
 func NewInvitationCodeService(
 	invitationRepo repositories.IInvitationCodeRepo,
+	departmentRepo repositories.IDepartmentRepo,
 	logger *slog.Logger,
 ) *InvitationCodeService {
 	return &InvitationCodeService{
 		invitationRepo: invitationRepo,
+		departmentRepo: departmentRepo,
 		logger:         logger,
 	}
 }
@@ -42,6 +45,7 @@ func generateInvitationCode() (string, error) {
 func (s *InvitationCodeService) CreateInvitationCode(
 	ctx context.Context,
 	claims types.JWTClaims,
+	departmentID int,
 	expiresInDays int,
 ) (string, error) {
 	if !claims.IsAdmin() {
@@ -49,6 +53,14 @@ func (s *InvitationCodeService) CreateInvitationCode(
 			slog.Int("jwt_user_id", claims.UserID),
 		)
 		return "", errors.ErrForbidden{Msg: "Only admins can generate invitation codes."}
+	}
+
+	if _, err := s.departmentRepo.GetDepartmentByID(ctx, departmentID); err != nil {
+		s.logger.Warn("admin tried to create invitation code for department that does not exist",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("department_id", departmentID),
+		)
+		return "", errors.ErrNotFound{Msg: "Department not found."}
 	}
 
 	existingCodes, err := s.invitationRepo.GetInvitationCodesByCreator(ctx, claims.UserID)
@@ -81,7 +93,7 @@ func (s *InvitationCodeService) CreateInvitationCode(
 		expiresAt = &expiry
 	}
 
-	if err = s.invitationRepo.CreateInvitationCode(ctx, code, claims.UserID, expiresAt); err != nil {
+	if err = s.invitationRepo.CreateInvitationCode(ctx, departmentID, code, claims.UserID, expiresAt); err != nil {
 		s.logger.Error("failed to save invitation code to database",
 			slog.String("code", code),
 			slog.Int("jwt_user_id", claims.UserID),
@@ -121,6 +133,49 @@ func (s *InvitationCodeService) GetInvitationCodes(
 
 	s.logger.Info("invitation codes retrieved successfully",
 		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("count", len(validCodes)),
+	)
+	return validCodes, nil
+}
+
+func (s *InvitationCodeService) GetInvitationCodesByDepartment(
+	ctx context.Context,
+	claims types.JWTClaims,
+	departmentID int,
+) ([]models.InvitationCode, error) {
+	if !claims.IsAdmin() {
+		s.logger.Warn("non-admin attempted to view invitation codes by department",
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return nil, errors.ErrForbidden{Msg: "Only admins can view invitation codes."}
+	}
+
+	if _, err := s.departmentRepo.GetDepartmentByID(ctx, departmentID); err != nil {
+		s.logger.Warn("tried to get invitation codes for department that does not exist",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("department_id", departmentID),
+		)
+		return nil, errors.ErrNotFound{Msg: "Department not found."}
+	}
+
+	codes, err := s.invitationRepo.GetInvitationCodesByDepartment(ctx, departmentID)
+	if err != nil {
+		s.logger.Error("failed to fetch invitation codes by department",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("department_id", departmentID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	validCodes, err := s.deleteExpiredCodes(ctx, codes)
+	if err != nil {
+		return nil, err
+	}
+
+	s.logger.Info("invitation codes by department retrieved successfully",
+		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("department_id", departmentID),
 		slog.Int("count", len(validCodes)),
 	)
 	return validCodes, nil

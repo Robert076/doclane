@@ -68,13 +68,15 @@ func buildRouter() (http.Handler, *chi.Mux) {
 
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", user_handler.GetUsersHandler)
+			r.Get("/me", user_handler.GetCurrentUserHandler)
+			r.Get("/by-department", user_handler.GetUsersByDepartmentHandler)
 			r.Get("/{id}", user_handler.GetUserByIDHandler)
 			r.Post("/notify/{id}", user_handler.NotifyUserHandler)
-			r.Get("/me", user_handler.GetCurrentUserHandler)
 			r.Post("/deactivate/{id}", user_handler.DeactivateUserHandler)
 		})
 
 		r.Route("/requests", func(r chi.Router) {
+			r.Get("/", request_handler.GetAllRequestsHandler)
 			r.Post("/", request_handler.AddRequestHandler)
 			r.Get("/assignee/{id}", request_handler.GetRequestsByAssigneeHandler)
 			r.Get("/department/{id}", request_handler.GetRequestsByDepartmentHandler)
@@ -125,6 +127,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 		r.Route("/invitations", func(r chi.Router) {
 			r.Post("/generate", invitation_handler.GenerateInvitationCodeHandler)
 			r.Get("/my-codes", invitation_handler.GetMyInvitationCodesHandler)
+			r.Get("/by-department", invitation_handler.GetInvitationCodesByDepartmentHandler)
 			r.Delete("/{id}", invitation_handler.DeleteInvitationCodeHandler)
 		})
 	})

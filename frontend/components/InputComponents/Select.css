@@ -1,0 +1,35 @@
+.select-wrapper {
+  display: flex;
+  flex-direction: column;
+  margin: var(--margin-y-10);
+}
+
+.select-label {
+  margin-bottom: 5px;
+  font-weight: 500;
+  font-size: var(--font-size-m);
+}
+
+.select {
+  height: var(--height-input-and-button);
+  background-color: white;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  font-size: var(--font-size-m);
+  padding: 0 10px;
+  box-sizing: border-box;
+  outline: none;
+  appearance: none;
+  cursor: pointer;
+  color: #1a202c;
+  font-family: inherit;
+  width: 80%;
+}
+
+.select:focus {
+  border: 1px solid var(--color-primary);
+}
+
+.select option[value=""] {
+  color: var(--text-color-secondary);
+}

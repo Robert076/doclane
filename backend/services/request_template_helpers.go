@@ -141,7 +141,7 @@ func (s *RequestTemplateService) insertTemplateWithDocsTx(
 	return templateID, err
 }
 
-func (s *RequestTemplateService) checkUserCanAccessTemplate(ctx context.Context, claims types.JWTClaims, requestTemplateID int) (*models.RequestTemplate, error) {
+func (s *RequestTemplateService) checkUserCanAccessTemplate(ctx context.Context, claims types.JWTClaims, requestTemplateID int) (*models.RequestTemplateDTORead, error) {
 	template, err := s.templateRepo.GetRequestTemplateByID(ctx, requestTemplateID)
 	if err != nil {
 		s.logger.Error("error getting template from db",

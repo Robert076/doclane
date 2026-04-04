@@ -19,13 +19,14 @@ func NewInvitationCodeRepo(db *sql.DB) *InvitationCodeRepo {
 
 func (r *InvitationCodeRepo) GetInvitationCodeByCode(ctx context.Context, code string) (models.InvitationCode, error) {
 	query := `
-		SELECT id, code, created_by, used_at, expires_at, created_at
+		SELECT id, department_id, code, created_by, used_at, expires_at, created_at
 		FROM invitation_codes
 		WHERE code = $1
 	`
 	var invCode models.InvitationCode
 	err := r.db.QueryRowContext(ctx, query, code).Scan(
 		&invCode.ID,
+		&invCode.DepartmentID,
 		&invCode.Code,
 		&invCode.CreatedBy,
 		&invCode.UsedAt,
@@ -40,7 +41,7 @@ func (r *InvitationCodeRepo) GetInvitationCodeByCode(ctx context.Context, code s
 
 func (r *InvitationCodeRepo) GetInvitationCodesByCreator(ctx context.Context, createdBy int) ([]models.InvitationCode, error) {
 	query := `
-		SELECT id, code, created_by, used_at, expires_at, created_at
+		SELECT id, department_id, code, created_by, used_at, expires_at, created_at
 		FROM invitation_codes
 		WHERE created_by = $1 AND used_at IS NULL
 		ORDER BY created_at DESC
@@ -56,6 +57,7 @@ func (r *InvitationCodeRepo) GetInvitationCodesByCreator(ctx context.Context, cr
 		var code models.InvitationCode
 		if err := rows.Scan(
 			&code.ID,
+			&code.DepartmentID,
 			&code.Code,
 			&code.CreatedBy,
 			&code.UsedAt,
@@ -71,13 +73,14 @@ func (r *InvitationCodeRepo) GetInvitationCodesByCreator(ctx context.Context, cr
 
 func (r *InvitationCodeRepo) GetInvitationCodeByID(ctx context.Context, id int) (models.InvitationCode, error) {
 	query := `
-		SELECT id, code, created_by, used_at, expires_at, created_at
+		SELECT id, department_id, code, created_by, used_at, expires_at, created_at
 		FROM invitation_codes
 		WHERE id = $1
 	`
 	var invCode models.InvitationCode
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&invCode.ID,
+		&invCode.DepartmentID,
 		&invCode.Code,
 		&invCode.CreatedBy,
 		&invCode.UsedAt,
@@ -90,12 +93,46 @@ func (r *InvitationCodeRepo) GetInvitationCodeByID(ctx context.Context, id int) 
 	return invCode, err
 }
 
-func (r *InvitationCodeRepo) CreateInvitationCode(ctx context.Context, code string, createdBy int, expiresAt *time.Time) error {
+func (r *InvitationCodeRepo) GetInvitationCodesByDepartment(ctx context.Context, departmentID int) ([]models.InvitationCode, error) {
 	query := `
-		INSERT INTO invitation_codes (code, created_by, expires_at)
-		VALUES ($1, $2, $3)
+		SELECT id, code, created_by, department_id, used_at, expires_at, created_at
+		FROM invitation_codes
+		WHERE department_id = $1
 	`
-	_, err := r.db.ExecContext(ctx, query, code, createdBy, expiresAt)
+
+	rows, err := r.db.QueryContext(ctx, query, departmentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	codes := []models.InvitationCode{}
+	for rows.Next() {
+		var code models.InvitationCode
+		err := rows.Scan(
+			&code.ID,
+			&code.Code,
+			&code.CreatedBy,
+			&code.DepartmentID,
+			&code.UsedAt,
+			&code.ExpiresAt,
+			&code.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		codes = append(codes, code)
+	}
+
+	return codes, rows.Err()
+}
+
+func (r *InvitationCodeRepo) CreateInvitationCode(ctx context.Context, departmentID int, code string, createdBy int, expiresAt *time.Time) error {
+	query := `
+		INSERT INTO invitation_codes (department_id, code, created_by, expires_at)
+		VALUES ($1, $2, $3, $4)
+	`
+	_, err := r.db.ExecContext(ctx, query, departmentID, code, createdBy, expiresAt)
 	return err
 }
 

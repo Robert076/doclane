@@ -45,6 +45,13 @@ func NewRequestService(
 }
 
 func (service *RequestService) AddRequest(ctx context.Context, claims types.JWTClaims, dto models.RequestDTOCreate) (*int, error) {
+	if claims.IsAdmin() || claims.IsDepartmentMember() {
+		service.logger.Warn("admin or department member tried to create request for themselves, got rejected",
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return nil, errors.ErrForbidden{Msg: "You are not allowed to create requests"}
+	}
+
 	if err := ValidateRequestInput(dto); err != nil {
 		service.logger.Warn("request creation failed because it did not pass validations",
 			slog.Int("jwt_user_id", claims.UserID),
@@ -118,6 +125,33 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.JWTC
 		slog.Int("department_id", template.DepartmentID),
 	)
 	return id, nil
+}
+
+func (service *RequestService) GetAllRequests(ctx context.Context, claims types.JWTClaims, search *string) ([]models.RequestDTORead, error) {
+	if !claims.IsAdmin() {
+		service.logger.Warn("unauthorized attempt to get all requests",
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return nil, errors.ErrForbidden{Msg: "Only admins can view all requests."}
+	}
+
+	reqs, err := service.requestRepo.GetAllRequests(ctx, search)
+	if err != nil {
+		service.logger.Error("failed to get all requests",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	for i := range reqs {
+		reqs[i].Status = ComputeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt, reqs[i].ExpectedDocuments)
+	}
+
+	service.logger.Info("fetched all requests successfully",
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return reqs, nil
 }
 
 func (s *RequestService) GetRequestByID(ctx context.Context, claims types.JWTClaims, requestID int) (*models.RequestDTORead, error) {

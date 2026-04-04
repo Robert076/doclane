@@ -6,6 +6,8 @@ import StatusBadge from "../../Pages/RequestsComponents/StatusBadge";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import { formatDate } from "@/lib/client/formatDate";
 import BaseDashboardCard from "@/components/CardComponents/BaseDashboardCard/BaseDashboardCard";
+import InfoList from "@/components/CardComponents/InfoList/InfoList";
+import InfoItem from "@/components/CardComponents/InfoItem/InfoItem";
 import { useRequestActions } from "@/hooks/useRequestActions";
 import Modal from "@/components/Modals/Modal";
 import HighlightText from "@/components/OtherComponents/HighlightText/HighlightText";
@@ -70,7 +72,32 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                 }
                                 isHighlighted={isOverdue}
                         >
-                                <RequestBody request={request} searchTerm={searchTerm} />
+                                <InfoList>
+                                        <InfoItem
+                                                label="Solicitant"
+                                                value={
+                                                        <HighlightText
+                                                                text={`${request.assignee_first_name} ${request.assignee_last_name}`}
+                                                                search={searchTerm}
+                                                        />
+                                                }
+                                        />
+                                        <InfoItem
+                                                label="Email"
+                                                value={
+                                                        <HighlightText
+                                                                text={request.assignee_email}
+                                                                search={searchTerm}
+                                                        />
+                                                }
+                                        />
+                                        {request.due_date && (
+                                                <InfoItem
+                                                        label="Termen"
+                                                        value={formatDate(request.due_date)}
+                                                />
+                                        )}
+                                </InfoList>
                         </BaseDashboardCard>
 
                         <Modal
@@ -90,30 +117,6 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                 </p>
                         </Modal>
                 </>
-        );
-}
-
-function RequestBody({ request, searchTerm }: { request: Request; searchTerm?: string }) {
-        return (
-                <div className="request-body">
-                        <p className="request-body-assignee">
-                                <HighlightText
-                                        text={`${request.assignee_first_name} ${request.assignee_last_name}`}
-                                        search={searchTerm}
-                                />
-                        </p>
-                        <p className="request-body-email">
-                                <HighlightText
-                                        text={request.assignee_email}
-                                        search={searchTerm}
-                                />
-                        </p>
-                        {request.due_date && (
-                                <p className="request-body-due">
-                                        Termen: {formatDate(request.due_date)}
-                                </p>
-                        )}
-                </div>
         );
 }
 

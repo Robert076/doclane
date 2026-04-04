@@ -1,0 +1,20 @@
+.info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.info-label {
+  font-weight: 600;
+  color: #475569;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.info-value {
+  color: #64748b;
+  line-height: 1.5;
+  word-break: break-word;
+}

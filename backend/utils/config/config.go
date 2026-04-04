@@ -56,7 +56,7 @@ func init() {
 	UserService = services.NewUserService(userRepo, Logger)
 	RequestService = services.NewRequestService(requestRepo, requestTemplateRepo, expectedDocumentRepo, expectedDocumentTemplateRepo, txManager, Logger, fileStorage)
 	DepartmentService = services.NewDepartmentService(departmentRepo, Logger)
-	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, Logger)
+	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, departmentRepo, Logger)
 	ExpectedDocumentService = services.NewExpectedDocumentService(expectedDocumentRepo, requestRepo, Logger)
 	RequestTemplateService = services.NewRequestTemplateService(
 		requestTemplateRepo,

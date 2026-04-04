@@ -1,3 +1,16 @@
 .templates-actions {
-        width: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 1rem;
+}
+
+.templates-actions-button {
+  width: 200px;
+}
+
+.templates-actions .select-wrapper {
+  width: 250px;
+  margin: 0;
 }

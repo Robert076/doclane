@@ -47,6 +47,34 @@ func (r *RequestRepo) AddRequestWithTx(ctx context.Context, req models.Request, 
 	return id, err
 }
 
+func (r *RequestRepo) GetAllRequests(ctx context.Context, search *string) ([]models.RequestDTORead, error) {
+	query := `
+        SELECT dr.id, dr.assignee, dr.department_id,
+            dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
+            dr.is_closed, dr.last_uploaded_at,
+            u.email AS assignee_email, u.first_name AS assignee_first_name, u.last_name AS assignee_last_name,
+            dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id
+        FROM document_requests dr
+        JOIN users u ON dr.assignee = u.id
+        WHERE dr.is_closed = false
+    `
+	args := []interface{}{}
+	argIndex := 1
+
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` AND (
+            LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(u.first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+            LOWER(u.last_name) LIKE $` + strconv.Itoa(argIndex) + `
+        )`
+		args = append(args, searchPattern)
+	}
+
+	query += " ORDER BY dr.created_at DESC"
+	return r.scanRequests(ctx, query, args...)
+}
+
 func (r *RequestRepo) GetRequestByID(ctx context.Context, id int) (models.RequestDTORead, error) {
 	var req models.RequestDTORead
 	query := `

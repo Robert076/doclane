@@ -22,9 +22,10 @@ func (r *RequestTemplateRepo) GetRequestTemplatesByDepartment(ctx context.Contex
 	query := `
 		SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
 			t.created_by, t.created_at, t.updated_at, t.is_closed,
-			u.first_name, u.last_name
+			u.first_name, u.last_name, d.name
 		FROM document_request_templates t
 		JOIN users u ON u.id = t.created_by
+		JOIN departments d ON d.id = t.department_id
 		WHERE t.department_id = $1
 		ORDER BY t.created_at DESC
 	`
@@ -50,6 +51,7 @@ func (r *RequestTemplateRepo) GetRequestTemplatesByDepartment(ctx context.Contex
 			&t.IsClosed,
 			&t.AuthorFirstName,
 			&t.AuthorLastName,
+			&t.DepartmentName,
 		); err != nil {
 			return nil, err
 		}
@@ -62,9 +64,10 @@ func (r *RequestTemplateRepo) GetAllRequestTemplates(ctx context.Context) ([]mod
 	query := `
 		SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
 			t.created_by, t.created_at, t.updated_at, t.is_closed,
-			u.first_name, u.last_name
+			u.first_name, u.last_name, d.name
 		FROM document_request_templates t
 		JOIN users u ON u.id = t.created_by
+		JOIN departments d ON d.id = t.department_id
 		ORDER BY t.created_at DESC
 	`
 	rows, err := r.db.QueryContext(ctx, query)
@@ -89,6 +92,7 @@ func (r *RequestTemplateRepo) GetAllRequestTemplates(ctx context.Context) ([]mod
 			&t.IsClosed,
 			&t.AuthorFirstName,
 			&t.AuthorLastName,
+			&t.DepartmentName,
 		); err != nil {
 			return nil, err
 		}
@@ -97,12 +101,16 @@ func (r *RequestTemplateRepo) GetAllRequestTemplates(ctx context.Context) ([]mod
 	return templates, rows.Err()
 }
 
-func (r *RequestTemplateRepo) GetRequestTemplateByID(ctx context.Context, id int) (models.RequestTemplate, error) {
-	var t models.RequestTemplate
+func (r *RequestTemplateRepo) GetRequestTemplateByID(ctx context.Context, id int) (models.RequestTemplateDTORead, error) {
+	var t models.RequestTemplateDTORead
 	query := `
-		SELECT id, title, description, department_id, is_recurring, recurrence_cron, created_by, created_at, updated_at, is_closed
-		FROM document_request_templates
-		WHERE id = $1
+		SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
+			t.created_by, t.created_at, t.updated_at, t.is_closed,
+			u.first_name, u.last_name, d.name
+		FROM document_request_templates t
+		JOIN users u ON u.id = t.created_by
+		JOIN departments d ON d.id = t.department_id
+		WHERE t.id = $1
 	`
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
 		&t.ID,
@@ -115,6 +123,9 @@ func (r *RequestTemplateRepo) GetRequestTemplateByID(ctx context.Context, id int
 		&t.CreatedAt,
 		&t.UpdatedAt,
 		&t.IsClosed,
+		&t.AuthorFirstName,
+		&t.AuthorLastName,
+		&t.DepartmentName,
 	)
 	return t, err
 }

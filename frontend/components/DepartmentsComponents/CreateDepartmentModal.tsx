@@ -49,6 +49,7 @@ export default function CreateDepartmentModal({
                                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                                         setName(e.target.value)
                                 }
+                                fullWidth
                         />
                 </Modal>
         );

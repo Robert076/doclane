@@ -105,6 +105,31 @@ func (service *UserService) GetUserByEmail(ctx context.Context, caller types.JWT
 	return &user, nil
 }
 
+func (service *UserService) GetUsersByDepartment(ctx context.Context, caller types.JWTClaims, departmentID int) ([]models.User, error) {
+	if !caller.IsAdmin() {
+		service.logger.Warn("unauthorized attempt to retrieve users by department",
+			slog.Int("jwt_user_id", caller.UserID),
+		)
+		return nil, errors.ErrForbidden{Msg: "Only admins can list users by department."}
+	}
+
+	users, err := service.repo.GetUsersByDepartment(ctx, departmentID)
+	if err != nil {
+		service.logger.Error("error when trying to retrieve users by department",
+			slog.Int("jwt_user_id", caller.UserID),
+			slog.Any("error", err),
+		)
+
+		return nil, err
+	}
+
+	service.logger.Info("retrieved users by department successfully",
+		slog.Int("jwt_user_id", caller.UserID),
+		slog.Int("department_id", departmentID),
+	)
+	return users, nil
+}
+
 func (service *UserService) AddUser(ctx context.Context, params RegisterParams) (int, error) {
 	if err := service.ValidateUserForRegister(ctx, params.Email, params.Password, params.Role, params.FirstName, params.LastName); err != nil {
 		service.logger.Warn("user validation failed for register",

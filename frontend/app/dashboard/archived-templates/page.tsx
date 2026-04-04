@@ -1,27 +1,30 @@
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 import { Template } from "@/types";
 import ArchivedTemplatesSection from "@/components/Pages/ArchivedTemplatesComponents/ArchivedTemplatesSection";
 import PageHeader from "@/components/PageHeader/PageHeader";
 import { getTemplates } from "@/lib/api/templates";
+import { getCurrentUser } from "@/lib/api/users";
 
-const ArchivedTemplates = async () => {
-        const templateResponse = await getTemplates();
+export default async function ArchivedTemplatesPage() {
+        const userResponse = await getCurrentUser();
+        if (!userResponse.success || !userResponse.data) redirect("/login");
 
-        if (!templateResponse?.data) {
-                notFound();
+        const user = userResponse.data;
+        if (user.role !== "admin" && user.department_id === null) {
+                redirect("/dashboard/requests");
         }
 
-        const templates = templateResponse.data as Template[];
+        const templateResponse = await getTemplates();
+        const templates = (templateResponse.data ?? []) as Template[];
+        const archivedTemplates = templates.filter((t) => t.is_closed);
 
         return (
                 <div>
                         <PageHeader
-                                title="Şabloane arhivate"
-                                subtitle="Restaurează şi gestionează şabloanele arhivate."
+                                title="Șabloane arhivate"
+                                subtitle="Restaurează și gestionează șabloanele arhivate."
                         />
-                        <ArchivedTemplatesSection templates={templates} />
+                        <ArchivedTemplatesSection templates={archivedTemplates} />
                 </div>
         );
-};
-
-export default ArchivedTemplates;
+}

@@ -1,0 +1,63 @@
+.department-members-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.department-members-actions > div {
+  width: 200px;
+}
+
+.codes-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.code-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  background: #f8fafc;
+}
+
+.code-item-text {
+  font-size: var(--font-size-m);
+  font-weight: 600;
+  color: #1a202c;
+  letter-spacing: 0.05em;
+  flex: 1;
+}
+
+.code-item-meta {
+  font-size: 0.75rem;
+  color: var(--text-color-secondary);
+}
+
+.code-copy-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-color-secondary);
+  display: flex;
+  align-items: center;
+  padding: 4px;
+  border-radius: 6px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.code-copy-btn:hover {
+  color: var(--color-primary);
+  background: #f1f5f9;
+}
+
+.codes-empty {
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-s);
+  text-align: center;
+  padding: 1rem 0;
+}

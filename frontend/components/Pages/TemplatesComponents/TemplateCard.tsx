@@ -7,12 +7,13 @@ import { useRouter } from "next/navigation";
 import { formatDate } from "@/lib/client/formatDate";
 import toast from "react-hot-toast";
 import BaseDashboardCard from "@/components/CardComponents/BaseDashboardCard/BaseDashboardCard";
+import InfoList from "@/components/CardComponents/InfoList/InfoList";
+import InfoItem from "@/components/CardComponents/InfoItem/InfoItem";
 import { archiveTemplate, deleteTemplate, unarchiveTemplate } from "@/lib/api/templates";
 import { createRequest } from "@/lib/api/requests";
 import DeleteTemplateModal from "./DeleteTemplateModal";
 import Modal from "@/components/Modals/Modal";
 import { useUser } from "@/context/UserContext";
-import "./TemplateCard.css";
 
 interface TemplateCardProps {
         template: Template;
@@ -131,31 +132,25 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                 }
                                 footer={footer}
                         >
-                                <div className="template-info">
-                                        <div className="template-info-item">
-                                                <span className="template-label">
-                                                        Creat pe data
-                                                </span>
-                                                <span className="template-value">
-                                                        {formatDate(template.created_at)}
-                                                </span>
-                                        </div>
+                                <InfoList>
+                                        <InfoItem
+                                                label="Creat pe data"
+                                                value={formatDate(template.created_at)}
+                                        />
                                         {template.description && (
-                                                <div className="template-info-item">
-                                                        <span className="template-label">
-                                                                Descriere
-                                                        </span>
-                                                        <span className="template-value">
+                                                <InfoItem
+                                                        label="Descriere"
+                                                        value={
                                                                 <HighlightText
                                                                         text={
                                                                                 template.description
                                                                         }
                                                                         search={searchTerm}
                                                                 />
-                                                        </span>
-                                                </div>
+                                                        }
+                                                />
                                         )}
-                                </div>
+                                </InfoList>
                         </BaseDashboardCard>
 
                         <Modal
