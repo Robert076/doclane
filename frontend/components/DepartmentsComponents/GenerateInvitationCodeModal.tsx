@@ -73,8 +73,19 @@ export default function GenerateInvitationCodeModal({ isOpen, onClose, departmen
                                         singură dată.
                                 </p>
                                 <div className="generated-code-box">
-                                        <span className="generated-code">{generatedCode}</span>
-                                        <button className="copy-btn" onClick={handleCopy}>
+                                        <span className="generated-code">
+                                                {typeof window !== "undefined"
+                                                        ? `${window.location.origin}/register/invite?code=${generatedCode}`
+                                                        : ""}
+                                        </span>
+                                        <button
+                                                className="copy-btn"
+                                                onClick={() => {
+                                                        const link = `${window.location.origin}/register/invite?code=${generatedCode}`;
+                                                        navigator.clipboard.writeText(link);
+                                                        toast.success("Link copiat!");
+                                                }}
+                                        >
                                                 Copiază
                                         </button>
                                 </div>

@@ -89,7 +89,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                                                 ? "Se trimite..."
                                                                 : "Depune cerere"
                                                 }
-                                                variant="primary"
+                                                variant="ghost"
                                                 fullWidth
                                                 disabled={isSubmitting}
                                                 onClick={handleSubmitRequest}
@@ -133,6 +133,15 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                 footer={footer}
                         >
                                 <InfoList>
+                                        <InfoItem
+                                                label="Departament"
+                                                value={
+                                                        <HighlightText
+                                                                text={template.department_name}
+                                                                search={searchTerm}
+                                                        />
+                                                }
+                                        />
                                         <InfoItem
                                                 label="Creat pe data"
                                                 value={formatDate(template.created_at)}

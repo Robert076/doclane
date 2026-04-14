@@ -53,3 +53,14 @@ export async function getUsersByDepartment(
                 method: "GET",
         });
 }
+
+export async function updateUserDepartment(
+        userId: number,
+        departmentId: number,
+): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/users/${userId}/department`, {
+                method: "PATCH",
+                body: { department_id: departmentId },
+                revalidate: "/dashboard/departments",
+        });
+}

@@ -16,13 +16,17 @@ interface RequestsSectionProps {
 const ITEMS_PER_PAGE = 8;
 
 export default function RequestsSection({ requests, user }: RequestsSectionProps) {
-        const openRequests = useMemo(() => requests.filter((r) => !r.is_closed), [requests]);
+        const openRequests = useMemo(
+                () => requests.filter((r) => !r.is_closed && !r.is_cancelled),
+                [requests],
+        );
 
         const searchFn = useCallback((req: Request, search: string) => {
                 const searchLower = search.toLowerCase();
                 return [
                         req.title,
                         req.description,
+                        req.department_name,
                         req.assignee_first_name,
                         req.assignee_last_name,
                         req.assignee_email,

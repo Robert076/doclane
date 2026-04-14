@@ -1,0 +1,43 @@
+.move-department-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.move-department-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.move-department-item {
+  padding: 0.75rem 1rem;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  cursor: pointer;
+  font-size: var(--font-size-s);
+  color: #1a202c;
+  background: white;
+  transition: all 0.15s ease;
+}
+
+.move-department-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.move-department-item--selected {
+  border-color: var(--color-primary);
+  background: #fff5f2;
+  color: var(--color-primary);
+  font-weight: 500;
+}
+
+.move-department-empty {
+  color: var(--text-color-secondary);
+  font-size: var(--font-size-s);
+  text-align: center;
+  padding: 1rem 0;
+}

@@ -1,10 +1,10 @@
 import PageHeader from "@/components/PageHeader/PageHeader";
-import ArchivedRequestsSection from "@/components/Pages/ArchivedRequestsComponents/ArchivedRequestsSection";
-import { getArchivedRequests } from "@/lib/api/requests";
+import CancelledRequestsSection from "@/components/CancelledRequestsComponents/CancelledRequestsSection";
+import { getCancelledRequests } from "@/lib/api/requests";
 import { getCurrentUser } from "@/lib/api/users";
 import { redirect } from "next/navigation";
 
-export default async function ArchivedRequestsPage() {
+export default async function CancelledRequestsPage() {
         const userResponse = await getCurrentUser();
         if (!userResponse.success || !userResponse.data) redirect("/login");
 
@@ -12,16 +12,16 @@ export default async function ArchivedRequestsPage() {
         if (user.role !== "admin" && user.department_id === null)
                 redirect("/dashboard/requests");
 
-        const res = await getArchivedRequests();
+        const res = await getCancelledRequests();
         const requests = res.data ?? [];
 
         return (
                 <div>
                         <PageHeader
-                                title="Dosare arhivate"
-                                subtitle="Vizualizează și gestionează dosarele arhivate."
+                                title="Dosare retrase"
+                                subtitle="Vizualizează dosarele retrase de utilizatori."
                         />
-                        <ArchivedRequestsSection requests={requests} user={user} />
+                        <CancelledRequestsSection requests={requests} user={user} />
                 </div>
         );
 }

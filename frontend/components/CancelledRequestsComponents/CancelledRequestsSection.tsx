@@ -6,23 +6,23 @@ import RequestCard from "@/components/CardComponents/RequestCard/RequestCard";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import "@/components/Pages/ArchivedRequestsComponents/ArchivedRequestsSection.css";
 
-type Props = {
+interface Props {
         requests: Request[];
         user: User;
-};
+}
 
-export default function ArchivedRequestsSection({ requests, user }: Props) {
+export default function CancelledRequestsSection({ requests, user }: Props) {
         const [searchInput, setSearchInput] = useState("");
 
-        const filteredRequests = requests.filter((r) =>
+        const filtered = requests.filter((r) =>
                 r.title?.toLowerCase().includes(searchInput.toLowerCase()),
         );
 
         if (requests.length === 0) {
                 return (
                         <NotFound
-                                text="Nu există dosare arhivate."
-                                subtext="Dosarele arhivate vor apărea aici."
+                                text="Nu există dosare anulate."
+                                subtext="Dosarele retrase de utilizatori vor apărea aici."
                                 background="white"
                         />
                 );
@@ -33,9 +33,9 @@ export default function ArchivedRequestsSection({ requests, user }: Props) {
                         <SearchBar
                                 value={searchInput}
                                 onChange={setSearchInput}
-                                placeholder="Caută dosar arhivat..."
+                                placeholder="Caută dosar retras..."
                         />
-                        {filteredRequests.length === 0 ? (
+                        {filtered.length === 0 ? (
                                 <NotFound
                                         text="Nu am găsit niciun dosar"
                                         subtext="Nu există niciun rezultat care să corespundă căutării tale."
@@ -43,13 +43,14 @@ export default function ArchivedRequestsSection({ requests, user }: Props) {
                                 />
                         ) : (
                                 <div className="archived-grid">
-                                        {filteredRequests.map((r) => (
+                                        {filtered.map((r) => (
                                                 <RequestCard
                                                         key={r.id}
                                                         user={user}
                                                         searchTerm={searchInput}
                                                         request={r}
-                                                        archived={true}
+                                                        archived={false}
+                                                        cancelled={true}
                                                 />
                                         ))}
                                 </div>

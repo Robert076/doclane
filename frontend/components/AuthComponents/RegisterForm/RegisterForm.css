@@ -18,3 +18,13 @@
     width: 80%;
     margin: 0rem 0 0.45rem 0;
 }
+.register-form-department-banner {
+  width: 80%;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: var(--border-radius-default);
+  padding: 0.6rem 1rem;
+  font-size: var(--font-size-s);
+  color: #166534;
+  margin-bottom: 0.5rem;
+}

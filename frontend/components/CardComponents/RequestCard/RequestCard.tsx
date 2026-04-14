@@ -17,6 +17,7 @@ interface RequestProps {
         user: User;
         searchTerm?: string;
         archived?: boolean;
+        cancelled?: boolean;
 }
 
 export default function RequestCard({ request, searchTerm, user, archived }: RequestProps) {
@@ -24,6 +25,7 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
         const { closeReq, reopenReq } = useRequestActions(request.id);
         const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
+        console.log(request);
         const canManage = user.role === "admin" || user.department_id !== null;
         const isOverdue = request.status === "overdue";
         const isScheduledFuture =
@@ -35,21 +37,23 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                 <>
                         <BaseDashboardCard
                                 header={
-                                        <>
-                                                <StatusBadge
-                                                        status={
-                                                                request.status as RequestStatus
-                                                        }
-                                                />
-                                                {isScheduledFuture && (
-                                                        <span
-                                                                className="scheduled-badge"
-                                                                title={`Programată pentru ${formatDate(request.scheduled_for!)}`}
-                                                        >
-                                                                Programată
-                                                        </span>
-                                                )}
-                                        </>
+                                        !request.is_cancelled && (
+                                                <>
+                                                        <StatusBadge
+                                                                status={
+                                                                        request.status as RequestStatus
+                                                                }
+                                                        />
+                                                        {isScheduledFuture && (
+                                                                <span
+                                                                        className="scheduled-badge"
+                                                                        title={`Programată pentru ${formatDate(request.scheduled_for!)}`}
+                                                                >
+                                                                        Programată
+                                                                </span>
+                                                        )}
+                                                </>
+                                        )
                                 }
                                 title={
                                         <HighlightText
@@ -61,6 +65,7 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                         <RequestFooter
                                                 archived={archived}
                                                 canManage={canManage}
+                                                cancelled={request.is_cancelled}
                                                 onView={() =>
                                                         router.push(
                                                                 `/dashboard/requests/${request.id}`,
@@ -73,6 +78,15 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                 isHighlighted={isOverdue}
                         >
                                 <InfoList>
+                                        <InfoItem
+                                                label="Departament"
+                                                value={
+                                                        <HighlightText
+                                                                text={`${request.department_name}`}
+                                                                search={searchTerm}
+                                                        />
+                                                }
+                                        />
                                         <InfoItem
                                                 label="Solicitant"
                                                 value={
@@ -122,6 +136,7 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
 
 interface RequestFooterProps {
         archived?: boolean;
+        cancelled?: boolean;
         canManage: boolean;
         onView: () => void;
         onClose: () => void;
@@ -130,6 +145,7 @@ interface RequestFooterProps {
 
 const RequestFooter: React.FC<RequestFooterProps> = ({
         archived,
+        cancelled,
         canManage,
         onView,
         onClose,
@@ -154,9 +170,9 @@ const RequestFooter: React.FC<RequestFooterProps> = ({
                                 fullWidth
                                 onClick={onView}
                         />
-                        {canManage && (
+                        {canManage && !cancelled && (
                                 <ButtonPrimary
-                                        text="Închide dosar"
+                                        text="Arhivează dosar"
                                         variant="ghost"
                                         fullWidth
                                         onClick={onClose}

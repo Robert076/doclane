@@ -7,6 +7,7 @@ interface SearchBarProps {
         onChange: (value: string) => void;
         placeholder?: string;
         className?: string;
+        fullWidth?: boolean;
 }
 
 const SearchBar: React.FC<SearchBarProps> = ({
@@ -14,13 +15,16 @@ const SearchBar: React.FC<SearchBarProps> = ({
         onChange,
         placeholder = "Search...",
         className = "",
+        fullWidth = false,
 }) => {
         const handleClear = () => {
                 onChange("");
         };
 
         return (
-                <div className={`searchbar-container ${className}`}>
+                <div
+                        className={`searchbar-container ${fullWidth ? "searchbar-container--full-width" : ""} ${className}`}
+                >
                         <svg
                                 className="searchbar-icon"
                                 width="20"

@@ -15,6 +15,14 @@ export async function generateInvitationCode(
         });
 }
 
+export async function getInvitationCodeInfo(
+        code: string,
+): Promise<APIResponse<InvitationCode>> {
+        return doclaneHTTPHelper(`/invitations/info?code=${encodeURIComponent(code)}`, {
+                method: "GET",
+        });
+}
+
 export async function getInvitationCodesByDepartment(
         departmentId: number,
 ): Promise<APIResponse<InvitationCode[]>> {

@@ -58,7 +58,7 @@ export default function UploadDocumentButton({ requestId, expectedDocumentId }: 
                         />
                         <ButtonPrimary
                                 text={isUploading ? "Se încarcă..." : "Încarcă document"}
-                                variant="primary"
+                                variant="ghost"
                                 fullWidth
                                 disabled={isUploading}
                                 onClick={() => fileInputRef.current?.click()}

@@ -32,6 +32,7 @@ export interface Request {
         assignee_first_name: string;
         assignee_last_name: string;
         department_id: number;
+        department_name: string;
         title: string;
         description?: string | null;
         due_date?: string | null;
@@ -41,6 +42,7 @@ export interface Request {
         scheduled_for?: string | null;
         next_due_at?: string | null;
         last_uploaded_at?: string | null;
+        is_cancelled: boolean;
         is_closed: boolean;
         template_id: number;
         status: RequestStatus;
@@ -115,6 +117,8 @@ export interface InvitationCode {
         id: number;
         code: string;
         created_by: number;
+        department_id: number;
+        department_name: string;
         used_at?: string | null;
         expires_at?: string | null;
         created_at: string;

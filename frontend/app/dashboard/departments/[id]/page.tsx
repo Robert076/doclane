@@ -32,7 +32,11 @@ export default async function DepartmentMembersPage({
                                 title={department.name}
                                 subtitle="Membrii acestui departament."
                         />
-                        <DepartmentMembersSection members={members} departmentId={deptId} />
+                        <DepartmentMembersSection
+                                members={members}
+                                departmentId={deptId}
+                                departments={departmentsResponse.data ?? []}
+                        />
                 </div>
         );
 }

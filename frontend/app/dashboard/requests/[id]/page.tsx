@@ -36,7 +36,10 @@ export default async function RequestDetailsPage({ params }: PageProps) {
                                                 requestId={requestId}
                                         />
                                 </div>
-                                <RequestDetailsActions assignee={request.assignee} />
+                                <RequestDetailsActions
+                                        assignee={request.assignee}
+                                        request={request}
+                                />
                         </div>
                 </div>
         );

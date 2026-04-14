@@ -59,6 +59,14 @@ export async function forwardRequestToDepartment(
         });
 }
 
+export async function getArchivedRequests(): Promise<APIResponse<Request[]>> {
+        return doclaneHTTPHelper("/requests/archived", { method: "GET" });
+}
+
+export async function getCancelledRequests(): Promise<APIResponse<Request[]>> {
+        return doclaneHTTPHelper("/requests/cancelled", { method: "GET" });
+}
+
 export async function closeRequest(requestID: number): Promise<APIResponse> {
         return doclaneHTTPHelper(`/requests/${requestID}/archive`, {
                 method: "POST",
@@ -68,6 +76,13 @@ export async function closeRequest(requestID: number): Promise<APIResponse> {
 
 export async function reopenRequest(requestID: number): Promise<APIResponse> {
         return doclaneHTTPHelper(`/requests/${requestID}/unarchive`, {
+                method: "POST",
+                revalidate: "/dashboard/requests",
+        });
+}
+
+export async function cancelRequest(requestId: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/requests/${requestId}/cancel`, {
                 method: "POST",
                 revalidate: "/dashboard/requests",
         });

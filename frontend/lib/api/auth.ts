@@ -36,18 +36,18 @@ export async function logout(): Promise<APIResponse> {
 export async function register(
         email: string,
         password: string,
-        invitationCode: string,
         firstName: string,
         lastName: string,
+        invitationCode?: string,
 ): Promise<APIResponse> {
         return doclaneHTTPHelper("/auth/register", {
                 method: "POST",
                 body: {
                         email,
                         password,
-                        invitation_code: invitationCode,
                         first_name: firstName,
                         last_name: lastName,
+                        ...(invitationCode ? { invitation_code: invitationCode } : {}),
                 },
         });
 }

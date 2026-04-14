@@ -1,4 +1,4 @@
-import { closeRequest, reopenRequest } from "@/lib/api/requests";
+import { closeRequest, reopenRequest, cancelRequest } from "@/lib/api/requests";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -37,5 +37,21 @@ export const useRequestActions = (requestId: number) => {
                 });
         };
 
-        return { closeReq, reopenReq, loading };
+        const cancelReq = async () => {
+                setLoading(true);
+                await toast.promise(cancelRequest(requestId), {
+                        loading: "Se retrage cererea...",
+                        success: (res) => {
+                                setLoading(false);
+                                if (!res.success) throw new Error(res.message);
+                                return "Cerere retrasă cu succes.";
+                        },
+                        error: () => {
+                                setLoading(false);
+                                return "Ceva nu a mers bine.";
+                        },
+                });
+        };
+
+        return { closeReq, reopenReq, cancelReq, loading };
 };

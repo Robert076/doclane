@@ -2,14 +2,12 @@ import { IconType } from "react-icons";
 import {
         MdDashboard,
         MdPeople,
-        MdSettings,
         MdArchive,
-        MdHelpCenter,
         MdEditDocument,
         MdOutlineSendAndArchive,
         MdApartment,
         MdHome,
-        MdInbox,
+        MdDoNotDisturb,
 } from "react-icons/md";
 
 export interface NavItem {
@@ -26,6 +24,11 @@ export const SIDEBAR_CONFIG: Record<string, NavItem[]> = {
                         href: "/dashboard/archived-requests",
                         icon: MdArchive,
                 },
+                {
+                        label: "Dosare retrase",
+                        href: "/dashboard/cancelled-requests",
+                        icon: MdDoNotDisturb,
+                },
                 { label: "Şabloane", href: "/dashboard/templates", icon: MdEditDocument },
                 {
                         label: "Şabloane arhivate",
@@ -34,13 +37,13 @@ export const SIDEBAR_CONFIG: Record<string, NavItem[]> = {
                 },
                 { label: "Utilizatori", href: "/dashboard/users", icon: MdPeople },
                 { label: "Departamente", href: "/dashboard/departments", icon: MdApartment },
-                { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
-                { label: "Ajutor", href: "/dashboard/help", icon: MdHelpCenter },
+                // { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
+                // { label: "Ajutor", href: "/dashboard/help", icon: MdHelpCenter },
         ],
         member: [
                 { label: "Portal", href: "/dashboard/requests", icon: MdHome },
                 { label: "Şabloane", href: "/dashboard/templates", icon: MdEditDocument },
-                { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
-                { label: "Ajutor", href: "/dashboard/help", icon: MdHelpCenter },
+                // { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
+                // { label: "Ajutor", href: "/dashboard/help", icon: MdHelpCenter },
         ],
 };

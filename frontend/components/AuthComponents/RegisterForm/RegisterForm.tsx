@@ -1,44 +1,38 @@
 "use client";
-import { Dispatch, SetStateAction, useMemo, useState } from "react";
-import "./RegisterForm.css";
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { MdLogin } from "react-icons/md";
-import Logo from "@/components/OtherComponents/Logo/Logo";
 import Input from "@/components/InputComponents/Input";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import SeparatorWithText from "@/components/OtherComponents/Separators/SeparatorWithText/SeparatorWithText";
 import ClickableCard from "../ClickableCard/ClickableCard";
-import { useRouter } from "next/navigation";
 import LoginFormFooter from "../LoginFormFooter/LoginFormFooter";
 import LoginFormHeader from "../LoginFormHeader/LoginFormHeader";
+import "./RegisterForm.css";
 
 interface RegisterFormProps {
-        email: string;
-        setEmail: Dispatch<SetStateAction<string>>;
-        password: string;
-        setPassword: Dispatch<SetStateAction<string>>;
-        invitationCode: string;
-        setInvitationCode: Dispatch<SetStateAction<string>>;
-        firstName: string;
-        setFirstName: Dispatch<SetStateAction<string>>;
-        lastName: string;
-        setLastName: Dispatch<SetStateAction<string>>;
-        handleRegister: () => void;
+        onSubmit: (data: {
+                email: string;
+                password: string;
+                firstName: string;
+                lastName: string;
+        }) => Promise<void>;
+        invitationCode?: string;
+        departmentName?: string;
+        isSubmitting?: boolean;
 }
 
 const RegisterForm: React.FC<RegisterFormProps> = ({
-        email,
-        setEmail,
-        password,
-        setPassword,
+        onSubmit,
         invitationCode,
-        setInvitationCode,
-        firstName,
-        setFirstName,
-        lastName,
-        setLastName,
-        handleRegister,
+        departmentName,
+        isSubmitting,
 }) => {
         const router = useRouter();
+        const [email, setEmail] = useState("");
+        const [password, setPassword] = useState("");
+        const [firstName, setFirstName] = useState("");
+        const [lastName, setLastName] = useState("");
         const [showErrors, setShowErrors] = useState(false);
 
         const isValidEmail = (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
@@ -48,29 +42,37 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                         isValidEmail(email) &&
                         firstName.trim().length >= 3 &&
                         lastName.trim().length >= 3 &&
-                        password.length > 0 &&
-                        invitationCode.trim().length > 0
+                        password.length > 0
                 );
-        }, [email, firstName, lastName, password, invitationCode]);
+        }, [email, firstName, lastName, password]);
 
-        const handleSubmit = () => {
+        const handleSubmit = async () => {
                 if (!isFormValid) {
                         setShowErrors(true);
                         return;
                 }
-                handleRegister();
+                await onSubmit({ email, password, firstName, lastName });
         };
 
         return (
                 <div className="register-form">
                         <LoginFormHeader
                                 title="Bun venit pe Portal"
-                                subtitle="Introduceți datele pentru a vă crea un cont pe Doclane."
+                                subtitle={
+                                        departmentName
+                                                ? `Te înregistrezi ca membru al departamentului „${departmentName}".`
+                                                : "Introduceți datele pentru a vă crea un cont pe Doclane."
+                                }
                         />
+                        {departmentName && (
+                                <div className="register-form-department-banner">
+                                        Departament: <strong>{departmentName}</strong>
+                                </div>
+                        )}
                         <Input
                                 label="Email:"
                                 value={email}
-                                onChange={(e: any) => setEmail(e.target.value)}
+                                onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Adresa ta de email"
                         />
                         {showErrors && !isValidEmail(email) && (
@@ -80,8 +82,8 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                                 label="Parolă:"
                                 placeholder="Parola ta"
                                 value={password}
-                                onChange={(e: any) => setPassword(e.target.value)}
-                                isPassword={true}
+                                onChange={(e) => setPassword(e.target.value)}
+                                isPassword
                         />
                         {showErrors && password.length === 0 && (
                                 <p className="register-form-error">Parola este obligatorie.</p>
@@ -90,7 +92,7 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                                 label="Prenume:"
                                 placeholder="Prenumele tău"
                                 value={firstName}
-                                onChange={(e: any) => setFirstName(e.target.value)}
+                                onChange={(e) => setFirstName(e.target.value)}
                         />
                         {showErrors && firstName.trim().length < 3 && (
                                 <p className="register-form-error">
@@ -101,25 +103,22 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                                 label="Nume:"
                                 placeholder="Numele tău"
                                 value={lastName}
-                                onChange={(e: any) => setLastName(e.target.value)}
+                                onChange={(e) => setLastName(e.target.value)}
                         />
                         {showErrors && lastName.trim().length < 3 && (
                                 <p className="register-form-error">
                                         Numele trebuie să aibă cel puțin 3 caractere.
                                 </p>
                         )}
-                        <Input
-                                label="Cod de invitație:"
-                                placeholder="Codul tău de invitație"
-                                value={invitationCode}
-                                onChange={(e: any) => setInvitationCode(e.target.value)}
+                        <ButtonPrimary
+                                text={
+                                        isSubmitting
+                                                ? "Se creează contul..."
+                                                : "Înregistrează-te"
+                                }
+                                onClick={handleSubmit}
+                                disabled={isSubmitting}
                         />
-                        {showErrors && invitationCode.trim().length === 0 && (
-                                <p className="register-form-error">
-                                        Codul de invitație este obligatoriu.
-                                </p>
-                        )}
-                        <ButtonPrimary text="Înregistrează-te" onClick={handleSubmit} />
                         <SeparatorWithText text="Ai deja un cont?" />
                         <ClickableCard
                                 text="Autentifică-te"

@@ -35,12 +35,8 @@ export default async function TemplatesPage() {
                         />
                         <TemplatesSection
                                 templates={templatesResponse.data}
-                                departments={
-                                        user.role === "admin"
-                                                ? (departmentsResponse.data ?? [])
-                                                : []
-                                }
                                 isAdmin={user.role === "admin"}
+                                userDepartmentId={user.department_id ?? null}
                         />
                 </div>
         );

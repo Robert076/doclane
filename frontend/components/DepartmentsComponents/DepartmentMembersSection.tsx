@@ -1,12 +1,10 @@
 "use client";
 import { useState } from "react";
-import { User, InvitationCode } from "@/types";
+import { User, InvitationCode, Department } from "@/types";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import UserCard from "@/components/Pages/UsersComponents/UserCard";
 import Modal from "@/components/Modals/Modal";
-import InfoList from "@/components/CardComponents/InfoList/InfoList";
-import InfoItem from "@/components/CardComponents/InfoItem/InfoItem";
 import { deactivateUser } from "@/lib/api/users";
 import {
         getInvitationCodesByDepartment,
@@ -17,19 +15,26 @@ import { formatDate } from "@/lib/client/formatDate";
 import toast from "react-hot-toast";
 import "./DepartmentMembersSection.css";
 import GenerateInvitationCodeModal from "./GenerateInvitationCodeModal";
+import MoveDepartmentModal from "./MoveDepartmentModal";
 import { MdContentCopy } from "react-icons/md";
 
 interface Props {
         members: User[];
         departmentId: number;
+        departments: Department[];
 }
 
-export default function DepartmentMembersSection({ members = [], departmentId }: Props) {
+export default function DepartmentMembersSection({
+        members = [],
+        departmentId,
+        departments,
+}: Props) {
         const router = useRouter();
         const [isAddModalOpen, setIsAddModalOpen] = useState(false);
         const [isCodesModalOpen, setIsCodesModalOpen] = useState(false);
         const [codes, setCodes] = useState<InvitationCode[]>([]);
         const [isLoadingCodes, setIsLoadingCodes] = useState(false);
+        const [movingUser, setMovingUser] = useState<User | null>(null);
 
         const handleDeactivate = async (userId: number, name: string) => {
                 const id = toast.loading("Se dezactivează...");
@@ -119,8 +124,8 @@ export default function DepartmentMembersSection({ members = [], departmentId }:
                                                                                 variant="ghost"
                                                                                 fullWidth
                                                                                 onClick={() =>
-                                                                                        alert(
-                                                                                                "Coming soon",
+                                                                                        setMovingUser(
+                                                                                                member,
                                                                                         )
                                                                                 }
                                                                         />
@@ -148,6 +153,17 @@ export default function DepartmentMembersSection({ members = [], departmentId }:
                                 departmentId={departmentId}
                         />
 
+                        {movingUser && (
+                                <MoveDepartmentModal
+                                        isOpen={!!movingUser}
+                                        onClose={() => setMovingUser(null)}
+                                        userId={movingUser.id}
+                                        userName={`${movingUser.first_name} ${movingUser.last_name}`}
+                                        currentDepartmentId={departmentId}
+                                        departments={departments}
+                                />
+                        )}
+
                         <Modal
                                 isOpen={isCodesModalOpen}
                                 onClose={() => setIsCodesModalOpen(false)}
@@ -160,41 +176,48 @@ export default function DepartmentMembersSection({ members = [], departmentId }:
                                         </p>
                                 ) : (
                                         <div className="codes-list">
-                                                {codes.map((code) => (
-                                                        <div
-                                                                key={code.id}
-                                                                className="code-item"
-                                                        >
-                                                                <div>
-                                                                        <span className="code-item-text">
-                                                                                {code.code}
-                                                                        </span>
-                                                                        {code.expires_at && (
-                                                                                <p className="code-item-meta">
-                                                                                        Expiră:{" "}
-                                                                                        {formatDate(
-                                                                                                code.expires_at,
-                                                                                        )}
-                                                                                </p>
-                                                                        )}
-                                                                </div>
-                                                                <button
-                                                                        className="code-copy-btn"
-                                                                        onClick={() => {
-                                                                                navigator.clipboard.writeText(
-                                                                                        code.code,
-                                                                                );
-                                                                                toast.success(
-                                                                                        "Cod copiat!",
-                                                                                );
-                                                                        }}
+                                                {codes.map((code) => {
+                                                        const inviteLink = `${window.location.origin}/register/invite?code=${code.code}`;
+                                                        return (
+                                                                <div
+                                                                        key={code.id}
+                                                                        className="code-item"
                                                                 >
-                                                                        <MdContentCopy
-                                                                                size={18}
-                                                                        />
-                                                                </button>
-                                                        </div>
-                                                ))}
+                                                                        <div>
+                                                                                <span className="code-item-text">
+                                                                                        {
+                                                                                                code.code
+                                                                                        }
+                                                                                </span>
+                                                                                {code.expires_at && (
+                                                                                        <p className="code-item-meta">
+                                                                                                Expiră:{" "}
+                                                                                                {formatDate(
+                                                                                                        code.expires_at,
+                                                                                                )}
+                                                                                        </p>
+                                                                                )}
+                                                                        </div>
+                                                                        <button
+                                                                                className="code-copy-btn"
+                                                                                onClick={() => {
+                                                                                        navigator.clipboard.writeText(
+                                                                                                inviteLink,
+                                                                                        );
+                                                                                        toast.success(
+                                                                                                "Link copiat!",
+                                                                                        );
+                                                                                }}
+                                                                        >
+                                                                                <MdContentCopy
+                                                                                        size={
+                                                                                                18
+                                                                                        }
+                                                                                />
+                                                                        </button>
+                                                                </div>
+                                                        );
+                                                })}
                                         </div>
                                 )}
                         </Modal>

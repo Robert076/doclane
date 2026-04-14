@@ -12,18 +12,29 @@ import "./TemplatesSection.css";
 interface TemplatesSectionProps {
         templates: Template[];
         isAdmin: boolean;
+        userDepartmentId: number;
 }
 
 const ITEMS_PER_PAGE = 12;
 
-export default function TemplatesSection({ templates, isAdmin }: TemplatesSectionProps) {
+export default function TemplatesSection({
+        templates,
+        isAdmin,
+        userDepartmentId,
+}: TemplatesSectionProps) {
         const searchParams = useSearchParams();
         const [currentPage, setCurrentPage] = useState(1);
 
         const departmentParam = searchParams.get("department");
         const selectedDepartmentId = departmentParam ? Number(departmentParam) : null;
 
-        const openTemplates = templates.filter((t) => !t.is_closed);
+        const openTemplates = templates.filter((t) => {
+                if (t.is_closed) return false;
+                if (!isAdmin && userDepartmentId !== null) {
+                        return t.department_id === userDepartmentId;
+                }
+                return true;
+        });
 
         const departmentFiltered = selectedDepartmentId
                 ? openTemplates.filter((t) => t.department_id === selectedDepartmentId)
@@ -33,7 +44,8 @@ export default function TemplatesSection({ templates, isAdmin }: TemplatesSectio
                 departmentFiltered,
                 (template, search) =>
                         template.title.toLowerCase().includes(search) ||
-                        (template.description ?? "").toLowerCase().includes(search),
+                        (template.description ?? "").toLowerCase().includes(search) ||
+                        template.department_name.toLowerCase().includes(search),
         );
 
         useEffect(() => {
