@@ -29,7 +29,6 @@ type IRequestRepo interface {
 	GetArchivedRequestsByDepartment(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error)
 	GetCancelledRequests(ctx context.Context, search *string) ([]models.RequestDTORead, error)
 	GetCancelledRequestsByDepartment(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error)
-	ForwardRequestToDepartment(ctx context.Context, requestID int, departmentID int) error
 	AddRequest(ctx context.Context, req models.Request) (int, error)
 	AddRequestWithTx(ctx context.Context, req models.Request, tx *sql.Tx) (int, error)
 	UpdateRequestTitle(ctx context.Context, id int, newTitle string) error

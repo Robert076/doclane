@@ -236,33 +236,6 @@ func (service *RequestService) GetRequestsByDepartment(ctx context.Context, clai
 	return reqs, nil
 }
 
-func (service *RequestService) ForwardRequestToDepartment(ctx context.Context, claims types.JWTClaims, requestID int, departmentID int) error {
-	if !claims.IsAdmin() {
-		service.logger.Warn("unauthorized attempt to forward request",
-			slog.Int("jwt_user_id", claims.UserID),
-			slog.Int("request_id", requestID),
-		)
-		return errors.ErrForbidden{Msg: "Only admins can forward requests to departments."}
-	}
-
-	if err := service.requestRepo.ForwardRequestToDepartment(ctx, requestID, departmentID); err != nil {
-		service.logger.Error("failed to forward request to department",
-			slog.Int("request_id", requestID),
-			slog.Int("department_id", departmentID),
-			slog.Int("jwt_user_id", claims.UserID),
-			slog.Any("error", err),
-		)
-		return err
-	}
-
-	service.logger.Info("request forwarded to department successfully",
-		slog.Int("request_id", requestID),
-		slog.Int("department_id", departmentID),
-		slog.Int("jwt_user_id", claims.UserID),
-	)
-	return nil
-}
-
 func (s *RequestService) PatchRequest(ctx context.Context, claims types.JWTClaims, requestID int, updatedDTO models.RequestDTOPatch) error {
 	if err := ValidatePatchDTO(updatedDTO); err != nil {
 		s.logger.Warn("request patch validation failed",
