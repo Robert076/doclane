@@ -17,7 +17,6 @@ type RegisterRequest struct {
 	FirstName      string  `json:"first_name"`
 	LastName       string  `json:"last_name"`
 	Password       string  `json:"password"`
-	DepartmentID   *int    `json:"department_id"`
 	InvitationCode *string `json:"invitation_code"`
 }
 
@@ -29,18 +28,38 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := services.RegisterParams{
-		Email:        req.Email,
-		FirstName:    req.FirstName,
-		LastName:     req.LastName,
-		Password:     req.Password,
-		Role:         types.RoleMember,
-		DepartmentID: req.DepartmentID,
+		Email:     req.Email,
+		FirstName: req.FirstName,
+		LastName:  req.LastName,
+		Password:  req.Password,
+		Role:      types.RoleMember,
+	}
+
+	var inviteCodeID *int
+
+	if req.InvitationCode != nil && *req.InvitationCode != "" {
+		invCode, err := config.InvitationCodeService.GetInvitationCodeInfo(r.Context(), *req.InvitationCode)
+		if err != nil {
+			utils.WriteError(w, err)
+			return
+		}
+		params.Role = types.RoleMember
+		params.DepartmentID = &invCode.DepartmentID
+		inviteCodeID = &invCode.ID
 	}
 
 	id, err := config.UserService.AddUser(r.Context(), params)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
+	}
+
+	if inviteCodeID != nil {
+		if err := config.InvitationCodeService.InvalidateCode(r.Context(), *inviteCodeID); err != nil {
+			// user is created but code isn't invalidated — log it but don't fail the request
+			// this is an edge case that can be handled by expiry
+			_ = err
+		}
 	}
 
 	utils.WriteJSONSafe(w, http.StatusCreated, types.APIResponse{

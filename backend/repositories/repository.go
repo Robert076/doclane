@@ -16,19 +16,24 @@ type IUserRepo interface {
 	AddUser(ctx context.Context, user models.User) (int, error)
 	NotifyUser(ctx context.Context, userId int, time time.Time) error
 	DeactivateUser(ctx context.Context, userId int) error
+	UpdateUserDepartment(ctx context.Context, userID int, departmentID int) error
 }
 
 type IRequestRepo interface {
 	GetAllRequests(ctx context.Context, search *string) ([]models.RequestDTORead, error)
 	GetRequestByID(ctx context.Context, id int) (models.RequestDTORead, error)
-	GetRequestsByAssignee(ctx context.Context, assignee int, search *string) ([]models.RequestDTORead, error)
 	GetRequestsByAssigneeWithExpectedDocs(ctx context.Context, assignee int, search *string) ([]models.RequestDTORead, error)
 	GetRequestsByDepartment(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error)
 	GetRequestsByDepartmentWithExpectedDocs(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error)
+	GetArchivedRequests(ctx context.Context, search *string) ([]models.RequestDTORead, error)
+	GetArchivedRequestsByDepartment(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error)
+	GetCancelledRequests(ctx context.Context, search *string) ([]models.RequestDTORead, error)
+	GetCancelledRequestsByDepartment(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error)
 	ForwardRequestToDepartment(ctx context.Context, requestID int, departmentID int) error
 	AddRequest(ctx context.Context, req models.Request) (int, error)
 	AddRequestWithTx(ctx context.Context, req models.Request, tx *sql.Tx) (int, error)
 	UpdateRequestTitle(ctx context.Context, id int, newTitle string) error
+	CancelRequest(ctx context.Context, id int) error
 	CloseRequest(ctx context.Context, id int) error
 	ReopenRequest(ctx context.Context, id int) error
 	AddDocument(ctx context.Context, file models.Document) (int, error)
@@ -66,7 +71,7 @@ type IDepartmentRepo interface {
 
 type IInvitationCodeRepo interface {
 	GetInvitationCodesByDepartment(ctx context.Context, departmentID int) ([]models.InvitationCode, error)
-	GetInvitationCodeByCode(ctx context.Context, code string) (models.InvitationCode, error)
+	GetInvitationCodeByCode(ctx context.Context, code string) (models.InvitationCodeReadDTO, error)
 	GetInvitationCodesByCreator(ctx context.Context, createdBy int) ([]models.InvitationCode, error)
 	GetInvitationCodeByID(ctx context.Context, id int) (models.InvitationCode, error)
 	CreateInvitationCode(ctx context.Context, departmentID int, code string, createdBy int, expiresAt *time.Time) error

@@ -20,14 +20,14 @@ func NewRequestRepo(db *sql.DB) *RequestRepo {
 func (r *RequestRepo) AddRequest(ctx context.Context, req models.Request) (int, error) {
 	var id int
 	query := `
-		INSERT INTO document_requests (assignee, department_id, title, description, is_recurring, recurrence_cron, is_scheduled, scheduled_for, is_closed, last_uploaded_at, due_date, next_due_at, template_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+		INSERT INTO document_requests (assignee, department_id, title, description, is_recurring, recurrence_cron, is_scheduled, scheduled_for, last_uploaded_at, due_date, next_due_at, template_id)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
 		RETURNING id
 	`
 	err := r.db.QueryRowContext(ctx, query,
 		req.Assignee, req.DepartmentID, req.Title, req.Description,
 		req.IsRecurring, req.RecurrenceCron, req.IsScheduled, req.ScheduledFor,
-		req.IsClosed, req.LastUploadedAt, req.DueDate, req.NextDueAt, req.RequestTemplateID,
+		req.LastUploadedAt, req.DueDate, req.NextDueAt, req.RequestTemplateID,
 	).Scan(&id)
 	return id, err
 }
@@ -51,12 +51,13 @@ func (r *RequestRepo) GetAllRequests(ctx context.Context, search *string) ([]mod
 	query := `
         SELECT dr.id, dr.assignee, dr.department_id,
             dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
-            dr.is_closed, dr.last_uploaded_at,
+            dr.is_cancelled, dr.is_closed, dr.last_uploaded_at,
             u.email AS assignee_email, u.first_name AS assignee_first_name, u.last_name AS assignee_last_name,
-            dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id
+            dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id, d.name
         FROM document_requests dr
         JOIN users u ON dr.assignee = u.id
-        WHERE dr.is_closed = false
+	JOIN departments d ON dr.department_id = d.id
+        WHERE dr.is_closed = false AND dr.is_cancelled = false
     `
 	args := []interface{}{}
 	argIndex := 1
@@ -80,7 +81,7 @@ func (r *RequestRepo) GetRequestByID(ctx context.Context, id int) (models.Reques
 	query := `
 		SELECT dr.id, dr.assignee, dr.department_id,
 			dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
-			dr.is_closed, dr.last_uploaded_at,
+			dr.is_cancelled, dr.is_closed, dr.last_uploaded_at,
 			u.email AS assignee_email, u.first_name AS assignee_first_name, u.last_name AS assignee_last_name,
 			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id
 		FROM document_requests dr
@@ -95,6 +96,7 @@ func (r *RequestRepo) GetRequestByID(ctx context.Context, id int) (models.Reques
 		&req.RecurrenceCron,
 		&req.IsScheduled,
 		&req.ScheduledFor,
+		&req.IsCancelled,
 		&req.IsClosed,
 		&req.LastUploadedAt,
 		&req.AssigneeEmail,
@@ -111,40 +113,6 @@ func (r *RequestRepo) GetRequestByID(ctx context.Context, id int) (models.Reques
 	return req, err
 }
 
-// GetRequestsByAssignee returns requests belonging to a specific user
-func (r *RequestRepo) GetRequestsByAssignee(
-	ctx context.Context,
-	assignee int,
-	search *string,
-) ([]models.RequestDTORead, error) {
-	query := `
-		SELECT dr.id, dr.assignee, dr.department_id,
-			dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
-			dr.is_closed, dr.last_uploaded_at,
-			u.email AS assignee_email, u.first_name AS assignee_first_name, u.last_name AS assignee_last_name,
-			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id
-		FROM document_requests dr
-		JOIN users u ON dr.assignee = u.id
-		WHERE dr.assignee = $1
-		AND (dr.is_scheduled = false OR dr.scheduled_for <= NOW())
-	`
-	args := []interface{}{assignee}
-	argIndex := 2
-
-	if search != nil && *search != "" {
-		searchPattern := "%" + strings.ToLower(*search) + "%"
-		query += ` AND (
-			LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
-			LOWER(dr.description) LIKE $` + strconv.Itoa(argIndex) + `
-		)`
-		args = append(args, searchPattern)
-	}
-
-	query += " ORDER BY dr.created_at DESC"
-	return r.scanRequests(ctx, query, args...)
-}
-
-// GetRequestsByDepartment returns requests belonging to a specific department
 func (r *RequestRepo) GetRequestsByDepartment(
 	ctx context.Context,
 	departmentID int,
@@ -153,12 +121,15 @@ func (r *RequestRepo) GetRequestsByDepartment(
 	query := `
 		SELECT dr.id, dr.assignee, dr.department_id,
 			dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
-			dr.is_closed, dr.last_uploaded_at,
+			dr.is_cancelled, dr.is_closed, dr.last_uploaded_at,
 			u.email AS assignee_email, u.first_name AS assignee_first_name, u.last_name AS assignee_last_name,
-			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id
+			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id, d.name
 		FROM document_requests dr
 		JOIN users u ON dr.assignee = u.id
+		JOIN departments d ON d.id = dr.department_id
 		WHERE dr.department_id = $1
+		AND dr.is_cancelled = false
+		AND dr.is_closed = false
 	`
 	args := []interface{}{departmentID}
 	argIndex := 2
@@ -180,7 +151,6 @@ func (r *RequestRepo) GetRequestsByDepartment(
 	return r.scanRequests(ctx, query, args...)
 }
 
-// GetRequestsByAssigneeWithExpectedDocs returns a user's requests with expected documents joined
 func (r *RequestRepo) GetRequestsByAssigneeWithExpectedDocs(
 	ctx context.Context,
 	assignee int,
@@ -189,14 +159,18 @@ func (r *RequestRepo) GetRequestsByAssigneeWithExpectedDocs(
 	query := `
 		SELECT dr.id, dr.assignee, dr.department_id,
 			dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
-			dr.is_closed, dr.last_uploaded_at,
+			dr.is_cancelled, dr.is_closed, dr.last_uploaded_at,
 			u.email, u.first_name, u.last_name,
 			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id,
-			ed.id, ed.document_request_id, ed.title, ed.description, ed.status, ed.rejection_reason, ed.example_file_path, ed.example_mime_type
+			ed.id, ed.document_request_id, ed.title, ed.description, ed.status, ed.rejection_reason, ed.example_file_path, ed.example_mime_type, d.name
 		FROM document_requests dr
 		JOIN users u ON dr.assignee = u.id
+		JOIN document_request_templates t ON t.id = dr.template_id
+		JOIN departments d ON d.id = t.department_id
 		LEFT JOIN expected_documents ed ON ed.document_request_id = dr.id
 		WHERE dr.assignee = $1
+		AND dr.is_cancelled = false
+		AND dr.is_closed = false
 		AND (dr.is_scheduled = false OR dr.scheduled_for <= NOW())
 	`
 	args := []interface{}{assignee}
@@ -215,7 +189,6 @@ func (r *RequestRepo) GetRequestsByAssigneeWithExpectedDocs(
 	return r.scanRequestsWithExpectedDocs(ctx, query, args...)
 }
 
-// GetRequestsByDepartmentWithExpectedDocs returns department requests with expected documents joined
 func (r *RequestRepo) GetRequestsByDepartmentWithExpectedDocs(
 	ctx context.Context,
 	departmentID int,
@@ -224,14 +197,17 @@ func (r *RequestRepo) GetRequestsByDepartmentWithExpectedDocs(
 	query := `
 		SELECT dr.id, dr.assignee, dr.department_id,
 			dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
-			dr.is_closed, dr.last_uploaded_at,
+			dr.is_cancelled, dr.is_closed, dr.last_uploaded_at,
 			u.email, u.first_name, u.last_name,
 			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id,
-			ed.id, ed.document_request_id, ed.title, ed.description, ed.status, ed.rejection_reason, ed.example_file_path, ed.example_mime_type
+			ed.id, ed.document_request_id, ed.title, ed.description, ed.status, ed.rejection_reason, ed.example_file_path, ed.example_mime_type, d.name
 		FROM document_requests dr
 		JOIN users u ON dr.assignee = u.id
+		JOIN departments d on dr.department_id = d.id
 		LEFT JOIN expected_documents ed ON ed.document_request_id = dr.id
 		WHERE dr.department_id = $1
+		AND dr.is_cancelled = false
+		AND dr.is_closed = false
 	`
 	args := []interface{}{departmentID}
 	argIndex := 2
@@ -251,6 +227,125 @@ func (r *RequestRepo) GetRequestsByDepartmentWithExpectedDocs(
 
 	query += " ORDER BY dr.created_at DESC, ed.id ASC"
 	return r.scanRequestsWithExpectedDocs(ctx, query, args...)
+}
+
+func (r *RequestRepo) GetArchivedRequestsByDepartment(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error) {
+	query := `
+		SELECT dr.id, dr.assignee, dr.department_id,
+			dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
+			dr.is_cancelled, dr.is_closed, dr.last_uploaded_at,
+			u.email AS assignee_email, u.first_name AS assignee_first_name, u.last_name AS assignee_last_name,
+			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id, d.name
+		FROM document_requests dr
+		JOIN users u ON dr.assignee = u.id
+		JOIN departments d ON dr.department_id = d.id
+		WHERE dr.department_id = $1
+		AND dr.is_closed = true
+		AND dr.is_cancelled = false
+	`
+	args := []interface{}{departmentID}
+	argIndex := 2
+
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` AND (
+			LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.last_name) LIKE $` + strconv.Itoa(argIndex) + `
+		)`
+		args = append(args, searchPattern)
+	}
+
+	query += " ORDER BY dr.created_at DESC"
+	return r.scanRequests(ctx, query, args...)
+}
+
+func (r *RequestRepo) GetCancelledRequestsByDepartment(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error) {
+	query := `
+		SELECT dr.id, dr.assignee, dr.department_id,
+			dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
+			dr.is_cancelled, dr.is_closed, dr.last_uploaded_at,
+			u.email AS assignee_email, u.first_name AS assignee_first_name, u.last_name AS assignee_last_name,
+			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id, d.name
+		FROM document_requests dr
+		JOIN users u ON dr.assignee = u.id
+		JOIN departments d ON dr.department_id = d.id
+		WHERE dr.department_id = $1
+		AND dr.is_cancelled = true
+	`
+	args := []interface{}{departmentID}
+	argIndex := 2
+
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` AND (
+			LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.last_name) LIKE $` + strconv.Itoa(argIndex) + `
+		)`
+		args = append(args, searchPattern)
+	}
+
+	query += " ORDER BY dr.created_at DESC"
+	return r.scanRequests(ctx, query, args...)
+}
+
+func (r *RequestRepo) GetArchivedRequests(ctx context.Context, search *string) ([]models.RequestDTORead, error) {
+	query := `
+		SELECT dr.id, dr.assignee, dr.department_id,
+			dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
+			dr.is_cancelled, dr.is_closed, dr.last_uploaded_at,
+			u.email AS assignee_email, u.first_name AS assignee_first_name, u.last_name AS assignee_last_name,
+			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id, d.name
+		FROM document_requests dr
+		JOIN users u ON dr.assignee = u.id
+		JOIN departments d ON dr.department_id = d.id
+		WHERE dr.is_closed = true AND dr.is_cancelled = false
+	`
+	args := []interface{}{}
+	argIndex := 1
+
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` AND (
+			LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.last_name) LIKE $` + strconv.Itoa(argIndex) + `
+		)`
+		args = append(args, searchPattern)
+	}
+
+	query += " ORDER BY dr.created_at DESC"
+	return r.scanRequests(ctx, query, args...)
+}
+
+func (r *RequestRepo) GetCancelledRequests(ctx context.Context, search *string) ([]models.RequestDTORead, error) {
+	query := `
+		SELECT dr.id, dr.assignee, dr.department_id,
+			dr.is_recurring, dr.recurrence_cron, dr.is_scheduled, dr.scheduled_for,
+			dr.is_cancelled, dr.is_closed, dr.last_uploaded_at,
+			u.email AS assignee_email, u.first_name AS assignee_first_name, u.last_name AS assignee_last_name,
+			dr.title, dr.description, dr.due_date, dr.next_due_at, dr.created_at, dr.updated_at, dr.template_id, d.name
+		FROM document_requests dr
+		JOIN users u ON dr.assignee = u.id
+		JOIN departments d ON dr.department_id = d.id
+		WHERE dr.is_cancelled = true
+	`
+	args := []interface{}{}
+	argIndex := 1
+
+	if search != nil && *search != "" {
+		searchPattern := "%" + strings.ToLower(*search) + "%"
+		query += ` AND (
+			LOWER(dr.title) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.first_name) LIKE $` + strconv.Itoa(argIndex) + ` OR
+			LOWER(u.last_name) LIKE $` + strconv.Itoa(argIndex) + `
+		)`
+		args = append(args, searchPattern)
+	}
+
+	query += " ORDER BY dr.created_at DESC"
+	return r.scanRequests(ctx, query, args...)
 }
 
 func (r *RequestRepo) ForwardRequestToDepartment(ctx context.Context, requestID int, departmentID int) error {
@@ -268,6 +363,11 @@ func (r *RequestRepo) ReopenRequest(ctx context.Context, id int) error {
 
 func (r *RequestRepo) CloseRequest(ctx context.Context, id int) error {
 	_, err := r.db.ExecContext(ctx, `UPDATE document_requests SET is_closed=true WHERE id=$1`, id)
+	return err
+}
+
+func (r *RequestRepo) CancelRequest(ctx context.Context, id int) error {
+	_, err := r.db.ExecContext(ctx, `UPDATE document_requests SET is_cancelled=true WHERE id=$1`, id)
 	return err
 }
 
@@ -358,7 +458,6 @@ func (r *RequestRepo) SetFileUploaded(ctx context.Context, id int) error {
 	return err
 }
 
-// scanRequests is a shared helper for simple request list queries
 func (r *RequestRepo) scanRequests(ctx context.Context, query string, args ...interface{}) ([]models.RequestDTORead, error) {
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -373,11 +472,11 @@ func (r *RequestRepo) scanRequests(ctx context.Context, query string, args ...in
 			&req.ID, &req.Assignee, &req.DepartmentID,
 			&req.IsRecurring, &req.RecurrenceCron,
 			&req.IsScheduled, &req.ScheduledFor,
-			&req.IsClosed, &req.LastUploadedAt,
+			&req.IsCancelled, &req.IsClosed, &req.LastUploadedAt,
 			&req.AssigneeEmail, &req.AssigneeFirstName, &req.AssigneeLastName,
 			&req.Title, &req.Description,
 			&req.DueDate, &req.NextDueAt,
-			&req.CreatedAt, &req.UpdatedAt, &req.RequestTemplateID,
+			&req.CreatedAt, &req.UpdatedAt, &req.RequestTemplateID, &req.DepartmentName,
 		); err != nil {
 			return nil, err
 		}
@@ -386,7 +485,6 @@ func (r *RequestRepo) scanRequests(ctx context.Context, query string, args ...in
 	return requests, rows.Err()
 }
 
-// scanRequestsWithExpectedDocs is a shared helper for request list queries that join expected_documents
 func (r *RequestRepo) scanRequestsWithExpectedDocs(ctx context.Context, query string, args ...interface{}) ([]models.RequestDTORead, error) {
 	rows, err := r.db.QueryContext(ctx, query, args...)
 	if err != nil {
@@ -412,13 +510,13 @@ func (r *RequestRepo) scanRequestsWithExpectedDocs(ctx context.Context, query st
 			&req.ID, &req.Assignee, &req.DepartmentID,
 			&req.IsRecurring, &req.RecurrenceCron,
 			&req.IsScheduled, &req.ScheduledFor,
-			&req.IsClosed, &req.LastUploadedAt,
+			&req.IsCancelled, &req.IsClosed, &req.LastUploadedAt,
 			&req.AssigneeEmail, &req.AssigneeFirstName, &req.AssigneeLastName,
 			&req.Title, &req.Description,
 			&req.DueDate, &req.NextDueAt,
 			&req.CreatedAt, &req.UpdatedAt, &req.RequestTemplateID,
 			&edID, &edRequestID, &edTitle, &edDescription,
-			&edStatus, &edRejectionReason, &edExampleFilePath, &edExampleMimeType,
+			&edStatus, &edRejectionReason, &edExampleFilePath, &edExampleMimeType, &req.DepartmentName,
 		); err != nil {
 			return nil, err
 		}

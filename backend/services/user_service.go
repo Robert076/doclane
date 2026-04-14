@@ -255,6 +255,42 @@ func (service *UserService) Login(ctx context.Context, params LoginParams) (*mod
 	return &user, nil
 }
 
+func (service *UserService) UpdateUserDepartment(ctx context.Context, caller types.JWTClaims, userID int, departmentID int) error {
+	if !caller.IsAdmin() {
+		service.logger.Warn("unauthorized attempt to update user department",
+			slog.Int("jwt_user_id", caller.UserID),
+			slog.Int("user_id", userID),
+		)
+		return errors.ErrForbidden{Msg: "Only admins can move users between departments."}
+	}
+
+	if _, err := service.repo.GetUserByID(ctx, userID); err != nil {
+		service.logger.Error("user not found when trying to update department",
+			slog.Int("user_id", userID),
+			slog.Int("jwt_user_id", caller.UserID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	if err := service.repo.UpdateUserDepartment(ctx, userID, departmentID); err != nil {
+		service.logger.Error("failed to update user department",
+			slog.Int("user_id", userID),
+			slog.Int("department_id", departmentID),
+			slog.Int("jwt_user_id", caller.UserID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	service.logger.Info("user department updated successfully",
+		slog.Int("user_id", userID),
+		slog.Int("department_id", departmentID),
+		slog.Int("jwt_user_id", caller.UserID),
+	)
+	return nil
+}
+
 func (service *UserService) DeactivateUser(ctx context.Context, caller types.JWTClaims, id int) error {
 	_, err := service.repo.GetUserByID(ctx, id)
 	if err != nil {

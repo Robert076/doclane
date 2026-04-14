@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Robert076/doclane/backend/models"
+	"github.com/Robert076/doclane/backend/types/errors"
 )
 
 type InvitationCodeRepo struct {
@@ -17,26 +18,28 @@ func NewInvitationCodeRepo(db *sql.DB) *InvitationCodeRepo {
 	return &InvitationCodeRepo{db: db}
 }
 
-func (r *InvitationCodeRepo) GetInvitationCodeByCode(ctx context.Context, code string) (models.InvitationCode, error) {
+func (r *InvitationCodeRepo) GetInvitationCodeByCode(ctx context.Context, code string) (models.InvitationCodeReadDTO, error) {
 	query := `
-		SELECT id, department_id, code, created_by, used_at, expires_at, created_at
-		FROM invitation_codes
-		WHERE code = $1
+		SELECT ic.id, ic.department_id, ic.code, ic.created_by, ic.used_at, ic.expires_at, ic.created_at, d.name
+		FROM invitation_codes ic
+		JOIN departments d ON d.id = ic.department_id
+		WHERE ic.code = $1
 	`
-	var invCode models.InvitationCode
+	var dto models.InvitationCodeReadDTO
 	err := r.db.QueryRowContext(ctx, query, code).Scan(
-		&invCode.ID,
-		&invCode.DepartmentID,
-		&invCode.Code,
-		&invCode.CreatedBy,
-		&invCode.UsedAt,
-		&invCode.ExpiresAt,
-		&invCode.CreatedAt,
+		&dto.ID,
+		&dto.DepartmentID,
+		&dto.Code,
+		&dto.CreatedBy,
+		&dto.UsedAt,
+		&dto.ExpiresAt,
+		&dto.CreatedAt,
+		&dto.DepartmentName,
 	)
 	if err == sql.ErrNoRows {
-		return models.InvitationCode{}, fmt.Errorf("invitation code not found")
+		return models.InvitationCodeReadDTO{}, errors.ErrNotFound{Msg: "Invitation code not found."}
 	}
-	return invCode, err
+	return dto, err
 }
 
 func (r *InvitationCodeRepo) GetInvitationCodesByCreator(ctx context.Context, createdBy int) ([]models.InvitationCode, error) {
@@ -88,7 +91,7 @@ func (r *InvitationCodeRepo) GetInvitationCodeByID(ctx context.Context, id int) 
 		&invCode.CreatedAt,
 	)
 	if err == sql.ErrNoRows {
-		return models.InvitationCode{}, fmt.Errorf("invitation code not found")
+		return models.InvitationCode{}, errors.ErrNotFound{Msg: "Invitation code not found."}
 	}
 	return invCode, err
 }
@@ -97,9 +100,9 @@ func (r *InvitationCodeRepo) GetInvitationCodesByDepartment(ctx context.Context,
 	query := `
 		SELECT id, code, created_by, department_id, used_at, expires_at, created_at
 		FROM invitation_codes
-		WHERE department_id = $1
+		WHERE department_id = $1 AND used_at IS NULL
+		ORDER BY created_at DESC
 	`
-
 	rows, err := r.db.QueryContext(ctx, query, departmentID)
 	if err != nil {
 		return nil, err
@@ -109,7 +112,7 @@ func (r *InvitationCodeRepo) GetInvitationCodesByDepartment(ctx context.Context,
 	codes := []models.InvitationCode{}
 	for rows.Next() {
 		var code models.InvitationCode
-		err := rows.Scan(
+		if err := rows.Scan(
 			&code.ID,
 			&code.Code,
 			&code.CreatedBy,
@@ -117,13 +120,11 @@ func (r *InvitationCodeRepo) GetInvitationCodesByDepartment(ctx context.Context,
 			&code.UsedAt,
 			&code.ExpiresAt,
 			&code.CreatedAt,
-		)
-		if err != nil {
+		); err != nil {
 			return nil, err
 		}
 		codes = append(codes, code)
 	}
-
 	return codes, rows.Err()
 }
 

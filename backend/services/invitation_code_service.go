@@ -184,44 +184,68 @@ func (s *InvitationCodeService) GetInvitationCodesByDepartment(
 func (s *InvitationCodeService) ValidateAndUseInvitationCode(
 	ctx context.Context,
 	code string,
-) error {
+) (*models.InvitationCodeReadDTO, error) {
 	invCode, err := s.invitationRepo.GetInvitationCodeByCode(ctx, code)
 	if err != nil {
 		s.logger.Warn("invitation code not found",
 			slog.String("code", code),
 			slog.Any("error", err),
 		)
-		return errors.ErrNotFound{Msg: "Invalid invitation code."}
+		return nil, errors.ErrNotFound{Msg: "Invalid invitation code."}
 	}
-
 	if invCode.UsedAt != nil {
 		s.logger.Warn("attempted to use already-used invitation code",
 			slog.String("code", code),
 		)
-		return errors.ErrBadRequest{Msg: "This invitation code has already been used."}
+		return nil, errors.ErrBadRequest{Msg: "This invitation code has already been used."}
 	}
-
 	if invCode.ExpiresAt != nil && time.Now().After(*invCode.ExpiresAt) {
 		s.logger.Warn("attempted to use expired invitation code",
 			slog.String("code", code),
 			slog.Time("expired_at", *invCode.ExpiresAt),
 		)
-		return errors.ErrBadRequest{Msg: "This invitation code has expired."}
+		return nil, errors.ErrBadRequest{Msg: "This invitation code has expired."}
 	}
-
 	if err = s.invitationRepo.InvalidateCode(ctx, invCode.ID); err != nil {
 		s.logger.Error("failed to invalidate invitation code",
 			slog.Int("code_id", invCode.ID),
 			slog.Any("error", err),
 		)
-		return errors.ErrInternalServerError{Msg: "Failed to process invitation code."}
+		return nil, errors.ErrInternalServerError{Msg: "Failed to process invitation code."}
 	}
-
 	s.logger.Info("invitation code used successfully",
 		slog.String("code", code),
 		slog.Int("created_by", invCode.CreatedBy),
 	)
-	return nil
+	return &invCode, nil
+}
+
+func (s *InvitationCodeService) GetInvitationCodeInfo(
+	ctx context.Context,
+	code string,
+) (*models.InvitationCodeReadDTO, error) {
+	invCode, err := s.invitationRepo.GetInvitationCodeByCode(ctx, code)
+	if err != nil {
+		s.logger.Warn("invitation code not found during info fetch",
+			slog.String("code", code),
+			slog.Any("error", err),
+		)
+		return nil, errors.ErrNotFound{Msg: "Invalid invitation code."}
+	}
+	if invCode.UsedAt != nil {
+		s.logger.Warn("info requested for already-used invitation code",
+			slog.String("code", code),
+		)
+		return nil, errors.ErrBadRequest{Msg: "This invitation code has already been used."}
+	}
+	if invCode.ExpiresAt != nil && time.Now().After(*invCode.ExpiresAt) {
+		s.logger.Warn("info requested for expired invitation code",
+			slog.String("code", code),
+			slog.Time("expired_at", *invCode.ExpiresAt),
+		)
+		return nil, errors.ErrBadRequest{Msg: "This invitation code has expired."}
+	}
+	return &invCode, nil
 }
 
 func (s *InvitationCodeService) DeleteInvitationCode(
@@ -251,4 +275,8 @@ func (s *InvitationCodeService) DeleteInvitationCode(
 		slog.Int("jwt_user_id", claims.UserID),
 	)
 	return nil
+}
+
+func (s *InvitationCodeService) InvalidateCode(ctx context.Context, id int) error {
+	return s.invitationRepo.InvalidateCode(ctx, id)
 }

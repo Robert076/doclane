@@ -12,6 +12,11 @@ type InvitationCode struct {
 	CreatedAt    time.Time  `json:"created_at"`
 }
 
+type InvitationCodeReadDTO struct {
+	InvitationCode
+	DepartmentName string `json:"department_name"`
+}
+
 type InvitationCodeCreateDTO struct {
 	DepartmentID  int `json:"department_id"`
 	ExpiresInDays int `json:"expires_in_days"`

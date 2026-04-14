@@ -60,7 +60,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 		r.Post("/insert-admin", insertadmin_handler.InsertAdminHandler)
 	})
 
-	r.Post("/api/invitations/validate", invitation_handler.ValidateInvitationCodeHandler)
+	r.Get("/api/invitations/info", invitation_handler.GetInvitationCodeInfoHandler)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth_middleware.AuthGuard)
@@ -73,6 +73,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Get("/{id}", user_handler.GetUserByIDHandler)
 			r.Post("/notify/{id}", user_handler.NotifyUserHandler)
 			r.Post("/deactivate/{id}", user_handler.DeactivateUserHandler)
+			r.Patch("/{id}/department", user_handler.UpdateUserDepartmentHandler)
 		})
 
 		r.Route("/requests", func(r chi.Router) {
@@ -83,12 +84,15 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Post("/forward/{id}", request_handler.ForwardRequestToDepartmentHandler)
 			r.Patch("/expected-documents/{id}/status", request_handler.PatchExpectedDocumentStatusHandler)
 			r.Get("/expected-documents/{id}/presign-example", request_handler.GetExamplePresignedURLHandler)
+			r.Get("/archived", request_handler.GetArchivedRequestsHandler)
+			r.Get("/cancelled", request_handler.GetCancelledRequestsHandler)
 
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", request_handler.GetRequestByIDHandler)
 				r.Patch("/", request_handler.PatchRequestHandler)
 				r.Post("/archive", request_handler.CloseRequestHandler)
 				r.Post("/unarchive", request_handler.ReopenRequestHandler)
+				r.Post("/cancel", request_handler.CancelRequestHandler)
 				r.Route("/comments", func(r chi.Router) {
 					r.Get("/", comment_handler.GetCommentsByRequest)
 					r.Get("/{commentID}", comment_handler.GetCommentByID)

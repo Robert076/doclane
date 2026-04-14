@@ -11,6 +11,7 @@ type RequestBase struct {
 	RecurrenceCron *string    `db:"recurrence_cron" json:"recurrence_cron"`
 	IsScheduled    bool       `db:"is_scheduled" json:"is_scheduled"`
 	ScheduledFor   *time.Time `db:"scheduled_for" json:"scheduled_for"`
+	IsCancelled    bool       `db:"is_cancelled" json:"is_cancelled"`
 	IsClosed       bool       `db:"is_closed" json:"is_closed"`
 	LastUploadedAt *time.Time `db:"last_uploaded_at" json:"last_uploaded_at"`
 	NextDueAt      *time.Time `db:"next_due_at" json:"next_due_at"`
@@ -31,6 +32,7 @@ type RequestDTORead struct {
 	AssigneeLastName  string             `json:"assignee_last_name"`
 	Status            string             `json:"status"`
 	ExpectedDocuments []ExpectedDocument `json:"expected_documents"`
+	DepartmentName    string             `json:"department_name"`
 }
 
 type RequestDTOPatch struct {

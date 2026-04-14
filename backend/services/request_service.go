@@ -337,6 +337,116 @@ func (s *RequestService) CloseRequest(ctx context.Context, claims types.JWTClaim
 	return nil
 }
 
+func (s *RequestService) CancelRequest(ctx context.Context, claims types.JWTClaims, requestID int) error {
+	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
+	if err != nil {
+		s.logger.Error("error when trying to retrieve request for cancelling it",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	status := ComputeStatus(req.LastUploadedAt, req.NextDueAt, req.ExpectedDocuments)
+	if status != types.StatusPending {
+		s.logger.Warn("attempt to cancel non-pending request",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return errors.ErrBadRequest{Msg: "A request cannot be closed if the status is not 'pending'."}
+	}
+
+	_, err = s.checkUserIsParticipantOfRequest(ctx, claims, requestID)
+	if err != nil {
+		s.logger.Error("user tried to cancel request that he does not own",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return errors.ErrForbidden{Msg: "You are not allowed to cancel this request."}
+	}
+
+	err = s.requestRepo.CancelRequest(ctx, requestID)
+	if err != nil {
+		s.logger.Error("error when trying to cancel request",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	return nil
+}
+
+func (service *RequestService) GetArchivedRequests(ctx context.Context, claims types.JWTClaims) ([]models.RequestDTORead, error) {
+	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
+		service.logger.Warn("unauthorized attempt to get archived requests",
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return nil, errors.ErrForbidden{Msg: "Only admins and department members can view archived requests."}
+	}
+
+	reqs, err := service.fetchArchivedRequests(ctx, claims)
+	if err != nil {
+		service.logger.Error("failed to get archived requests",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	for i := range reqs {
+		reqs[i].Status = ComputeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt, reqs[i].ExpectedDocuments)
+	}
+
+	service.logger.Info("fetched archived requests successfully",
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return reqs, nil
+}
+
+func (service *RequestService) fetchArchivedRequests(ctx context.Context, claims types.JWTClaims) ([]models.RequestDTORead, error) {
+	if claims.IsAdmin() {
+		return service.requestRepo.GetArchivedRequests(ctx, nil)
+	}
+	return service.requestRepo.GetArchivedRequestsByDepartment(ctx, *claims.DepartmentID, nil)
+}
+
+func (service *RequestService) GetCancelledRequests(ctx context.Context, claims types.JWTClaims) ([]models.RequestDTORead, error) {
+	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
+		service.logger.Warn("unauthorized attempt to get cancelled requests",
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return nil, errors.ErrForbidden{Msg: "Only admins and department members can view cancelled requests."}
+	}
+
+	reqs, err := service.fetchCancelledRequests(ctx, claims)
+	if err != nil {
+		service.logger.Error("failed to get cancelled requests",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	for i := range reqs {
+		reqs[i].Status = ComputeStatus(reqs[i].LastUploadedAt, reqs[i].NextDueAt, reqs[i].ExpectedDocuments)
+	}
+
+	service.logger.Info("fetched cancelled requests successfully",
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return reqs, nil
+}
+
+func (service *RequestService) fetchCancelledRequests(ctx context.Context, claims types.JWTClaims) ([]models.RequestDTORead, error) {
+	if claims.IsAdmin() {
+		return service.requestRepo.GetCancelledRequests(ctx, nil)
+	}
+	return service.requestRepo.GetCancelledRequestsByDepartment(ctx, *claims.DepartmentID, nil)
+}
+
 func (s *RequestService) AddDocument(
 	ctx context.Context,
 	claims types.JWTClaims,

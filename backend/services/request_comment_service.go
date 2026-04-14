@@ -8,6 +8,7 @@ import (
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/types"
+	"github.com/Robert076/doclane/backend/types/errors"
 )
 
 type RequestCommentService struct {
@@ -60,6 +61,24 @@ func (s *RequestCommentService) AddComment(ctx context.Context, claims types.JWT
 
 	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, requestID); err != nil {
 		return nil, err
+	}
+
+	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
+	if err != nil {
+		s.logger.Error("error when trying to retrieve request for adding comment",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	if req.IsCancelled || req.IsClosed {
+		s.logger.Warn("user attempted to add comment to closed or cancelled request",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return nil, errors.ErrBadRequest{Msg: "Cannot add comment to closed or cancelled request."}
 	}
 
 	comment.UserID = claims.UserID
