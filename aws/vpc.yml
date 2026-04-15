@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 
 Description: |
   The VPC of Doclane. Consists of two private subnets for the Lambda backend,
-  a route table, the route associations for the table, and a gateway VPC endpoint
+  a route table, the route associations for the table, an
+  Interface endpoint for CloudWatch (Lambda needs it) and a gateway VPC endpoint
   for S3. Robert is a Solutions Architect Professional AWS Certified so he does it
   like that, what a chad.
 
@@ -24,8 +25,9 @@ Resources:
       EnableDnsSupport: true
       Tags:
         - Key: Name
-          Value:
-            doclane-vpc
+          Value: doclane-vpc
+        - Key: Description
+          Value: The VPC where Doclane is deployed.
 
   PrivateSubnet1:
     Type: AWS::EC2::Subnet
@@ -35,8 +37,9 @@ Resources:
       CidrBlock: "10.0.0.0/24"
       Tags:
         - Key: Name
-          Value:
-            doclane-private-subnet-1
+          Value: doclane-private-subnet-1
+        - Key: Description
+          Value: One of the two subnets where Lambda backend is deployed, to ensure high availability.
 
   PrivateSubnet2:
     Type: AWS::EC2::Subnet
@@ -46,8 +49,9 @@ Resources:
       CidrBlock: "10.0.1.0/24"
       Tags:
         - Key: Name
-          Value:
-            doclane-private-subnet-2
+          Value: doclane-private-subnet-2
+        - Key: Description
+          Value: One of the two subnets where Lambda backend is deployed, to ensure high availability.
 
   RouteTable:
     Type: AWS::EC2::RouteTable
@@ -56,6 +60,8 @@ Resources:
       Tags:
         - Key: Name
           Value: doclane-route-table
+        - Key: Description
+          Value: The route table used by the lambda backend
   
   PrivateSubnet1Association:
     Type: AWS::EC2::SubnetRouteTableAssociation
@@ -81,6 +87,8 @@ Resources:
         - Key: Name
           Value:
             doclane-gateway-endpoint-s3
+        - Key: Description
+          Value: Gateway endpoint is needed for Lambda to access S3. Lambda backend has no internet access.
   
   InterfaceEndpointCloudWatch:
     Type: AWS::EC2::VPCEndpoint
@@ -93,10 +101,44 @@ Resources:
       SecurityGroupIds:
         - !Ref EndpointSG
       PrivateDnsEnabled: true
+      VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value:
-            doclane-interface-endpoint-cloudwatch
+          Value: doclane-interface-endpoint-cloudwatch
+        - Key: Description
+          Value: Interface endpoint is needed for Lambda to post logs in CloudWatch. Lambda backend has no internet access.
+  
+  InterfaceEndpointSSM:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.ssm
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      PrivateDnsEnabled: true
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: doclane-interface-endpoint-ssm
+        - Key: Description
+          Value: Interface endpoint is needed for Lambda to access RDS credentials stored in SSM. Lambda backend has no internet access.
+
+  InterfaceEndpointKMS:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.kms
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      PrivateDnsEnabled: true
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: doclane-interface-endpoint-kms
+        - Key: Description
+          Value: Needed for Lambda to be able to decrypt SSM Secure Strings since Lambda has no internet access.
 
   EndpointSG:
     Type: AWS::EC2::SecurityGroup
@@ -108,16 +150,23 @@ Resources:
           FromPort: 443
           ToPort: 443
           SourceSecurityGroupId: !Ref LambdaBackendSG
+      Tags:
+        - Key: Name
+          Value: doclane-endpoint-sg
+        - Key: Description
+          Value: Used for the interface endpoints in the deployment such that only Lambda SG can access it.
 
   LambdaBackendSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupDescription: Used to be referenced by the RDS Security group to guarantee least privilege access to RDS. That's the only purpose it serves.
+      GroupDescription: Used to be referenced by the RDS Security group to guarantee least privilege access to RDS. That is the only purpose it serves.
       GroupName: doclane-lambda-sg
       VpcId: !Ref VPC
       Tags:
         - Key: Name
           Value: doclane-lambda-sg
+        - Key: Description
+          Value: Used to be referenced by the RDS Security group to guarantee least privilege access to RDS. That is the only purpose it serves.
 
   RDSDatabaseSG:
     Type: AWS::EC2::SecurityGroup
@@ -133,3 +182,5 @@ Resources:
       Tags:
         - Key: Name
           Value: doclane-rds-sg
+        - Key: Description
+          Value: Security Group used for the RDS instance, leverages least privilege principle to only allow Doclane Lambda backend to connect.
