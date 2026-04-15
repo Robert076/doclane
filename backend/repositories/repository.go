@@ -16,6 +16,7 @@ type IUserRepo interface {
 	AddUser(ctx context.Context, user models.User) (int, error)
 	NotifyUser(ctx context.Context, userId int, time time.Time) error
 	DeactivateUser(ctx context.Context, userId int) error
+	UpdatePassword(ctx context.Context, userID int, hashedPassword string) error
 	UpdateUserProfile(ctx context.Context, userID int, dto models.UserProfilePatchDTO) error
 	UpdateUserDepartment(ctx context.Context, userID int, departmentID int) error
 }
@@ -30,6 +31,10 @@ type IRequestRepo interface {
 	GetArchivedRequestsByDepartment(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error)
 	GetCancelledRequests(ctx context.Context, search *string) ([]models.RequestDTORead, error)
 	GetCancelledRequestsByDepartment(ctx context.Context, departmentID int, search *string) ([]models.RequestDTORead, error)
+	GetDueRecurringRequests(ctx context.Context) ([]models.RequestDTORead, error)
+	UpdateNextDueAt(ctx context.Context, requestID int, nextDueAt time.Time) error
+	ClaimRequest(ctx context.Context, requestID int, userID int) error
+	UnclaimRequest(ctx context.Context, requestID int) error
 	AddRequest(ctx context.Context, req models.Request) (int, error)
 	AddRequestWithTx(ctx context.Context, req models.Request, tx *sql.Tx) (int, error)
 	UpdateRequestTitle(ctx context.Context, id int, newTitle string) error

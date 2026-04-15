@@ -47,6 +47,32 @@ func NewRequestService(
 	}
 }
 
+func (service *RequestService) ProcessRecurringRequests(ctx context.Context) error {
+	dueRequests, err := service.requestRepo.GetDueRecurringRequests(ctx)
+	if err != nil {
+		service.logger.Error("failed to fetch due recurring requests",
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	service.logger.Info("processing recurring requests",
+		slog.Int("count", len(dueRequests)),
+	)
+
+	for _, req := range dueRequests {
+		if err := service.processRecurringRequest(ctx, req); err != nil {
+			service.logger.Error("failed to process recurring request",
+				slog.Int("request_id", req.ID),
+				slog.Any("error", err),
+			)
+			continue
+		}
+	}
+
+	return nil
+}
+
 func (service *RequestService) AddRequest(ctx context.Context, claims types.JWTClaims, dto models.RequestDTOCreate) (*int, error) {
 	if claims.IsAdmin() || claims.IsDepartmentMember() {
 		service.logger.Warn("admin or department member tried to create request for themselves, got rejected",
@@ -287,9 +313,101 @@ func (s *RequestService) PatchRequest(ctx context.Context, claims types.JWTClaim
 	return nil
 }
 
-func (s *RequestService) ReopenRequest(ctx context.Context, claims types.JWTClaims, requestID int) error {
-	if _, err := s.checkUserCanEditRequest(ctx, claims, requestID); err != nil {
+func (s *RequestService) ClaimRequest(ctx context.Context, claims types.JWTClaims, requestID int) error {
+	if !claims.IsDepartmentMember() && !claims.IsAdmin() {
+		return errors.ErrForbidden{Msg: "Only department members can claim requests."}
+	}
+
+	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
+	if err != nil {
+		s.logger.Error("failed to get request for claiming",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
 		return err
+	}
+
+	if req.IsClosed || req.IsCancelled {
+		return errors.ErrBadRequest{Msg: "Cannot claim a closed or cancelled request."}
+	}
+
+	if req.ClaimedBy != nil {
+		if *req.ClaimedBy == claims.UserID {
+			return errors.ErrBadRequest{Msg: "You have already claimed this request."}
+		}
+		return errors.ErrConflict{Msg: "This request has already been claimed by another member."}
+	}
+
+	if claims.IsDepartmentMember() && *claims.DepartmentID != req.DepartmentID {
+		return errors.ErrForbidden{Msg: "You can only claim requests from your department."}
+	}
+
+	if err := s.requestRepo.ClaimRequest(ctx, requestID, claims.UserID); err != nil {
+		s.logger.Error("failed to claim request",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return errors.ErrInternalServerError{Msg: "Failed to claim request."}
+	}
+
+	s.logger.Info("request claimed successfully",
+		slog.Int("request_id", requestID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return nil
+}
+
+func (s *RequestService) UnclaimRequest(ctx context.Context, claims types.JWTClaims, requestID int) error {
+	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
+	if err != nil {
+		s.logger.Error("failed to get request for unclaiming",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	if req.IsClosed {
+		return errors.ErrBadRequest{Msg: "Cannot unclaim an archived request."}
+	}
+
+	if req.ClaimedBy == nil {
+		return errors.ErrBadRequest{Msg: "This request is not claimed."}
+	}
+
+	if *req.ClaimedBy != claims.UserID && !claims.IsAdmin() {
+		return errors.ErrForbidden{Msg: "You can only unclaim requests you have claimed."}
+	}
+
+	if err := s.requestRepo.UnclaimRequest(ctx, requestID); err != nil {
+		s.logger.Error("failed to unclaim request",
+			slog.Int("request_id", requestID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return errors.ErrInternalServerError{Msg: "Failed to unclaim request."}
+	}
+
+	s.logger.Info("request unclaimed successfully",
+		slog.Int("request_id", requestID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return nil
+}
+
+func (s *RequestService) ReopenRequest(ctx context.Context, claims types.JWTClaims, requestID int) error {
+	req, err := s.checkUserCanEditRequest(ctx, claims, requestID)
+	if err != nil {
+		return err
+	}
+
+	if !claims.IsAdmin() {
+		if req.ClaimedBy == nil || *req.ClaimedBy != claims.UserID {
+			return errors.ErrForbidden{Msg: "Only the member who claimed this request can reopen it."}
+		}
 	}
 
 	if err := s.requestRepo.ReopenRequest(ctx, requestID); err != nil {
@@ -309,8 +427,18 @@ func (s *RequestService) ReopenRequest(ctx context.Context, claims types.JWTClai
 }
 
 func (s *RequestService) CloseRequest(ctx context.Context, claims types.JWTClaims, requestID int) error {
-	if _, err := s.checkUserCanEditRequest(ctx, claims, requestID); err != nil {
+	req, err := s.checkUserCanEditRequest(ctx, claims, requestID)
+	if err != nil {
 		return err
+	}
+
+	if !claims.IsAdmin() {
+		if req.ClaimedBy == nil {
+			return errors.ErrBadRequest{Msg: "You must claim the request before closing it."}
+		}
+		if *req.ClaimedBy != claims.UserID {
+			return errors.ErrForbidden{Msg: "Only the member who claimed this request can close it."}
+		}
 	}
 
 	if err := s.requestRepo.CloseRequest(ctx, requestID); err != nil {

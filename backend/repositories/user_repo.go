@@ -253,3 +253,9 @@ func (repo *UserRepo) NotifyUser(ctx context.Context, userId int, time time.Time
 	_, err := repo.db.ExecContext(ctx, query, time, userId)
 	return err
 }
+
+func (repo *UserRepo) UpdatePassword(ctx context.Context, userID int, hashedPassword string) error {
+	query := `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`
+	_, err := repo.db.ExecContext(ctx, query, hashedPassword, userID)
+	return err
+}

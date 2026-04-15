@@ -62,6 +62,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 	})
 
 	r.Get("/api/invitations/info", invitation_handler.GetInvitationCodeInfoHandler)
+	r.Post("/api/internal/process-recurring", request_handler.ProcessRecurringRequestsHandler)
 
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth_middleware.AuthGuard)
@@ -73,6 +74,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Get("/", user_handler.GetUsersHandler)
 			r.Get("/me", user_handler.GetCurrentUserHandler)
 			r.Patch("/me/profile", user_handler.UpdateProfileHandler)
+			r.Patch("/me/password", user_handler.UpdatePasswordHandler)
 			r.Get("/by-department", user_handler.GetUsersByDepartmentHandler)
 			r.Get("/{id}", user_handler.GetUserByIDHandler)
 			r.Post("/notify/{id}", user_handler.NotifyUserHandler)
@@ -96,6 +98,8 @@ func buildRouter() (http.Handler, *chi.Mux) {
 				r.Post("/archive", request_handler.CloseRequestHandler)
 				r.Post("/unarchive", request_handler.ReopenRequestHandler)
 				r.Post("/cancel", request_handler.CancelRequestHandler)
+				r.Post("/claim", request_handler.ClaimRequestHandler)
+				r.Post("/unclaim", request_handler.UnclaimRequestHandler)
 				r.Route("/comments", func(r chi.Router) {
 					r.Get("/", comment_handler.GetCommentsByRequest)
 					r.Get("/{commentID}", comment_handler.GetCommentByID)

@@ -49,6 +49,19 @@ func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
 		return nil, errors.ErrNotFound{Msg: "Request not found."}
 	}
 
+	if !claims.IsAdmin() {
+		if req.ClaimedBy == nil {
+			return nil, errors.ErrBadRequest{Msg: "You must claim the request before working on it."}
+		}
+		if *req.ClaimedBy != claims.UserID {
+			service.logger.Warn("user tried to modify status on request that he did not claim",
+				slog.Int("jwt_user_id", claims.UserID),
+				slog.Int("request_id", req.ID),
+			)
+			return nil, errors.ErrForbidden{Msg: "You can only work on requests that are claimed by you."}
+		}
+	}
+
 	isDepartmentMatch := claims.DepartmentID != nil && *claims.DepartmentID == req.DepartmentID
 	if !claims.IsAdmin() && !isDepartmentMatch {
 		service.logger.Warn("unauthorized status update attempt",

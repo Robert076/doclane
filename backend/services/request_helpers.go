@@ -175,6 +175,66 @@ func (service *RequestService) checkUserHasProfileConfigured(user models.User) e
 	return nil
 }
 
+func (service *RequestService) processRecurringRequest(ctx context.Context, req models.RequestDTORead) error {
+	if req.RecurrenceCron == nil {
+		return nil
+	}
+
+	expectedDocTemplates, err := service.expectedDocTmplRepo.GetByRequestTemplateID(ctx, *req.RequestTemplateID)
+	if err != nil {
+		return err
+	}
+
+	expectedDocs := make([]models.ExpectedDocument, len(expectedDocTemplates))
+	for i, edt := range expectedDocTemplates {
+		expectedDocs[i] = models.ExpectedDocument{
+			Title:           edt.Title,
+			Description:     edt.Description,
+			Status:          "pending",
+			ExampleFilePath: edt.ExampleFilePath,
+			ExampleMimeType: edt.ExampleMimeType,
+		}
+	}
+
+	nextDueAt := ComputeNextDueAt(nil, req.RecurrenceCron)
+
+	newReq := models.Request{
+		RequestBase: models.RequestBase{
+			Assignee:       req.Assignee,
+			DepartmentID:   req.DepartmentID,
+			Title:          req.Title,
+			Description:    req.Description,
+			IsRecurring:    true,
+			RecurrenceCron: req.RecurrenceCron,
+			IsScheduled:    false,
+			NextDueAt:      nextDueAt,
+			LastUploadedAt: nil,
+			DueDate:        nil,
+		},
+		RequestTemplateID: req.RequestTemplateID,
+	}
+
+	_, err = service.createRequestTransaction(ctx, newReq, expectedDocs)
+	if err != nil {
+		return err
+	}
+
+	if nextDueAt != nil {
+		if err := service.requestRepo.UpdateNextDueAt(ctx, req.ID, *nextDueAt); err != nil {
+			service.logger.Error("failed to update next_due_at on original request",
+				slog.Int("request_id", req.ID),
+				slog.Any("error", err),
+			)
+		}
+	}
+
+	service.logger.Info("recurring request processed successfully",
+		slog.Int("original_request_id", req.ID),
+		slog.Int("assignee", req.Assignee),
+	)
+	return nil
+}
+
 func (service *RequestService) createRequestTransaction(ctx context.Context, req models.Request, expectedDocs []models.ExpectedDocument) (*int, error) {
 	var id int
 	err := service.txManager.WithTx(ctx, func(tx *sql.Tx) error {

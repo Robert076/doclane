@@ -16,7 +16,9 @@ type RequestBase struct {
 	LastUploadedAt *time.Time `db:"last_uploaded_at" json:"last_uploaded_at"`
 	NextDueAt      *time.Time `db:"next_due_at" json:"next_due_at"`
 	DueDate        *time.Time `db:"due_date,omitempty" json:"due_date,omitempty"`
+	ClaimedBy      *int       `db:"claimed_by" json:"claimed_by"`
 }
+
 type Request struct {
 	RequestBase
 	ID                int       `db:"id" json:"id"`
@@ -27,12 +29,14 @@ type Request struct {
 
 type RequestDTORead struct {
 	Request
-	AssigneeEmail     string             `json:"assignee_email"`
-	AssigneeFirstName string             `json:"assignee_first_name"`
-	AssigneeLastName  string             `json:"assignee_last_name"`
-	Status            string             `json:"status"`
-	ExpectedDocuments []ExpectedDocument `json:"expected_documents"`
-	DepartmentName    string             `json:"department_name"`
+	AssigneeEmail      string             `json:"assignee_email"`
+	AssigneeFirstName  string             `json:"assignee_first_name"`
+	AssigneeLastName   string             `json:"assignee_last_name"`
+	ClaimedByFirstName *string            `json:"claimed_by_first_name"`
+	ClaimedByLastName  *string            `json:"claimed_by_last_name"`
+	Status             string             `json:"status"`
+	ExpectedDocuments  []ExpectedDocument `json:"expected_documents"`
+	DepartmentName     string             `json:"department_name"`
 }
 
 type RequestDTOPatch struct {

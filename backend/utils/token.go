@@ -30,6 +30,9 @@ func init() {
 func GenerateJWT(user models.User) (string, error) {
 	claims := types.JWTClaims{
 		UserID:       user.ID,
+		Email:        user.Email,
+		FirstName:    user.FirstName,
+		LastName:     user.LastName,
 		Role:         user.Role,
 		DepartmentID: user.DepartmentID,
 		StandardClaims: jwt.StandardClaims{
@@ -39,9 +42,7 @@ func GenerateJWT(user models.User) (string, error) {
 			Audience:  "doclane.app",
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
 	return token.SignedString([]byte(JWTSecret))
 }
 

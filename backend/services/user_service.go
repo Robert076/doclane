@@ -174,6 +174,50 @@ func (service *UserService) AddUser(ctx context.Context, params RegisterParams) 
 	return id, nil
 }
 
+func (service *UserService) UpdatePassword(ctx context.Context, caller types.JWTClaims, dto models.UserPasswordPatchDTO) error {
+	user, err := service.repo.GetUserByID(ctx, caller.UserID)
+	if err != nil {
+		return err
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(dto.CurrentPassword)); err != nil {
+		service.logger.Warn("password change failed: incorrect current password",
+			slog.Int("jwt_user_id", caller.UserID),
+		)
+		return errors.ErrBadRequest{Msg: "Current password is incorrect."}
+	}
+
+	if len(dto.NewPassword) < 8 {
+		return errors.ErrBadRequest{Msg: "New password must be at least 8 characters."}
+	}
+
+	if dto.CurrentPassword == dto.NewPassword {
+		return errors.ErrBadRequest{Msg: "New password must be different from current password."}
+	}
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte(dto.NewPassword), bcrypt.DefaultCost)
+	if err != nil {
+		service.logger.Error("failed to hash new password",
+			slog.Int("jwt_user_id", caller.UserID),
+			slog.Any("error", err),
+		)
+		return errors.ErrInternalServerError{Msg: "Failed to update password."}
+	}
+
+	if err := service.repo.UpdatePassword(ctx, caller.UserID, string(hashed)); err != nil {
+		service.logger.Error("failed to update password in db",
+			slog.Int("jwt_user_id", caller.UserID),
+			slog.Any("error", err),
+		)
+		return errors.ErrInternalServerError{Msg: "Failed to update password."}
+	}
+
+	service.logger.Info("password updated successfully",
+		slog.Int("jwt_user_id", caller.UserID),
+	)
+	return nil
+}
+
 func (service *UserService) NotifyUser(ctx context.Context, caller types.JWTClaims, id int) error {
 	user, err := service.repo.GetUserByID(ctx, id)
 	if err != nil {
