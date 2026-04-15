@@ -1,0 +1,1 @@
+aws cloudformation create-stack --stack-name doclane-vpc --template-body file://vpc.yml --parameters ParameterKey=AZ1,ParameterValue=eu-west-1a ParameterKey=AZ2,ParameterValue=eu-west-1b

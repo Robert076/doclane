@@ -1,0 +1,135 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  The VPC of Doclane. Consists of two private subnets for the Lambda backend,
+  a route table, the route associations for the table, and a gateway VPC endpoint
+  for S3. Robert is a Solutions Architect Professional AWS Certified so he does it
+  like that, what a chad.
+
+Parameters:
+  AZ1:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Select first AZ
+
+  AZ2:
+    Type: AWS::EC2::AvailabilityZone::Name
+    Description: Select second AZ
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value:
+            doclane-vpc
+
+  PrivateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Ref AZ1
+      CidrBlock: "10.0.0.0/24"
+      Tags:
+        - Key: Name
+          Value:
+            doclane-private-subnet-1
+
+  PrivateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Ref AZ2
+      CidrBlock: "10.0.1.0/24"
+      Tags:
+        - Key: Name
+          Value:
+            doclane-private-subnet-2
+
+  RouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: doclane-route-table
+  
+  PrivateSubnet1Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref PrivateSubnet1
+
+  PrivateSubnet2Association:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref RouteTable
+      SubnetId: !Ref PrivateSubnet2
+
+  GatewayEndpointS3:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      RouteTableIds:
+        - !Ref RouteTable
+      VpcEndpointType: Gateway
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value:
+            doclane-gateway-endpoint-s3
+  
+  InterfaceEndpointCloudWatch:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.logs
+      VpcEndpointType: Interface
+      SubnetIds:
+        - !Ref PrivateSubnet1
+        - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref EndpointSG
+      PrivateDnsEnabled: true
+      Tags:
+        - Key: Name
+          Value:
+            doclane-interface-endpoint-cloudwatch
+
+  EndpointSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Allow Lambda to access VPC endpoints
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !Ref LambdaBackendSG
+
+  LambdaBackendSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Used to be referenced by the RDS Security group to guarantee least privilege access to RDS. That's the only purpose it serves.
+      GroupName: doclane-lambda-sg
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: doclane-lambda-sg
+
+  RDSDatabaseSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security Group used for the RDS instance, leverages least privilege principle to only allow Doclane Lambda backend to connect.
+      GroupName: doclane-rds-sg
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !Ref LambdaBackendSG
+      Tags:
+        - Key: Name
+          Value: doclane-rds-sg
