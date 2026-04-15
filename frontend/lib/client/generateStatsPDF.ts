@@ -29,6 +29,13 @@ export function generateStatsPDF(stats: Stats) {
         const GRAY = [71, 85, 105] as [number, number, number];
         const LIGHT_GRAY = [241, 245, 249] as [number, number, number];
 
+        const checkPageBreak = (threshold = 260) => {
+                if (y > threshold) {
+                        doc.addPage();
+                        y = 20;
+                }
+        };
+
         const addTitle = (text: string) => {
                 doc.setFontSize(20);
                 doc.setTextColor(...DARK);
@@ -46,10 +53,7 @@ export function generateStatsPDF(stats: Stats) {
         };
 
         const addSectionHeader = (text: string) => {
-                if (y > 250) {
-                        doc.addPage();
-                        y = 20;
-                }
+                checkPageBreak(250);
                 doc.setFillColor(...PRIMARY);
                 doc.rect(14, y - 4, pageWidth - 28, 8, "F");
                 doc.setFontSize(10);
@@ -60,10 +64,7 @@ export function generateStatsPDF(stats: Stats) {
         };
 
         const addRow = (label: string, value: string, highlight = false) => {
-                if (y > 270) {
-                        doc.addPage();
-                        y = 20;
-                }
+                checkPageBreak(270);
                 if (highlight) {
                         doc.setFillColor(...LIGHT_GRAY);
                         doc.rect(14, y - 4, pageWidth - 28, 7, "F");
@@ -84,72 +85,149 @@ export function generateStatsPDF(stats: Stats) {
                 y += 6;
         };
 
-        // header
+        const addTableHeader = (columns: string[], widths: number[]) => {
+                checkPageBreak(250);
+                doc.setFillColor(...LIGHT_GRAY);
+                doc.rect(14, y - 4, pageWidth - 28, 7, "F");
+                doc.setFontSize(9);
+                doc.setTextColor(...GRAY);
+                doc.setFont("helvetica", "bold");
+                let x = 18;
+                columns.forEach((col, i) => {
+                        doc.text(col, x, y);
+                        x += widths[i];
+                });
+                y += 8;
+        };
+
+        const addTableRow = (values: string[], widths: number[], highlight = false) => {
+                checkPageBreak(270);
+                if (highlight) {
+                        doc.setFillColor(250, 252, 255);
+                        doc.rect(14, y - 4, pageWidth - 28, 7, "F");
+                }
+                doc.setFontSize(9);
+                doc.setFont("helvetica", "normal");
+                let x = 18;
+                values.forEach((val, i) => {
+                        doc.setTextColor(...DARK);
+                        doc.text(val, x, y);
+                        x += widths[i];
+                });
+                y += 8;
+        };
+
+        // ── Header ────────────────────────────────────────────────────────────────
         addTitle("Raport Statistici Doclane");
         addSubtitle(
-                `Generat pe ${new Date().toLocaleDateString("ro-RO", { day: "2-digit", month: "long", year: "numeric" })}`,
+                `Generat pe ${new Date().toLocaleDateString("ro-RO", {
+                        day: "2-digit",
+                        month: "long",
+                        year: "numeric",
+                })}`,
         );
         addDivider();
 
-        // requests
+        // ── Cereri ────────────────────────────────────────────────────────────────
         addSectionHeader("Cereri");
         addRow("Cereri deschise", stats.total_open_requests.toString(), false);
         addRow("Cereri finalizate", stats.total_archived_requests.toString(), true);
         addRow("Cereri retrase", stats.total_cancelled_requests.toString(), false);
-        addRow("Rată finalizare", formatPercent(stats.completion_rate), true);
-        addRow("Rată retragere", formatPercent(stats.cancellation_rate), false);
+        addRow("Rata finalizare", formatPercent(stats.completion_rate), true);
+        addRow("Rata retragere", formatPercent(stats.cancellation_rate), false);
         addRow("Timp mediu finalizare", formatHours(stats.avg_completion_hours), true);
         y += 4;
 
-        // activity
+        // ── Activitate ────────────────────────────────────────────────────────────
         addSectionHeader("Activitate");
         addRow(
-                "Cereri săptămâna aceasta",
+                "Cereri saptamana aceasta",
                 `${stats.requests_this_week} (${formatChange(stats.weekly_change_percent)})`,
                 false,
         );
-        addRow("Cereri săptămâna trecută", stats.requests_last_week.toString(), true);
+        addRow("Cereri saptamana trecuta", stats.requests_last_week.toString(), true);
         addRow(
                 "Cereri luna aceasta",
                 `${stats.requests_this_month} (${formatChange(stats.monthly_change_percent)})`,
                 false,
         );
-        addRow("Cereri luna trecută", stats.requests_last_month.toString(), true);
+        addRow("Cereri luna trecuta", stats.requests_last_month.toString(), true);
         y += 4;
 
-        // departments
+        // ── Departamente ──────────────────────────────────────────────────────────
         addSectionHeader("Departamente");
         addRow("Total departamente", stats.total_departments.toString(), false);
         addRow("Membri departamente", stats.total_department_members.toString(), true);
         y += 4;
 
-        addSectionHeader("Cereri per departament");
+        addSectionHeader("Cereri deschise per departament");
         stats.requests_per_department.forEach((d, i) => {
-                addRow(d.department_name, `${d.request_count} cereri`, i % 2 === 0);
+                addRow(sanitize(d.department_name), `${d.request_count} cereri`, i % 2 === 0);
         });
         y += 4;
 
-        // users
+        // ── Localitati ────────────────────────────────────────────────────────────
+        if (stats.requests_per_locality?.length > 0) {
+                addSectionHeader("Cereri per localitate (top 10)");
+                stats.requests_per_locality.forEach((l, i) => {
+                        addRow(sanitize(l.locality), `${l.request_count} cereri`, i % 2 === 0);
+                });
+                y += 4;
+        }
+
+        // ── Utilizatori ───────────────────────────────────────────────────────────
         addSectionHeader("Utilizatori");
         addRow("Total utilizatori", stats.total_users.toString(), false);
-        addRow("Cetățeni", stats.total_citizens.toString(), true);
+        addRow("Cetateni", stats.total_citizens.toString(), true);
         addRow("Membri departamente", stats.total_department_members.toString(), false);
         addRow("Utilizatori activi", stats.total_active_users.toString(), true);
-        addRow("Utilizatori dezactivați", stats.total_deactivated_users.toString(), false);
+        addRow("Utilizatori dezactivati", stats.total_deactivated_users.toString(), false);
         y += 4;
 
-        // templates
-        addSectionHeader("Șabloane");
-        addRow("Șabloane active", stats.total_active_templates.toString(), false);
-        addRow("Șabloane arhivate", stats.total_archived_templates.toString(), true);
+        // ── Sabloane ──────────────────────────────────────────────────────────────
+        addSectionHeader("Sabloane");
+        addRow("Sabloane active", stats.total_active_templates.toString(), false);
+        addRow("Sabloane arhivate", stats.total_archived_templates.toString(), true);
         y += 4;
 
-        addSectionHeader("Top 5 șabloane folosite");
+        addSectionHeader("Top 5 sabloane folosite");
         stats.most_used_templates.forEach((t, i) => {
-                addRow(t.template_title, `${t.request_count} cereri`, i % 2 === 0);
+                addRow(sanitize(t.template_title), `${t.request_count} cereri`, i % 2 === 0);
         });
+        y += 4;
 
-        // footer on each page
+        // ── Performanta membri ────────────────────────────────────────────────────
+        if (stats.member_stats?.length > 0) {
+                addSectionHeader("Performanta membri");
+                const colWidths = [50, 45, 20, 22, 20, 25];
+                addTableHeader(
+                        [
+                                "Membru",
+                                "Departament",
+                                "Preluate",
+                                "Finalizate",
+                                "In lucru",
+                                "Timp mediu",
+                        ],
+                        colWidths,
+                );
+                stats.member_stats.forEach((m, i) => {
+                        addTableRow(
+                                [
+                                        sanitize(`${m.first_name} ${m.last_name}`),
+                                        sanitize(m.department_name),
+                                        m.total_claimed.toString(),
+                                        m.total_closed.toString(),
+                                        m.total_pending.toString(),
+                                        formatHours(m.avg_close_time_hours),
+                                ],
+                                colWidths,
+                                i % 2 === 0,
+                        );
+                });
+        }
+
+        // ── Footer ────────────────────────────────────────────────────────────────
         const totalPages = doc.getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
                 doc.setPage(i);
@@ -157,7 +235,7 @@ export function generateStatsPDF(stats: Stats) {
                 doc.setTextColor(...GRAY);
                 doc.setFont("helvetica", "normal");
                 doc.text(
-                        `Doclane — Pagina ${i} din ${totalPages}`,
+                        `Doclane - Pagina ${i} din ${totalPages}`,
                         pageWidth / 2,
                         doc.internal.pageSize.getHeight() - 10,
                         { align: "center" },
@@ -165,4 +243,18 @@ export function generateStatsPDF(stats: Stats) {
         }
 
         doc.save(`statistici-doclane-${new Date().toISOString().split("T")[0]}.pdf`);
+}
+
+function sanitize(text: string): string {
+        return text
+                .replace(/[ăâ]/g, "a")
+                .replace(/[Ăâ]/g, "A")
+                .replace(/[î]/g, "i")
+                .replace(/[Î]/g, "I")
+                .replace(/[ș]/g, "s")
+                .replace(/[Ș]/g, "S")
+                .replace(/[ț]/g, "t")
+                .replace(/[Ț]/g, "T")
+                .replace(/[é]/g, "e")
+                .replace(/[É]/g, "E");
 }

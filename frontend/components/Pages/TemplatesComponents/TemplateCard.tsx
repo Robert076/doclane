@@ -36,9 +36,15 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                 setIsSubmitting(true);
                 const response = await createRequest({ template_id: template.id });
                 setIsSubmitting(false);
+
                 if (response.success) {
                         toast.success("Cerere depusă cu succes!");
                         router.push("/dashboard/requests");
+                } else if (response.message?.includes("You must update")) {
+                        toast.error("Completează-ți profilul înainte de a depune o cerere.", {
+                                duration: 4000,
+                        });
+                        router.push("/dashboard/settings");
                 } else {
                         toast.error(response.message);
                 }

@@ -1,12 +1,15 @@
 "use client";
-import { useMemo, useCallback } from "react";
-import { Request, User } from "@/types";
+import { useMemo, useCallback, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Request, User, RequestStatus } from "@/types";
 import RequestCard from "@/components/CardComponents/RequestCard/RequestCard";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
 import { useSearch } from "@/hooks/useSearch";
 import { usePagination } from "@/hooks/usePagination";
 import PaginationFooter from "@/components/FileSectionComponents/FileSection/_components/PaginationFooter";
+import FilterTabs from "@/components/InputComponents/FilterTabs";
+import "./RequestsSection.css";
 
 interface RequestsSectionProps {
         requests: Request[];
@@ -15,14 +18,56 @@ interface RequestsSectionProps {
 
 const ITEMS_PER_PAGE = 8;
 
+const STATUS_FILTERS: { label: string; value: RequestStatus | "all" }[] = [
+        { label: "Orice status", value: "all" },
+        { label: "In asteptare", value: "pending" },
+        { label: "Incarcat", value: "uploaded" },
+        { label: "Expirat", value: "overdue" },
+];
+
+const CLAIM_FILTERS: { label: string; value: "all" | "claimed" | "unclaimed" }[] = [
+        { label: "Toate", value: "all" },
+        { label: "Preluate", value: "claimed" },
+        { label: "Nepreluate", value: "unclaimed" },
+];
+
 export default function RequestsSection({ requests, user }: RequestsSectionProps) {
+        const router = useRouter();
+        const searchParams = useSearchParams();
+        const [currentPage, setCurrentPage] = useState(1);
+
+        const activeStatus = (searchParams.get("status") ?? "all") as RequestStatus | "all";
+        const activeClaim = (searchParams.get("claim") ?? "all") as
+                | "all"
+                | "claimed"
+                | "unclaimed";
+
+        const canManage = user.role === "admin" || user.department_id !== null;
+
         const openRequests = useMemo(
                 () => requests.filter((r) => !r.is_closed && !r.is_cancelled),
                 [requests],
         );
 
+        const statusFiltered = useMemo(
+                () =>
+                        activeStatus === "all"
+                                ? openRequests
+                                : openRequests.filter((r) => r.status === activeStatus),
+                [openRequests, activeStatus],
+        );
+
+        const claimFiltered = useMemo(() => {
+                if (activeClaim === "claimed")
+                        return statusFiltered.filter(
+                                (r) => r.claimed_by !== null && r.claimed_by !== undefined,
+                        );
+                if (activeClaim === "unclaimed")
+                        return statusFiltered.filter((r) => !r.claimed_by);
+                return statusFiltered;
+        }, [statusFiltered, activeClaim]);
+
         const searchFn = useCallback((req: Request, search: string) => {
-                const searchLower = search.toLowerCase();
                 return [
                         req.title,
                         req.description,
@@ -35,26 +80,37 @@ export default function RequestsSection({ requests, user }: RequestsSectionProps
                         .filter(Boolean)
                         .join(" ")
                         .toLowerCase()
-                        .includes(searchLower);
+                        .includes(search.toLowerCase());
         }, []);
 
         const { searchInput, setSearchInput, filteredItems } = useSearch(
-                openRequests,
+                claimFiltered,
                 searchFn,
         );
-        const { currentPage, setCurrentPage, totalPages, paginatedItems } = usePagination(
-                filteredItems,
-                ITEMS_PER_PAGE,
-        );
+        const { totalPages, paginatedItems } = usePagination(filteredItems, ITEMS_PER_PAGE);
+
+        const handleStatusChange = (status: RequestStatus | "all") => {
+                const params = new URLSearchParams(searchParams.toString());
+                status === "all" ? params.delete("status") : params.set("status", status);
+                router.push(`?${params.toString()}`);
+                setCurrentPage(1);
+        };
+
+        const handleClaimChange = (claim: "all" | "claimed" | "unclaimed") => {
+                const params = new URLSearchParams(searchParams.toString());
+                claim === "all" ? params.delete("claim") : params.set("claim", claim);
+                router.push(`?${params.toString()}`);
+                setCurrentPage(1);
+        };
 
         if (requests.length === 0) {
                 return (
                         <NotFound
-                                text="Nu ai niciun dosar încă."
+                                text="Nu ai niciun dosarinca."
                                 subtext={
                                         user.role === "admin" || user.department_id !== null
-                                                ? "Aici vor apărea dosarele pe care le gestionezi."
-                                                : "Aici vor apărea dosarele tale. Accesează șabloanele pentru a deschide un dosar."
+                                                ? "Aici vor aparea dosarele pe care le gestionezi."
+                                                : "Aici vor aparea dosarele tale. Acceseaza sabloanele pentru a deschide un dosar."
                                 }
                                 background="#fff"
                         />
@@ -63,18 +119,60 @@ export default function RequestsSection({ requests, user }: RequestsSectionProps
 
         return (
                 <div className="section">
-                        <SearchBar
-                                value={searchInput}
-                                onChange={(value) => {
-                                        setSearchInput(value);
-                                        setCurrentPage(1);
-                                }}
-                                placeholder="Caută..."
-                        />
+                        <div className="requests-filters">
+                                <SearchBar
+                                        value={searchInput}
+                                        onChange={(value) => {
+                                                setSearchInput(value);
+                                                setCurrentPage(1);
+                                        }}
+                                        placeholder="Cauta..."
+                                />
+                                <FilterTabs
+                                        tabs={STATUS_FILTERS.map((f) => ({
+                                                ...f,
+                                                count:
+                                                        f.value === "all"
+                                                                ? openRequests.length
+                                                                : openRequests.filter(
+                                                                          (r) =>
+                                                                                  r.status ===
+                                                                                  f.value,
+                                                                  ).length,
+                                        }))}
+                                        active={activeStatus}
+                                        onChange={handleStatusChange}
+                                />
+                                {canManage && (
+                                        <FilterTabs
+                                                tabs={CLAIM_FILTERS.map((f) => ({
+                                                        ...f,
+                                                        count:
+                                                                f.value === "all"
+                                                                        ? openRequests.length
+                                                                        : f.value === "claimed"
+                                                                          ? openRequests.filter(
+                                                                                    (r) =>
+                                                                                            r.claimed_by !==
+                                                                                                    null &&
+                                                                                            r.claimed_by !==
+                                                                                                    undefined,
+                                                                            ).length
+                                                                          : openRequests.filter(
+                                                                                    (r) =>
+                                                                                            !r.claimed_by,
+                                                                            ).length,
+                                                }))}
+                                                active={activeClaim}
+                                                onChange={handleClaimChange}
+                                        />
+                                )}
+                        </div>
+
                         {filteredItems.length === 0 ? (
                                 <NotFound
-                                        text="Nu am găsit niciun dosar"
-                                        subtext="Nu există niciun rezultat care să corespundă căutării tale."
+                                        text="Nu am gasit niciun dosar"
+                                        subtext="Nu exista niciun rezultat care sa corespunda cautarii tale."
                                         background="#fff"
                                 />
                         ) : (

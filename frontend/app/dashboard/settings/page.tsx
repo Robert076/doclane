@@ -1,4 +1,5 @@
 import PageHeader from "@/components/PageHeader/PageHeader";
+import PasswordSection from "@/components/Pages/SettingsComponents/PasswordSection";
 import ProfileSection from "@/components/Pages/SettingsComponents/ProfileSection";
 import { getCurrentUser } from "@/lib/api/users";
 import { redirect } from "next/navigation";
@@ -14,6 +15,7 @@ export default async function SettingsPage() {
                                 subtitle="Gestionează informațiile contului tău."
                         />
                         <ProfileSection user={userResponse.data} />
+                        <PasswordSection />
                 </div>
         );
 }

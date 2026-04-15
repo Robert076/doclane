@@ -20,23 +20,19 @@ export default async function TemplatesPage() {
 
         if (!templatesResponse.success || !templatesResponse.data) notFound();
 
+        const departments = user.role === "admin" ? ((await getDepartments()).data ?? []) : [];
+
         return (
                 <div>
                         <PageHeader
                                 title="Şabloanele tale"
                                 subtitle="Administrează şi gestionează şabloanele tale."
                         />
-                        <TemplatesActions
-                                departments={
-                                        user.role === "admin"
-                                                ? (departmentsResponse.data ?? [])
-                                                : []
-                                }
-                        />
                         <TemplatesSection
                                 templates={templatesResponse.data}
                                 isAdmin={user.role === "admin"}
                                 userDepartmentId={user.department_id ?? null}
+                                departments={departments}
                         />
                 </div>
         );

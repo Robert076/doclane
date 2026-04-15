@@ -67,6 +67,20 @@ export async function getCancelledRequests(): Promise<APIResponse<Request[]>> {
         return doclaneHTTPHelper("/requests/cancelled", { method: "GET" });
 }
 
+export async function claimRequest(requestId: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/requests/${requestId}/claim`, {
+                method: "POST",
+                revalidate: "/dashboard/requests",
+        });
+}
+
+export async function unclaimRequest(requestId: number): Promise<APIResponse> {
+        return doclaneHTTPHelper(`/requests/${requestId}/unclaim`, {
+                method: "POST",
+                revalidate: "/dashboard/requests",
+        });
+}
+
 export async function closeRequest(requestID: number): Promise<APIResponse> {
         return doclaneHTTPHelper(`/requests/${requestID}/archive`, {
                 method: "POST",

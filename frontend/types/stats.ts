@@ -14,6 +14,22 @@ export interface TemplateStat {
         request_count: number;
 }
 
+export interface MemberStat {
+        user_id: number;
+        first_name: string;
+        last_name: string;
+        department_name: string;
+        total_claimed: number;
+        total_closed: number;
+        total_pending: number;
+        avg_close_time_hours: number;
+}
+
+export interface LocalityStat {
+        locality: string;
+        request_count: number;
+}
+
 export interface Stats {
         total_open_requests: number;
         total_archived_requests: number;
@@ -41,4 +57,7 @@ export interface Stats {
         total_deactivated_users: number;
         total_active_templates: number;
         total_archived_templates: number;
+
+        requests_per_locality: LocalityStat[];
+        member_stats: MemberStat[];
 }

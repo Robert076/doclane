@@ -214,6 +214,48 @@ export default function StatsSection({ stats }: Props) {
                                 </ResponsiveContainer>
                         </div>
 
+                        {stats.requests_per_locality?.length > 0 && (
+                                <div className="stats-chart-card">
+                                        <h3 className="stats-chart-title">
+                                                Cereri per localitate (top 10)
+                                        </h3>
+                                        <ResponsiveContainer width="100%" height={280}>
+                                                <BarChart
+                                                        data={stats.requests_per_locality}
+                                                        layout="vertical"
+                                                >
+                                                        <CartesianGrid
+                                                                strokeDasharray="3 3"
+                                                                stroke="#f1f5f9"
+                                                        />
+                                                        <XAxis
+                                                                type="number"
+                                                                allowDecimals={false}
+                                                                tick={{
+                                                                        fontSize: 12,
+                                                                        fill: "#94a3b8",
+                                                                }}
+                                                        />
+                                                        <YAxis
+                                                                dataKey="locality"
+                                                                type="category"
+                                                                tick={{
+                                                                        fontSize: 12,
+                                                                        fill: "#94a3b8",
+                                                                }}
+                                                                width={140}
+                                                        />
+                                                        <Tooltip />
+                                                        <Bar
+                                                                dataKey="request_count"
+                                                                fill="#FF5722"
+                                                                radius={[0, 4, 4, 0]}
+                                                        />
+                                                </BarChart>
+                                        </ResponsiveContainer>
+                                </div>
+                        )}
+
                         <SectionTitle text="Utilizatori" />
                         <div className="stats-grid">
                                 <StatCard
@@ -280,6 +322,71 @@ export default function StatsSection({ stats }: Props) {
                                         </BarChart>
                                 </ResponsiveContainer>
                         </div>
+
+                        {stats.member_stats?.length > 0 && (
+                                <>
+                                        <SectionTitle text="Performanță membri" />
+                                        <div className="stats-table-card">
+                                                <table className="stats-table">
+                                                        <thead>
+                                                                <tr>
+                                                                        <th>Membru</th>
+                                                                        <th>Departament</th>
+                                                                        <th>Preluate</th>
+                                                                        <th>Finalizate</th>
+                                                                        <th>În lucru</th>
+                                                                        <th>Timp mediu</th>
+                                                                </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                                {stats.member_stats.map(
+                                                                        (m) => (
+                                                                                <tr
+                                                                                        key={
+                                                                                                m.user_id
+                                                                                        }
+                                                                                >
+                                                                                        <td>
+                                                                                                {
+                                                                                                        m.first_name
+                                                                                                }{" "}
+                                                                                                {
+                                                                                                        m.last_name
+                                                                                                }
+                                                                                        </td>
+                                                                                        <td>
+                                                                                                {
+                                                                                                        m.department_name
+                                                                                                }
+                                                                                        </td>
+                                                                                        <td>
+                                                                                                {
+                                                                                                        m.total_claimed
+                                                                                                }
+                                                                                        </td>
+                                                                                        <td>
+                                                                                                {
+                                                                                                        m.total_closed
+                                                                                                }
+                                                                                        </td>
+                                                                                        <td>
+                                                                                                {
+                                                                                                        m.total_pending
+                                                                                                }
+                                                                                        </td>
+                                                                                        <td>
+                                                                                                {formatHours(
+                                                                                                        m.avg_close_time_hours,
+                                                                                                )}
+                                                                                        </td>
+                                                                                </tr>
+                                                                        ),
+                                                                )}
+                                                        </tbody>
+                                                </table>
+                                        </div>
+                                </>
+                        )}
                 </div>
         );
 }

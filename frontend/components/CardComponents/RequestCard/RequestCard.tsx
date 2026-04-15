@@ -17,21 +17,22 @@ interface RequestProps {
         user: User;
         searchTerm?: string;
         archived?: boolean;
-        cancelled?: boolean;
 }
 
 export default function RequestCard({ request, searchTerm, user, archived }: RequestProps) {
         const router = useRouter();
-        const { closeReq, reopenReq } = useRequestActions(request.id);
+        const { closeReq, reopenReq, claimReq, unclaimReq } = useRequestActions(request.id);
         const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
-        console.log(request);
         const canManage = user.role === "admin" || user.department_id !== null;
         const isOverdue = request.status === "overdue";
         const isScheduledFuture =
                 request.is_scheduled &&
                 request.scheduled_for &&
                 new Date(request.scheduled_for) > new Date();
+
+        const isClaimed = request.claimed_by !== null && request.claimed_by !== undefined;
+        const isClaimedByMe = request.claimed_by === user.id;
 
         return (
                 <>
@@ -52,6 +53,13 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                                                         Programată
                                                                 </span>
                                                         )}
+                                                        {isClaimed && (
+                                                                <span className="claimed-badge">
+                                                                        {isClaimedByMe
+                                                                                ? "Preluat de tine"
+                                                                                : `Preluat de ${request.claimed_by_first_name} ${request.claimed_by_last_name}`}
+                                                                </span>
+                                                        )}
                                                 </>
                                         )
                                 }
@@ -63,9 +71,12 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                 }
                                 footer={
                                         <RequestFooter
+                                                user={user}
                                                 archived={archived}
                                                 canManage={canManage}
                                                 cancelled={request.is_cancelled}
+                                                isClaimed={isClaimed}
+                                                isClaimedByMe={isClaimedByMe}
                                                 onView={() =>
                                                         router.push(
                                                                 `/dashboard/requests/${request.id}`,
@@ -73,6 +84,8 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                                 }
                                                 onClose={() => setIsCloseModalOpen(true)}
                                                 onReopen={reopenReq}
+                                                onClaim={claimReq}
+                                                onUnclaim={unclaimReq}
                                         />
                                 }
                                 isHighlighted={isOverdue}
@@ -82,7 +95,7 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                                 label="Departament"
                                                 value={
                                                         <HighlightText
-                                                                text={`${request.department_name}`}
+                                                                text={request.department_name}
                                                                 search={searchTerm}
                                                         />
                                                 }
@@ -135,21 +148,31 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
 }
 
 interface RequestFooterProps {
+        user: User;
         archived?: boolean;
         cancelled?: boolean;
         canManage: boolean;
+        isClaimed: boolean;
+        isClaimedByMe: boolean;
         onView: () => void;
         onClose: () => void;
         onReopen: () => void;
+        onClaim: () => void;
+        onUnclaim: () => void;
 }
 
 const RequestFooter: React.FC<RequestFooterProps> = ({
+        user,
         archived,
         cancelled,
         canManage,
+        isClaimed,
+        isClaimedByMe,
         onView,
         onClose,
         onReopen,
+        onClaim,
+        onUnclaim,
 }) => {
         if (archived) {
                 return canManage ? (
@@ -162,6 +185,23 @@ const RequestFooter: React.FC<RequestFooterProps> = ({
                 ) : null;
         }
 
+        const isAdmin = user.role === "admin";
+        const isMember = user.department_id !== null && !isAdmin;
+        const canClaim = isMember && !isClaimed;
+        const canUnclaim = isClaimedByMe;
+        const canClose = isAdmin || isClaimedByMe;
+
+        if (!canManage || cancelled) {
+                return (
+                        <ButtonPrimary
+                                text="Vezi detalii"
+                                variant="ghost"
+                                fullWidth
+                                onClick={onView}
+                        />
+                );
+        }
+
         return (
                 <>
                         <ButtonPrimary
@@ -170,9 +210,38 @@ const RequestFooter: React.FC<RequestFooterProps> = ({
                                 fullWidth
                                 onClick={onView}
                         />
-                        {canManage && !cancelled && (
+                        {canClaim && (
                                 <ButtonPrimary
-                                        text="Arhivează dosar"
+                                        text="Preia dosar"
+                                        variant="ghost"
+                                        fullWidth
+                                        onClick={onClaim}
+                                />
+                        )}
+                        {canUnclaim && (
+                                <ButtonPrimary
+                                        text="Renunta"
+                                        variant="ghost"
+                                        fullWidth
+                                        onClick={onUnclaim}
+                                />
+                        )}
+                        {!canClaim && !canUnclaim && (
+                                <ButtonPrimary
+                                        text={
+                                                isClaimed && !isClaimedByMe
+                                                        ? "Preluat de altcineva"
+                                                        : "Preia dosar"
+                                        }
+                                        variant="ghost"
+                                        fullWidth
+                                        disabled={isClaimed && !isClaimedByMe}
+                                        onClick={!isClaimed ? onClaim : undefined}
+                                />
+                        )}
+                        {canClose && (
+                                <ButtonPrimary
+                                        text="Arhiveaza dosar"
                                         variant="ghost"
                                         fullWidth
                                         onClick={onClose}

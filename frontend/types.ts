@@ -47,6 +47,9 @@ export interface Request {
         last_uploaded_at?: string | null;
         is_cancelled: boolean;
         is_closed: boolean;
+        claimed_by?: number | null;
+        claimed_by_first_name?: string | null;
+        claimed_by_last_name?: string | null;
         template_id: number;
         status: RequestStatus;
         created_at: string;

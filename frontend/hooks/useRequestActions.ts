@@ -1,4 +1,10 @@
-import { closeRequest, reopenRequest, cancelRequest } from "@/lib/api/requests";
+import {
+        closeRequest,
+        reopenRequest,
+        cancelRequest,
+        claimRequest,
+        unclaimRequest,
+} from "@/lib/api/requests";
 import { useState } from "react";
 import toast from "react-hot-toast";
 
@@ -53,5 +59,37 @@ export const useRequestActions = (requestId: number) => {
                 });
         };
 
-        return { closeReq, reopenReq, cancelReq, loading };
+        const claimReq = async () => {
+                setLoading(true);
+                await toast.promise(claimRequest(requestId), {
+                        loading: "Se preia dosarul...",
+                        success: (res) => {
+                                setLoading(false);
+                                if (!res.success) throw new Error(res.message);
+                                return "Dosar preluat cu succes.";
+                        },
+                        error: (err) => {
+                                setLoading(false);
+                                return err.message ?? "Ceva nu a mers bine.";
+                        },
+                });
+        };
+
+        const unclaimReq = async () => {
+                setLoading(true);
+                await toast.promise(unclaimRequest(requestId), {
+                        loading: "Se renunță la dosar...",
+                        success: (res) => {
+                                setLoading(false);
+                                if (!res.success) throw new Error(res.message);
+                                return "Ai renunțat la dosar.";
+                        },
+                        error: (err) => {
+                                setLoading(false);
+                                return err.message ?? "Ceva nu a mers bine.";
+                        },
+                });
+        };
+
+        return { closeReq, reopenReq, cancelReq, claimReq, unclaimReq, loading };
 };

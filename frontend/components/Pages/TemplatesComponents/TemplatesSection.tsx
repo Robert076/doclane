@@ -1,9 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import { Template } from "@/types";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Template, Department } from "@/types";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
 import SearchBar from "@/components/OtherComponents/SearchBar/SearchBar";
+import FilterTabs from "@/components/InputComponents/FilterTabs";
 import TemplateCard from "./TemplateCard";
 import PaginationFooter from "@/components/FileSectionComponents/FileSection/_components/PaginationFooter";
 import { useSearch } from "@/hooks/useSearch";
@@ -12,7 +13,8 @@ import "./TemplatesSection.css";
 interface TemplatesSectionProps {
         templates: Template[];
         isAdmin: boolean;
-        userDepartmentId: number;
+        userDepartmentId: number | null;
+        departments: Department[];
 }
 
 const ITEMS_PER_PAGE = 12;
@@ -21,7 +23,9 @@ export default function TemplatesSection({
         templates,
         isAdmin,
         userDepartmentId,
+        departments,
 }: TemplatesSectionProps) {
+        const router = useRouter();
         const searchParams = useSearchParams();
         const [currentPage, setCurrentPage] = useState(1);
 
@@ -56,6 +60,25 @@ export default function TemplatesSection({
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const currentTemplates = filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
+        const handleDepartmentChange = (deptId: string) => {
+                const params = new URLSearchParams(searchParams.toString());
+                if (deptId === "all") {
+                        params.delete("department");
+                } else {
+                        params.set("department", deptId);
+                }
+                router.push(`?${params.toString()}`);
+        };
+
+        const departmentTabs = [
+                { label: "Toate", value: "all", count: openTemplates.length },
+                ...departments.map((d) => ({
+                        label: d.name,
+                        value: String(d.id),
+                        count: openTemplates.filter((t) => t.department_id === d.id).length,
+                })),
+        ];
+
         if (openTemplates.length === 0) {
                 return (
                         <NotFound
@@ -87,7 +110,24 @@ export default function TemplatesSection({
                                 onChange={setSearchInput}
                                 placeholder="Caută șablon..."
                         />
-                        {filteredItems.length === 0 ? (
+                        {isAdmin && (
+                                <FilterTabs
+                                        tabs={departmentTabs}
+                                        active={
+                                                selectedDepartmentId
+                                                        ? String(selectedDepartmentId)
+                                                        : "all"
+                                        }
+                                        onChange={handleDepartmentChange}
+                                />
+                        )}
+                        {departmentFiltered.length === 0 ? (
+                                <NotFound
+                                        text="Niciun șablon în acest departament."
+                                        subtext="Nu există șabloane asociate departamentului selectat."
+                                        background="#fff"
+                                />
+                        ) : filteredItems.length === 0 ? (
                                 <NotFound
                                         text="Nu am găsit niciun șablon"
                                         subtext="Nu există niciun rezultat care să corespundă căutării tale."

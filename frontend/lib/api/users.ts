@@ -76,3 +76,13 @@ export async function updateUserProfile(payload: {
                 revalidate: "/dashboard/settings",
         });
 }
+
+export async function updatePassword(payload: {
+        current_password: string;
+        new_password: string;
+}): Promise<APIResponse> {
+        return doclaneHTTPHelper("/users/me/password", {
+                method: "PATCH",
+                body: payload,
+        });
+}

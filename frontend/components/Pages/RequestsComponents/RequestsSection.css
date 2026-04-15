@@ -1,0 +1,58 @@
+.requests-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.requests-status-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.status-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.85rem;
+  border: var(--border-default);
+  border-radius: 999px;
+  background: white;
+  font-size: var(--font-size-s);
+  font-family: inherit;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  font-weight: 500;
+}
+
+.status-tab:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.status-tab--active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.status-tab--active:hover {
+  color: white;
+  filter: brightness(110%);
+}
+
+.status-tab-count {
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 999px;
+  padding: 0 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  min-width: 18px;
+  text-align: center;
+}
+
+.status-tab--active .status-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+}
