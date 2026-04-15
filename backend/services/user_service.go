@@ -291,6 +291,21 @@ func (service *UserService) UpdateUserDepartment(ctx context.Context, caller typ
 	return nil
 }
 
+func (service *UserService) UpdateUserProfile(ctx context.Context, caller types.JWTClaims, dto models.UserProfilePatchDTO) error {
+	if err := service.repo.UpdateUserProfile(ctx, caller.UserID, dto); err != nil {
+		service.logger.Error("failed to update user profile",
+			slog.Int("jwt_user_id", caller.UserID),
+			slog.Any("error", err),
+		)
+		return errors.ErrInternalServerError{Msg: "Failed to update profile."}
+	}
+
+	service.logger.Info("user profile updated successfully",
+		slog.Int("jwt_user_id", caller.UserID),
+	)
+	return nil
+}
+
 func (service *UserService) DeactivateUser(ctx context.Context, caller types.JWTClaims, id int) error {
 	_, err := service.repo.GetUserByID(ctx, id)
 	if err != nil {

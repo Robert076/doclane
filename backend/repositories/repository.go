@@ -16,6 +16,7 @@ type IUserRepo interface {
 	AddUser(ctx context.Context, user models.User) (int, error)
 	NotifyUser(ctx context.Context, userId int, time time.Time) error
 	DeactivateUser(ctx context.Context, userId int) error
+	UpdateUserProfile(ctx context.Context, userID int, dto models.UserProfilePatchDTO) error
 	UpdateUserDepartment(ctx context.Context, userID int, departmentID int) error
 }
 
@@ -92,6 +93,10 @@ type IRequestCommentRepo interface {
 	GetCommentByID(ctx context.Context, commentID int) (models.RequestCommentDTO, error)
 	AddComment(ctx context.Context, comment models.RequestComment) (int, error)
 	GetLastCommentFromUser(ctx context.Context, userID int) (models.RequestComment, error)
+}
+
+type IStatsRepo interface {
+	GetStats(ctx context.Context) (*models.Stats, error)
 }
 
 type ITxManager interface {

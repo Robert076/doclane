@@ -14,4 +14,18 @@ type User struct {
 	CreatedAt    time.Time  `db:"created_at" json:"created_at"`
 	LastNotified *time.Time `db:"last_notified" json:"last_notified"`
 	UpdatedAt    time.Time  `db:"updated_at" json:"updated_at"`
+	Phone        *string    `db:"phone" json:"phone"`
+	Street       *string    `db:"street" json:"street"`
+	Locality     *string    `db:"locality" json:"locality"`
+}
+
+type UserProfilePatchDTO struct {
+	Phone    *string `json:"phone"`
+	Street   *string `json:"street"`
+	Locality *string `json:"locality"`
+}
+
+type UserPasswordPatchDTO struct {
+	CurrentPassword string `json:"current_password"`
+	NewPassword     string `json:"new_password"`
 }

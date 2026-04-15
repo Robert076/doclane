@@ -35,7 +35,7 @@ func (repo *UserRepo) GetUsers(
 	}
 
 	query := `
-		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at
+		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality
 		FROM users
 	`
 
@@ -97,6 +97,9 @@ func (repo *UserRepo) GetUsers(
 			&user.LastNotified,
 			&user.CreatedAt,
 			&user.UpdatedAt,
+			&user.Phone,
+			&user.Street,
+			&user.Locality,
 		); err != nil {
 			return nil, err
 		}
@@ -108,7 +111,7 @@ func (repo *UserRepo) GetUsers(
 
 func (repo *UserRepo) GetUserByID(ctx context.Context, id int) (models.User, error) {
 	query := `
-		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at
+		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality
 		FROM users
 		WHERE id = $1
 	`
@@ -125,6 +128,9 @@ func (repo *UserRepo) GetUserByID(ctx context.Context, id int) (models.User, err
 		&user.LastNotified,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.Phone,
+		&user.Street,
+		&user.Locality,
 	)
 	if err == sql.ErrNoRows {
 		return models.User{}, errors.ErrNotFound{Msg: "User not found."}
@@ -134,7 +140,7 @@ func (repo *UserRepo) GetUserByID(ctx context.Context, id int) (models.User, err
 
 func (repo *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
 	query := `
-		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at
+		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality
 		FROM users
 		WHERE email = $1
 	`
@@ -151,6 +157,9 @@ func (repo *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.
 		&user.LastNotified,
 		&user.CreatedAt,
 		&user.UpdatedAt,
+		&user.Phone,
+		&user.Street,
+		&user.Locality,
 	)
 	if err == sql.ErrNoRows {
 		return models.User{}, errors.ErrNotFound{Msg: "User not found."}
@@ -160,7 +169,7 @@ func (repo *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.
 
 func (repo *UserRepo) GetUsersByDepartment(ctx context.Context, departmentID int) ([]models.User, error) {
 	query := `
-		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at
+		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality
 		FROM users
 		WHERE department_id = $1
 	`
@@ -185,6 +194,9 @@ func (repo *UserRepo) GetUsersByDepartment(ctx context.Context, departmentID int
 			&user.LastNotified,
 			&user.CreatedAt,
 			&user.UpdatedAt,
+			&user.Phone,
+			&user.Street,
+			&user.Locality,
 		); err != nil {
 			return nil, err
 		}
@@ -214,6 +226,22 @@ func (repo *UserRepo) AddUser(ctx context.Context, user models.User) (int, error
 	return id, err
 }
 
+func (repo *UserRepo) UpdateUserProfile(ctx context.Context, userID int, dto models.UserProfilePatchDTO) error {
+	query := `
+		UPDATE users
+		SET phone = $1, street = $2, locality = $3, updated_at = NOW()
+		WHERE id = $4
+	`
+	_, err := repo.db.ExecContext(ctx, query, dto.Phone, dto.Street, dto.Locality, userID)
+	return err
+}
+
+func (repo *UserRepo) UpdateUserDepartment(ctx context.Context, userID int, departmentID int) error {
+	query := `UPDATE users SET department_id = $1, updated_at = NOW() WHERE id = $2`
+	_, err := repo.db.ExecContext(ctx, query, departmentID, userID)
+	return err
+}
+
 func (repo *UserRepo) DeactivateUser(ctx context.Context, userId int) error {
 	query := `UPDATE users SET is_active=false WHERE id=$1`
 	_, err := repo.db.ExecContext(ctx, query, userId)
@@ -223,11 +251,5 @@ func (repo *UserRepo) DeactivateUser(ctx context.Context, userId int) error {
 func (repo *UserRepo) NotifyUser(ctx context.Context, userId int, time time.Time) error {
 	query := `UPDATE users SET last_notified=$1 WHERE id=$2`
 	_, err := repo.db.ExecContext(ctx, query, time, userId)
-	return err
-}
-
-func (repo *UserRepo) UpdateUserDepartment(ctx context.Context, userID int, departmentID int) error {
-	query := `UPDATE users SET department_id = $1, updated_at = NOW() WHERE id = $2`
-	_, err := repo.db.ExecContext(ctx, query, departmentID, userID)
 	return err
 }

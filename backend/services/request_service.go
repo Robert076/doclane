@@ -16,6 +16,7 @@ import (
 
 type RequestService struct {
 	requestRepo         repositories.IRequestRepo
+	userRepo            repositories.IUserRepo
 	templateRepo        repositories.IRequestTemplateRepo
 	expectedDocRepo     repositories.IExpectedDocumentRepo
 	expectedDocTmplRepo repositories.IExpectedDocumentTemplateRepo
@@ -26,6 +27,7 @@ type RequestService struct {
 
 func NewRequestService(
 	requestRepo repositories.IRequestRepo,
+	userRepo repositories.IUserRepo,
 	templateRepo repositories.IRequestTemplateRepo,
 	expectedDocRepo repositories.IExpectedDocumentRepo,
 	expectedDocTmplRepo repositories.IExpectedDocumentTemplateRepo,
@@ -35,6 +37,7 @@ func NewRequestService(
 ) *RequestService {
 	return &RequestService{
 		requestRepo:         requestRepo,
+		userRepo:            userRepo,
 		templateRepo:        templateRepo,
 		expectedDocRepo:     expectedDocRepo,
 		expectedDocTmplRepo: expectedDocTmplRepo,
@@ -50,6 +53,22 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.JWTC
 			slog.Int("jwt_user_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "You are not allowed to create requests"}
+	}
+
+	user, err := service.userRepo.GetUserByID(ctx, claims.UserID)
+	if err != nil {
+		service.logger.Error("error when trying to retrieve user from db for adding request",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	if err := service.checkUserHasProfileConfigured(user); err != nil {
+		service.logger.Warn("user tried to make request without profile configured",
+			slog.Int("jwt_user_id", claims.UserID),
+		)
+		return nil, err
 	}
 
 	if err := ValidateRequestInput(dto); err != nil {

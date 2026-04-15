@@ -349,12 +349,12 @@ func (r *RequestRepo) GetCancelledRequests(ctx context.Context, search *string) 
 }
 
 func (r *RequestRepo) ReopenRequest(ctx context.Context, id int) error {
-	_, err := r.db.ExecContext(ctx, `UPDATE document_requests SET is_closed=false WHERE id=$1`, id)
+	_, err := r.db.ExecContext(ctx, `UPDATE document_requests SET is_closed=false, closed_at=NULL WHERE id=$1`, id)
 	return err
 }
 
 func (r *RequestRepo) CloseRequest(ctx context.Context, id int) error {
-	_, err := r.db.ExecContext(ctx, `UPDATE document_requests SET is_closed=true WHERE id=$1`, id)
+	_, err := r.db.ExecContext(ctx, `UPDATE document_requests SET is_closed=true, closed_at=NOW() WHERE id=$1`, id)
 	return err
 }
 

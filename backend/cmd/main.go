@@ -13,6 +13,7 @@ import (
 	insertadmin_handler "github.com/Robert076/doclane/backend/handlers/insert-admin"
 	invitation_handler "github.com/Robert076/doclane/backend/handlers/invitation"
 	request_handler "github.com/Robert076/doclane/backend/handlers/requests"
+	stats_handler "github.com/Robert076/doclane/backend/handlers/stats"
 	template_handler "github.com/Robert076/doclane/backend/handlers/templates"
 	user_handler "github.com/Robert076/doclane/backend/handlers/users"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -66,9 +67,12 @@ func buildRouter() (http.Handler, *chi.Mux) {
 		r.Use(auth_middleware.AuthGuard)
 		r.Use(auth_middleware.MustBeActive)
 
+		r.Get("/stats", stats_handler.GetStatsHandler)
+
 		r.Route("/users", func(r chi.Router) {
 			r.Get("/", user_handler.GetUsersHandler)
 			r.Get("/me", user_handler.GetCurrentUserHandler)
+			r.Patch("/me/profile", user_handler.UpdateProfileHandler)
 			r.Get("/by-department", user_handler.GetUsersByDepartmentHandler)
 			r.Get("/{id}", user_handler.GetUserByIDHandler)
 			r.Post("/notify/{id}", user_handler.NotifyUserHandler)
@@ -81,7 +85,6 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Post("/", request_handler.AddRequestHandler)
 			r.Get("/assignee/{id}", request_handler.GetRequestsByAssigneeHandler)
 			r.Get("/department/{id}", request_handler.GetRequestsByDepartmentHandler)
-			r.Post("/forward/{id}", request_handler.ForwardRequestToDepartmentHandler)
 			r.Patch("/expected-documents/{id}/status", request_handler.PatchExpectedDocumentStatusHandler)
 			r.Get("/expected-documents/{id}/presign-example", request_handler.GetExamplePresignedURLHandler)
 			r.Get("/archived", request_handler.GetArchivedRequestsHandler)

@@ -26,6 +26,7 @@ var InvitationCodeService *services.InvitationCodeService
 var ExpectedDocumentService *services.ExpectedDocumentService
 var RequestTemplateService *services.RequestTemplateService
 var RequestCommentService *services.RequestCommentService
+var StatsService *services.StatsService
 var S3Client *s3.Client
 
 func init() {
@@ -42,6 +43,7 @@ func init() {
 	requestTemplateRepo := repositories.NewRequestTemplateRepo(db)
 	expectedDocumentTemplateRepo := repositories.NewExpectedDocumentTemplateRepo(db)
 	requestCommentRepo := repositories.NewRequestCommentRepo(db)
+	statsRepo := repositories.NewStatsRepo(db)
 	txManager := repositories.NewTxManager(db)
 
 	// Initialize S3
@@ -54,7 +56,7 @@ func init() {
 	// Initialize services
 	fileStorage := services.NewFileStorageService(S3Client, utils.RequireEnv("S3_BUCKET_NAME"), Logger)
 	UserService = services.NewUserService(userRepo, Logger)
-	RequestService = services.NewRequestService(requestRepo, requestTemplateRepo, expectedDocumentRepo, expectedDocumentTemplateRepo, txManager, Logger, fileStorage)
+	RequestService = services.NewRequestService(requestRepo, userRepo, requestTemplateRepo, expectedDocumentRepo, expectedDocumentTemplateRepo, txManager, Logger, fileStorage)
 	DepartmentService = services.NewDepartmentService(departmentRepo, Logger)
 	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, departmentRepo, Logger)
 	ExpectedDocumentService = services.NewExpectedDocumentService(expectedDocumentRepo, requestRepo, Logger)
@@ -72,6 +74,7 @@ func init() {
 		requestRepo,
 		Logger,
 	)
+	StatsService = services.NewStatsService(statsRepo, Logger)
 }
 
 func initDB() *sql.DB {

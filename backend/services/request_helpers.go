@@ -162,6 +162,19 @@ func (s *RequestService) checkUserIsParticipantOfRequest(ctx context.Context, cl
 	return &req, nil
 }
 
+func (service *RequestService) checkUserHasProfileConfigured(user models.User) error {
+	if user.Phone == nil {
+		return errors.ErrBadRequest{Msg: "You must update your phone number first."}
+	}
+	if user.Street == nil {
+		return errors.ErrBadRequest{Msg: "You must update the street where you live first."}
+	}
+	if user.Locality == nil {
+		return errors.ErrBadRequest{Msg: "You must update the locality where you live first."}
+	}
+	return nil
+}
+
 func (service *RequestService) createRequestTransaction(ctx context.Context, req models.Request, expectedDocs []models.ExpectedDocument) (*int, error) {
 	var id int
 	err := service.txManager.WithTx(ctx, func(tx *sql.Tx) error {
