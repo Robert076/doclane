@@ -1,0 +1,48 @@
+.locality-search {
+  position: relative;
+  width: 100%;
+}
+
+.locality-dropdown {
+  position: absolute;
+  top: calc(100% - 8px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  z-index: 100;
+  overflow: hidden;
+}
+
+.locality-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  cursor: pointer;
+  font-size: var(--font-size-s);
+  transition: background 0.15s ease;
+  gap: 1rem;
+}
+
+.locality-dropdown-item:hover {
+  background: #f8fafc;
+}
+
+.locality-dropdown-loading {
+  color: var(--text-color-secondary);
+  cursor: default;
+}
+
+.locality-dropdown-name {
+  color: #1a202c;
+  font-weight: 500;
+}
+
+.locality-dropdown-county {
+  color: var(--text-color-secondary);
+  font-size: 0.75rem;
+  white-space: nowrap;
+}

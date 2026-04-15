@@ -8,6 +8,8 @@ import {
         MdApartment,
         MdHome,
         MdDoNotDisturb,
+        MdBarChart,
+        MdSettings,
 } from "react-icons/md";
 
 export interface NavItem {
@@ -18,6 +20,7 @@ export interface NavItem {
 
 export const SIDEBAR_CONFIG: Record<string, NavItem[]> = {
         admin: [
+                { label: "Statistici", href: "/dashboard/stats", icon: MdBarChart },
                 { label: "Dosare", href: "/dashboard/requests", icon: MdDashboard },
                 {
                         label: "Dosare arhivate",
@@ -37,13 +40,13 @@ export const SIDEBAR_CONFIG: Record<string, NavItem[]> = {
                 },
                 { label: "Utilizatori", href: "/dashboard/users", icon: MdPeople },
                 { label: "Departamente", href: "/dashboard/departments", icon: MdApartment },
-                // { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
+                { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
                 // { label: "Ajutor", href: "/dashboard/help", icon: MdHelpCenter },
         ],
         member: [
                 { label: "Portal", href: "/dashboard/requests", icon: MdHome },
                 { label: "Şabloane", href: "/dashboard/templates", icon: MdEditDocument },
-                // { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
+                { label: "Setări", href: "/dashboard/settings", icon: MdSettings },
                 // { label: "Ajutor", href: "/dashboard/help", icon: MdHelpCenter },
         ],
 };

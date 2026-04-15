@@ -64,3 +64,15 @@ export async function updateUserDepartment(
                 revalidate: "/dashboard/departments",
         });
 }
+
+export async function updateUserProfile(payload: {
+        phone?: string | null;
+        street?: string | null;
+        locality?: string | null;
+}): Promise<APIResponse> {
+        return doclaneHTTPHelper("/users/me/profile", {
+                method: "PATCH",
+                body: payload,
+                revalidate: "/dashboard/settings",
+        });
+}

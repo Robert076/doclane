@@ -55,6 +55,18 @@ export default function UserCard({ user, footer }: Props) {
                                                 label="Înregistrat la"
                                                 value={formatDate(user.created_at)}
                                         />
+                                        {user.phone && (
+                                                <InfoItem label="Telefon" value={user.phone} />
+                                        )}
+                                        {user.street && (
+                                                <InfoItem label="Stradă" value={user.street} />
+                                        )}
+                                        {user.locality && (
+                                                <InfoItem
+                                                        label="Localitate"
+                                                        value={user.locality}
+                                                />
+                                        )}
                                         {user.last_notified && (
                                                 <InfoItem
                                                         label="Ultima notificare"

@@ -1,0 +1,33 @@
+.profile-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profile-card {
+  background: white;
+  border: var(--border-default);
+  border-radius: var(--border-radius-default);
+  box-shadow: var(--box-shadow-default);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.profile-card-title {
+  font-size: var(--font-size-m);
+  font-weight: 600;
+  color: #1a202c;
+}
+
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profile-save {
+  width: 200px;
+  margin-top: 0.5rem;
+}

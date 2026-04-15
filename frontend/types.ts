@@ -13,6 +13,9 @@ export interface User {
         is_active: boolean;
         created_at: string;
         updated_at: string;
+        phone?: string;
+        locality?: string;
+        street?: string;
         last_notified?: string | null;
         first_name: string;
         last_name: string;

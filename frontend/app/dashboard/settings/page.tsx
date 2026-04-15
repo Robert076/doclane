@@ -1,11 +1,19 @@
 import PageHeader from "@/components/PageHeader/PageHeader";
+import ProfileSection from "@/components/Pages/SettingsComponents/ProfileSection";
+import { getCurrentUser } from "@/lib/api/users";
+import { redirect } from "next/navigation";
 
-const Settings = () => {
+export default async function SettingsPage() {
+        const userResponse = await getCurrentUser();
+        if (!userResponse.success || !userResponse.data) redirect("/login");
+
         return (
                 <div>
-                        <PageHeader title="Setări" subtitle="Setările contului tău Doclane." />
+                        <PageHeader
+                                title="Setări"
+                                subtitle="Gestionează informațiile contului tău."
+                        />
+                        <ProfileSection user={userResponse.data} />
                 </div>
         );
-};
-
-export default Settings;
+}
