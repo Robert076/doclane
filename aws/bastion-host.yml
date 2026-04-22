@@ -1,0 +1,25 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  Bastion Host needed to SSH tunnel to the RDS instance for initialization.
+
+Resources:
+  Bastion:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: !ImportValue doclane-az1
+      SubnetId: !ImportValue doclane-public-subnet-id
+      ImageId: ami-0442403fb8d244144
+      KeyName: doclane-bastion-key
+      SecurityGroupIds:
+        - !ImportValue doclane-bastion-sg-id
+      UserData: 
+        Fn::Base64: |
+          #!/bin/bash
+          dnf install postgresql17 -y
+      Tags:
+        - Key: Name
+          Value: doclane-bastion-host
+        - Key: Description
+          Value: Bastion Host needed for initial setup of RDS database.
+

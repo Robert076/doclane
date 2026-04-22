@@ -1,0 +1,43 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  The RDS Database of Doclane. Robert is an AWS Certified Professional as a student btw, got it like that.
+  Clean asf.
+
+Resources:
+  RDS:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBName: doclane
+      Engine: postgres
+      EngineVersion: "17"
+      AllocatedStorage: 20
+      AllowMajorVersionUpgrade: false
+      DBSubnetGroupName: !Ref RDSSubnetGroup
+      VPCSecurityGroups:
+        - !ImportValue doclane-rds-sg-id
+      BackupRetentionPeriod: 0
+      CertificateRotationRestart: true
+      ApplyImmediately: true
+      DBInstanceClass: db.t3.micro
+      DBParameterGroupName: !Ref RDSParameterGroup
+      AvailabilityZone: !ImportValue doclane-az1
+      MasterUsername: !Sub "{{resolve:ssm:/doclane/rds/username}}"
+      MasterUserPassword: !Sub "{{resolve:ssm:/doclane/rds/password}}"
+      StorageEncrypted: true
+
+  RDSSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Doclane RDS
+      SubnetIds:
+        - !ImportValue doclane-private-subnet-1-id
+        - !ImportValue doclane-private-subnet-2-id
+
+  RDSParameterGroup:
+    Type: AWS::RDS::DBParameterGroup
+    Properties:
+      Description: Enforce SSL for Doclane Postgres RDS
+      Family: postgres17
+      Parameters:
+        rds.force_ssl: "1"

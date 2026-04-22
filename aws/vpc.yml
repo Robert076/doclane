@@ -15,6 +15,12 @@ Parameters:
   AZ2:
     Type: AWS::EC2::AvailabilityZone::Name
     Description: Select second AZ
+  
+  MyPublicCidr:
+    Type: String
+    Description: Public IP address for Bastion SSH access
+    AllowedPattern: (\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/32
+    ConstraintDescription: Must be a valid IP in x.x.x.x/32 format
 
 Resources:
   VPC:
@@ -53,34 +59,98 @@ Resources:
         - Key: Description
           Value: One of the two subnets where Lambda backend is deployed, to ensure high availability.
 
-  RouteTable:
+  IGW: 
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: doclane-igw
+        - Key: Description
+          Value: The internet gateway is needed for making a public subnet.
+
+  AttachIGW:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId: !Ref IGW
+      VpcId: !Ref VPC
+
+  InternetRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      GatewayId: !Ref IGW
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Ref AZ1
+      CidrBlock: "10.0.2.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: doclane-public-subnet-1
+        - Key: Description
+          Value: Needed for the ALB and Bastion Host so that we may initialize the RDS instance.
+
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: !Ref AZ2
+      CidrBlock: "10.0.3.0/24"
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: doclane-public-subnet-2
+        - Key: Description
+          Value: Needed for the ALB.
+
+  PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: doclane-route-table
+          Value: doclane-private-route-table
         - Key: Description
           Value: The route table used by the lambda backend
   
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: doclane-public-route-table
+        - Key: Description
+          Value: The route table used by the public subnet.
+
   PrivateSubnet1Association:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref RouteTable
+      RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref PrivateSubnet1
 
   PrivateSubnet2Association:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
-      RouteTableId: !Ref RouteTable
+      RouteTableId: !Ref PrivateRouteTable
       SubnetId: !Ref PrivateSubnet2
+
+  PublicSubnetAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet
 
   GatewayEndpointS3:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
       RouteTableIds:
-        - !Ref RouteTable
+        - !Ref PrivateRouteTable
       VpcEndpointType: Gateway
       VpcId: !Ref VPC
       Tags:
@@ -116,6 +186,8 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnet1
         - !Ref PrivateSubnet2
+      SecurityGroupIds:
+        - !Ref EndpointSG
       PrivateDnsEnabled: true
       VpcId: !Ref VPC
       Tags:
@@ -134,6 +206,8 @@ Resources:
         - !Ref PrivateSubnet2
       PrivateDnsEnabled: true
       VpcId: !Ref VPC
+      SecurityGroupIds:
+        - !Ref EndpointSG
       Tags:
         - Key: Name
           Value: doclane-interface-endpoint-kms
@@ -145,16 +219,34 @@ Resources:
     Properties:
       GroupDescription: Allow Lambda to access VPC endpoints
       VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          SourceSecurityGroupId: !Ref LambdaBackendSG
       Tags:
         - Key: Name
           Value: doclane-endpoint-sg
         - Key: Description
           Value: Used for the interface endpoints in the deployment such that only Lambda SG can access it.
+
+  EndpointSGIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref EndpointSG
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !Ref LambdaBackendSG
+
+  BastionSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Bastion Host to allow inbound SSH from outside.
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref MyPublicCidr
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
 
   LambdaBackendSG:
     Type: AWS::EC2::SecurityGroup
@@ -168,19 +260,96 @@ Resources:
         - Key: Description
           Value: Used to be referenced by the RDS Security group to guarantee least privilege access to RDS. That is the only purpose it serves.
 
+  LambdaEgressToRDS:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref LambdaBackendSG
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      DestinationSecurityGroupId: !Ref RDSDatabaseSG
+    
+  LambdaEgressToEndpoint:
+    Type: AWS::EC2::SecurityGroupEgress
+    Properties:
+      GroupId: !Ref LambdaBackendSG
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      DestinationSecurityGroupId: !Ref EndpointSG
+
   RDSDatabaseSG:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Security Group used for the RDS instance, leverages least privilege principle to only allow Doclane Lambda backend to connect.
       GroupName: doclane-rds-sg
       VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !Ref LambdaBackendSG
       Tags:
         - Key: Name
           Value: doclane-rds-sg
         - Key: Description
           Value: Security Group used for the RDS instance, leverages least privilege principle to only allow Doclane Lambda backend to connect.
+
+  RDSIngressFromBastion:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref RDSDatabaseSG
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      SourceSecurityGroupId: !Ref BastionSG
+
+  RDSIngressFromLambda:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !Ref RDSDatabaseSG
+      IpProtocol: tcp
+      FromPort: 5432
+      ToPort: 5432
+      SourceSecurityGroupId: !Ref LambdaBackendSG
+
+Outputs:
+  PrivateSubnet1Id:
+    Value: !Ref PrivateSubnet1
+    Export:
+      Name: doclane-private-subnet-1-id
+
+  PrivateSubnet2Id:
+    Value: !Ref PrivateSubnet2
+    Export:
+      Name: doclane-private-subnet-2-id
+
+  RDSDatabaseSGId:
+    Value: !Ref RDSDatabaseSG
+    Export:
+      Name: doclane-rds-sg-id
+      
+  LambdaSGId:
+    Value: !Ref LambdaBackendSG
+    Export:
+      Name: doclane-lambda-sg-id
+
+  AvailabilityZone1:
+    Value: !Ref AZ1
+    Export:
+      Name: doclane-az1
+
+  AvailabilityZone2:
+    Value: !Ref AZ2
+    Export:
+      Name: doclane-az2
+
+  PublicSubnetId:
+    Value: !Ref PublicSubnet
+    Export:
+      Name: doclane-public-subnet-id
+
+  PrivateRouteTableId:
+    Value: !Ref PrivateRouteTable
+    Export:
+      Name: doclane-private-route-table-id
+
+  BastionSGId:
+    Value: !Ref BastionSG
+    Export:
+      Name: doclane-bastion-sg-id

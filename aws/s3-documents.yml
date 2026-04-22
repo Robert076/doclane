@@ -1,0 +1,68 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: S3 bucket for Doclane document storage.
+
+Parameters:
+  DaysUntilIA:
+    Type: Number
+    Default: 30
+    Description: Days until objects transition to Standard-IA
+
+  DaysUntilGlacier:
+    Type: Number
+    Default: 90
+    Description: Days until objects transition to Glacier Instant Retrieval
+
+Resources:
+  DocumentsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: doclane-documents
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: TransitionToIA
+            Status: Enabled
+            Transitions:
+              - TransitionInDays: !Ref DaysUntilIA
+                StorageClass: STANDARD_IA
+              - TransitionInDays: !Ref DaysUntilGlacier
+                StorageClass: GLACIER_IR
+            NoncurrentVersionTransitions:
+              - TransitionInDays: !Ref DaysUntilIA
+                StorageClass: STANDARD_IA
+              - TransitionInDays: !Ref DaysUntilGlacier
+                StorageClass: GLACIER_IR
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+              - POST
+              - DELETE
+            AllowedOrigins:
+              - "*"
+            MaxAge: 3600
+
+Outputs:
+  DocumentsBucketName:
+    Value: !Ref DocumentsBucket
+    Export:
+      Name: doclane-documents-bucket-name
+
+  DocumentsBucketArn:
+    Value: !GetAtt DocumentsBucket.Arn
+    Export:
+      Name: doclane-documents-bucket-arn

@@ -1,0 +1,28 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: |
+  The parameters for the RDS 
+
+Parameters:
+  DBUsername:
+    Type: String
+    Description: Master username for Doclane RDS
+  DBPassword:
+    Type: String
+    Description: Master password for Doclane RDS
+    NoEcho: true
+
+Resources:
+  SSMDBUsername:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /doclane/rds/username
+      Type: String
+      Value: !Ref DBUsername
+
+  SSMDBPassword:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: /doclane/rds/password
+      Type: String
+      Value: !Ref DBPassword
