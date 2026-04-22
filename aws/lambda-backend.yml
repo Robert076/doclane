@@ -36,41 +36,41 @@ Resources:
           S3_BUCKET_NAME: doclane-documents
 
   LambdaBackendRole:
-  Type: AWS::IAM::Role
-  Properties:
-    RoleName: doclane-backend-role
-    AssumeRolePolicyDocument:
-      Version: "2012-10-17"
-      Statement:
-        - Effect: Allow
-          Principal:
-            Service: lambda.amazonaws.com
-          Action: sts:AssumeRole
-    ManagedPolicyArns:
-      - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
-    Policies:
-      - PolicyName: doclane-backend-policy
-        PolicyDocument:
-          Version: "2012-10-17"
-          Statement:
-            - Effect: Allow
-              Action:
-                - ssm:GetParameter
-              Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/doclane/*
-            - Effect: Allow
-              Action:
-                - kms:Decrypt
-              Resource: "*"
-            - Effect: Allow
-              Action:
-                - s3:GetObject
-                - s3:PutObject
-                - s3:DeleteObject
-              Resource: !Sub arn:aws:s3:::doclane-documents/*
-            - Effect: Allow
-              Action:
-                - s3:GetObject
-              Resource: arn:aws:s3:::doclane-rds-lambda-code/*
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: doclane-backend-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
+      Policies:
+        - PolicyName: doclane-backend-policy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/doclane/*
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource: "*"
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub arn:aws:s3:::doclane-documents/*
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: arn:aws:s3:::doclane-rds-lambda-code/*
 
 Outputs:
   LambdaFunctionName:
