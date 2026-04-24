@@ -1,0 +1,153 @@
+\chapter{Implementation}
+\label{chap:ch4}
+
+\par The preferred programming language chosen for the backend was Golang, and the frontend was done in Next.js. Golang was chosen because it's a modern language, and although it is not object-oriented, the tradeoff is worth it for how fast it is and how rich of a standard library it has. It is also surprisingly fast to write, and one of the best things about it is that it has error objects. No more uncaught exceptions!
+
+\par Next.js was chosen for its server side capabilities. Doclane is a dynamic app, it contains many HTTP calls and fetching everything client side would shortly become a nightmare when thinking of user experience.
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/folder-structure.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{Overview of Doclane's folder structure.}
+\end{center}
+
+
+\section{Backend}
+
+\subsection{Golang}
+
+\par Go is a high-level, general-purpose programming language that is statically typed and compiled. It is known for the simplicity of its syntax and the efficiency of development that it enables through the inclusion of a large standard library supplying many needs for common projects.
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/doclane-go-sample.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{Sample of backend code from Doclane.}
+\end{center}
+
+\subsection{Layers}
+
+\par Code is split into multiple layers:
+\begin{itemize}
+    \item Handler layer: HTTP calls.
+    \item Service layer: business logic and validation.
+    \item Repository layer: interaction with the database.
+    \item Model layer: structures used throughout the app.
+\end{itemize}
+
+\subsubsection{Handler layer}
+\par The handler layer is responsible for extracting needed information from a request in order for it to be processed. Required information includes, but it is not limited to: JWT claims from the user, id of a resource that the user wishes to interact with, files that need to be uploaded.
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/handler-sample-code.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{Sample of handler code used to retrieve invitation codes.}
+\end{center}
+
+\subsubsection{Service layer}
+\par The service layer is responsible for validating a request passed from the handlers. Validations include, but are not limited to: checking the user's role, checking that they have sufficient permissions to take an action. One example would be: you cannot view the files from a request unless you are either an admin or you belong to the department managing that request.
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/service-sample-code.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{Sample of service code used to retrieve files from a request.}
+\end{center}
+
+\subsubsection{Repository layer}
+\par The repository layer is responsible for executing queries on the database. It trusts everything it is given as everything given to it passes through the service first. No validations are done in the repository, ensuring a clean separation of concerns. Transactions, although rarely, are also used where multiple database operations are required for one operation to be considered complete in the app. 
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/repository-sample-code.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{Sample of repository code where a transaction is used.}
+\end{center}
+
+\subsubsection{Model layer}
+\par The model layer simply holds the structures used throughout the app: users, requests, templates, invitation codes, comments, and more. Occasionally, DTOs (Data Transfer Objects) are used to enrich data coming from the database. A sample use case where a DTO is used is for retrieving requests, and making sure we also get the requesters' name and email, not just their ID, as the original model has only the ID in it.
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/model-sample-code.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{Sample of model code of a request.}
+\end{center}
+
+\subsection{Authentication}
+
+\par Authentication is done via JWTs (JSON Web Tokens). A JWT is a stateless form of authentication, it is basically a cryptographically signed payload containing the user id, the audience for which the token is intended, the issuer, but in Doclane's case it also contains the user's role, their department, their first and last names. 
+
+\par The information in the token is visible to anyone, it is not encrypted. However it cannot be altered (or one should say it can, but with no effect), because token verification will see that the signature does not match, therefore rejecting the token.
+
+\par The token is stored in an HTTP only cookie, making it inaccessible to JavaScript running in the browser, which protects against attacks such as XSS (Cross-Site Scripting).
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/jwt-claims.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{JWT Claims used by Doclane.}
+\end{center}
+
+\subsection{API Response}
+
+\par The entire API returns a common object structure across all responses, ensuring parsing a response from the callers' end a consistent process. Every request will come back with an object containing: 
+\begin{itemize}
+    \item "success" - a boolean that determines whether the request executed successfully.
+    \item "message" - optional, a message, containing a short description of what happened.
+    \item "error" - optional, an error message in case success boolean is false.
+    \item "data" - optional, this is where any data is returned.
+\end{itemize}
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/api-response.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{API Response struct.}
+\end{center}
+
+\subsection{Custom errors}
+
+\par Custom error objects have been defined to be used throughout the app. Reason for this is to have a unified way of treating them, and making code more readable.
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/errors.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{Custom error types.}
+\end{center}
+
+\subsection {Configuration}
+
+\par The single source of truth for what structures are being used throughout the app (i.e., which implementation of a repository is chosen, but not only) is the configuration file. It is from here that all other files use the service layer, the instances are being globally exported from this file.
+
+\par This creates a scalable environment due to the fact that whenever a repository change is required, for example to use another interface implementation instead of the current one, all one has to do is come in this file and swap out that implementation. Simply put, just change one line of code and you're done.
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/go-config.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{Config file.}
+\end{center}
+
+\subsection {Middleware}
+
+\par Middleware pattern is used all throughout the app. Almost every request is tested against having a valid JWT token, which has a signature that corresponds to an authentic token signed by the server.
+
+\par This enables a significant amount of functions to be more lightweight, as they do not need to worry about checking whether a user has a valid token or not, but rather any request containing an invalid request is rejected before ever entering the handler layer.
+
+\par There are two middleware checks happening in Doclane: first, a request is validated against having an authentic JWT signed by Doclane, and second it checks whether an account is active or not.
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/go-middleware.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{Middleware sample code.}
+\end{center}
+
+\subsection {File storage}
+
+\par All the files that users upload within the app need to be stored somewhere. The storage chosen for these was S3 from AWS. 
+
+\par Without going into detail about S3 (Simple Storage Service), let's see the calls to the S3 API. S3 as a service is covered in the deployment chapter.
+
+\par The file storage logic has been abstracted away as to not depend on a particular service. This means that the file storage logic is separate from application logic. It also lives in the service layer, since it's dealing with business logic.
+
+\par All file acess is done via S3 Presigned URLs, which is a feature of S3 in AWS that enables temporary access to a specific file, ensuring least privilege principle. More on this in the deployment section.
+
+\begin{center}
+    \includegraphics[width=0.8\textwidth]{figures/implementation/backend/file-storage.png}
+    \captionsetup{type=figure} % ensures LaTeX treats it as a figure even if not floating
+    \captionof{figure}{File storage sample code.}
+\end{center}

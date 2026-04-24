@@ -36,7 +36,9 @@ func (r *RequestRepo) AddRequest(ctx context.Context, req models.Request) (int, 
 func (r *RequestRepo) AddRequestWithTx(ctx context.Context, req models.Request, tx *sql.Tx) (int, error) {
 	var id int
 	query := `
-		INSERT INTO document_requests (assignee, department_id, title, description, is_recurring, recurrence_cron, is_scheduled, scheduled_for, next_due_at, due_date, template_id)
+		INSERT INTO document_requests (assignee, department_id, title, 
+		description, is_recurring, recurrence_cron, is_scheduled, 
+		scheduled_for, next_due_at, due_date, template_id)
 		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
 		RETURNING id
 	`

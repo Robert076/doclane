@@ -18,9 +18,46 @@ coverage.*
 profile.cov
 *.pem
 .DS_Store
+# LaTeX auxiliary files
+*.aux
+*.lof
+*.log
+*.lot
+*.fls
+*.out
+*.toc
+*.fmt
+*.fot
+*.cb
+*.cb2
+*.lb
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+
+# Build output
+*.dvi
+*.xdv
+*.ps
+*.pdf
+
+# Synctex
+*.synctex.gz
+*.synctex(busy)
+
+# latexmk
+*.fdb_latexmk
+
+# Misc
+*.nav
+*.snm
+*.vrb
+*.idx
+*.ilg
+*.ind
 # Dependency directories (remove the comment below to include it)
 # vendor/
-
 # Go workspace file
 go.work
 go.work.sum
