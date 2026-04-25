@@ -106,7 +106,7 @@ export default function RequestsSection({ requests, user }: RequestsSectionProps
         if (requests.length === 0) {
                 return (
                         <NotFound
-                                text="Nu ai niciun dosarinca."
+                                text="Nu ai niciun dosar inca."
                                 subtext={
                                         user.role === "admin" || user.department_id !== null
                                                 ? "Aici vor aparea dosarele pe care le gestionezi."
