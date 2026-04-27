@@ -44,6 +44,10 @@ export default function DepartmentCard({ department }: DepartmentCardProps) {
                 >
                         <InfoList>
                                 <InfoItem
+                                        label="Număr de membrii"
+                                        value={department.member_count}
+                                />
+                                <InfoItem
                                         label="Creat la"
                                         value={formatDate(department.created_at)}
                                 />

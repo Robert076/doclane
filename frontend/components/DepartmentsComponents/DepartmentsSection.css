@@ -1,19 +1,16 @@
-.department-members-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+.departments-section {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
 }
 
-.department-members-actions > div {
-  width: 200px;
+.departments-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
 }
 
-.departments-actions {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.departments-actions > div {
-  width: 200px;
+.departments-toolbar-action {
+    width: 200px;
 }

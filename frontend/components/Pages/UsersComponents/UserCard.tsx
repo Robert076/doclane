@@ -7,19 +7,26 @@ import InfoItem from "@/components/CardComponents/InfoItem/InfoItem";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import Modal from "@/components/Modals/Modal";
 import { formatDate } from "@/lib/client/formatDate";
+import HighlightText from "@/components/OtherComponents/HighlightText/HighlightText";
 
 interface Props {
         user: User;
         footer?: React.ReactNode;
+        search?: string;
 }
 
-export default function UserCard({ user, footer }: Props) {
+export default function UserCard({ user, footer, search }: Props) {
         const [isModalOpen, setIsModalOpen] = useState(false);
 
         return (
                 <>
                         <BaseDashboardCard
-                                title={`${user.first_name} ${user.last_name}`}
+                                title={
+                                        <HighlightText
+                                                text={`${user.first_name} ${user.last_name}`}
+                                                search={search}
+                                        />
+                                }
                                 isHighlighted={!user.is_active}
                                 footer={
                                         <>
@@ -34,7 +41,13 @@ export default function UserCard({ user, footer }: Props) {
                                 }
                         >
                                 <InfoList>
-                                        <InfoItem label="Email" value={user.email} />
+                                        <InfoItem
+                                                label="Email"
+                                                value=<HighlightText
+                                                        text={user.email}
+                                                        search={search}
+                                                />
+                                        />
                                 </InfoList>
                         </BaseDashboardCard>
 

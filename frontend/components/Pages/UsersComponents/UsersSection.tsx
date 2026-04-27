@@ -64,7 +64,11 @@ export default function UsersSection({ users }: Props) {
                                 <>
                                         <div className="objects-grid">
                                                 {paginatedItems.map((user) => (
-                                                        <UserCard key={user.id} user={user} />
+                                                        <UserCard
+                                                                key={user.id}
+                                                                user={user}
+                                                                search={searchInput}
+                                                        />
                                                 ))}
                                         </div>
                                         {totalPages > 1 && (

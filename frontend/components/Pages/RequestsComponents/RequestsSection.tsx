@@ -31,6 +31,23 @@ const CLAIM_FILTERS: { label: string; value: "all" | "claimed" | "unclaimed" }[]
         { label: "Nepreluate", value: "unclaimed" },
 ];
 
+const STALE_DAYS = 7;
+
+function isStale(req: Request): boolean {
+        if (req.claimed_by !== null && req.claimed_by !== undefined) return false;
+        const created = new Date(req.created_at);
+        const diffMs = Date.now() - created.getTime();
+        return diffMs > STALE_DAYS * 24 * 60 * 60 * 1000;
+}
+
+function isDueSoon(req: Request): boolean {
+        if (!req.due_date) return false;
+        if (req.is_closed || req.is_cancelled) return false;
+        const diffMs = new Date(req.due_date).getTime() - Date.now();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        return diffDays >= 0 && diffDays <= 3;
+}
+
 export default function RequestsSection({ requests, user }: RequestsSectionProps) {
         const router = useRouter();
         const searchParams = useSearchParams();
@@ -185,6 +202,8 @@ export default function RequestsSection({ requests, user }: RequestsSectionProps
                                                                 user={user}
                                                                 searchTerm={searchInput}
                                                                 archived={false}
+                                                                isStale={isStale(req)}
+                                                                isDueSoon={isDueSoon(req)}
                                                         />
                                                 ))}
                                         </div>

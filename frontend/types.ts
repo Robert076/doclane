@@ -26,6 +26,13 @@ export interface Department {
         name: string;
         created_at: string;
         updated_at: string;
+        member_count: number;
+}
+
+export interface Tag {
+        id: number;
+        name: string;
+        color: string;
 }
 
 export interface Request {
@@ -64,6 +71,7 @@ export interface Template {
         department_id: number;
         department_name: string;
         is_recurring: boolean;
+        tags: Tag[];
         recurrence_cron?: string | null;
         created_by: number;
         author_first_name?: string | null;

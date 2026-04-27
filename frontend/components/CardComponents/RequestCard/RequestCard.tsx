@@ -17,9 +17,18 @@ interface RequestProps {
         user: User;
         searchTerm?: string;
         archived?: boolean;
+        isStale?: boolean;
+        isDueSoon?: boolean;
 }
 
-export default function RequestCard({ request, searchTerm, user, archived }: RequestProps) {
+export default function RequestCard({
+        request,
+        searchTerm,
+        user,
+        archived,
+        isStale,
+        isDueSoon,
+}: RequestProps) {
         const router = useRouter();
         const { closeReq, reopenReq, claimReq, unclaimReq } = useRequestActions(request.id);
         const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
@@ -58,6 +67,14 @@ export default function RequestCard({ request, searchTerm, user, archived }: Req
                                                                         {isClaimedByMe
                                                                                 ? "Preluat de tine"
                                                                                 : `Preluat de ${request.claimed_by_first_name} ${request.claimed_by_last_name}`}
+                                                                </span>
+                                                        )}
+                                                        {canManage && isStale && (
+                                                                <span
+                                                                        className="stale-badge"
+                                                                        title="Dosar nepreluat de peste 7 zile"
+                                                                >
+                                                                        Nepreluat 7+ zile
                                                                 </span>
                                                         )}
                                                 </>

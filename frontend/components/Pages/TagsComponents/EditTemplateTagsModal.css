@@ -1,0 +1,47 @@
+/* EditTemplateTagsModal.css */
+.tag-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 16px 0 12px;
+}
+
+.tag-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    cursor: pointer;
+    border: 1px solid transparent;
+    background-color: color-mix(in srgb, var(--tag-color) 12%, white);
+    color: var(--tag-color);
+    border-color: color-mix(in srgb, var(--tag-color) 25%, white);
+    transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.tag-option--selected {
+    background-color: color-mix(in srgb, var(--tag-color) 20%, white);
+    border-color: var(--tag-color);
+    box-shadow: 0 0 0 1px var(--tag-color);
+}
+
+.tag-option--disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.tag-option-check {
+    font-size: 0.7rem;
+}
+
+.tag-counter {
+    font-size: 0.75rem;
+    color: var(--text-color-secondary);
+    text-align: right;
+}

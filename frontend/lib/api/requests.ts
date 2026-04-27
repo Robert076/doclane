@@ -128,10 +128,11 @@ export async function presignDocumentURL(
 }
 
 export async function presignExampleURL(expectedDocID: number): Promise<APIResponse<string>> {
-        return doclaneHTTPHelper(
+        const res = await doclaneHTTPHelper<{ url: string }>(
                 `/requests/expected-documents/${expectedDocID}/presign-example`,
                 { method: "GET" },
         );
+        return { ...res, data: res.data?.url };
 }
 
 const MAX_FILE_SIZE = 20 * 1024 * 1024;

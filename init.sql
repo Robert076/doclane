@@ -120,6 +120,19 @@ CREATE TABLE request_comments (
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE tags (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE,
+    color TEXT NOT NULL DEFAULT '#6366f1',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE template_tags (
+    template_id INT NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
+    tag_id INT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
+    PRIMARY KEY (template_id, tag_id)
+);
+
 -- Indexes
 CREATE INDEX idx_users_department_id          ON users(department_id);
 CREATE INDEX idx_users_role                   ON users(role);

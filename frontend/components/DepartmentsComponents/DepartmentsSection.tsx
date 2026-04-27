@@ -33,28 +33,25 @@ export default function DepartmentsSection({ departments }: DepartmentsSectionPr
         );
 
         return (
-                <div className="section">
-                        <div className="section-actions">
-                                <div className="departments-actions">
-                                        <div>
-                                                <ButtonPrimary
-                                                        text="Departament nou"
-                                                        fullWidth
-                                                        onClick={() =>
-                                                                setIsCreateModalOpen(true)
-                                                        }
-                                                />
-                                        </div>
+                <div className="departments-section">
+                        <div className="departments-toolbar">
+                                <div className="departments-toolbar-action">
+                                        <ButtonPrimary
+                                                text="Departament nou"
+                                                fullWidth
+                                                variant="ghost"
+                                                onClick={() => setIsCreateModalOpen(true)}
+                                        />
                                 </div>
+                                <SearchBar
+                                        value={searchInput}
+                                        onChange={(value) => {
+                                                setSearchInput(value);
+                                                setCurrentPage(1);
+                                        }}
+                                        placeholder="Caută departament..."
+                                />
                         </div>
-                        <SearchBar
-                                value={searchInput}
-                                onChange={(value) => {
-                                        setSearchInput(value);
-                                        setCurrentPage(1);
-                                }}
-                                placeholder="Caută departament..."
-                        />
                         {filteredItems.length === 0 ? (
                                 <NotFound
                                         text="Nu există niciun departament încă."

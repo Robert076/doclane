@@ -130,6 +130,26 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
         return (
                 <>
                         <BaseDashboardCard
+                                header={
+                                        template.tags?.length > 0 && (
+                                                <div className="template-tags">
+                                                        {template.tags.map((tag) => (
+                                                                <span
+                                                                        key={tag.id}
+                                                                        className="template-tag-badge"
+                                                                        style={
+                                                                                {
+                                                                                        "--tag-color":
+                                                                                                tag.color,
+                                                                                } as React.CSSProperties
+                                                                        }
+                                                                >
+                                                                        {tag.name}
+                                                                </span>
+                                                        ))}
+                                                </div>
+                                        )
+                                }
                                 title={
                                         <HighlightText
                                                 text={template.title}

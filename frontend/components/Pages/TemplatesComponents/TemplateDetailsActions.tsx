@@ -10,6 +10,7 @@ import { useUser } from "@/context/UserContext";
 import EditTemplateModal from "./EditTemplateModal";
 import { patchTemplate } from "@/lib/api/templates";
 import { createRequest } from "@/lib/api/requests";
+import EditTemplateTagsModal from "../TagsComponents/EditTemplateTagsModal";
 
 export default function TemplateDetailsActions({
         id,
@@ -19,6 +20,7 @@ export default function TemplateDetailsActions({
         template: Template;
 }) {
         const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+        const [isTagModalOpen, setIsTagModalOpen] = useState(false);
         const [isSubmitting, setIsSubmitting] = useState(false);
         const router = useRouter();
         const user = useUser();
@@ -54,14 +56,26 @@ export default function TemplateDetailsActions({
                                 <SectionTitle text="Acțiuni" />
                                 <div className="template-action-buttons">
                                         {canManage ? (
-                                                <ButtonPrimary
-                                                        text="Editează șablon"
-                                                        fullWidth
-                                                        variant="ghost"
-                                                        onClick={() =>
-                                                                setIsEditModalOpen(true)
-                                                        }
-                                                />
+                                                <>
+                                                        <ButtonPrimary
+                                                                text="Editează șablon"
+                                                                fullWidth
+                                                                variant="ghost"
+                                                                onClick={() =>
+                                                                        setIsEditModalOpen(
+                                                                                true,
+                                                                        )
+                                                                }
+                                                        />
+                                                        <ButtonPrimary
+                                                                text="Editează taguri"
+                                                                fullWidth
+                                                                variant="ghost"
+                                                                onClick={() =>
+                                                                        setIsTagModalOpen(true)
+                                                                }
+                                                        />
+                                                </>
                                         ) : (
                                                 <ButtonPrimary
                                                         text={
@@ -80,6 +94,11 @@ export default function TemplateDetailsActions({
                                 isOpen={isEditModalOpen}
                                 onClose={() => setIsEditModalOpen(false)}
                                 onConfirm={handleEditConfirm}
+                                template={template}
+                        />
+                        <EditTemplateTagsModal
+                                isOpen={isTagModalOpen}
+                                onClose={() => setIsTagModalOpen(false)}
                                 template={template}
                         />
                 </>
