@@ -27,14 +27,17 @@ var ExpectedDocumentService *services.ExpectedDocumentService
 var RequestTemplateService *services.RequestTemplateService
 var RequestCommentService *services.RequestCommentService
 var StatsService *services.StatsService
+var TagService *services.TagService
 var S3Client *s3.Client
 
 func init() {
 	godotenv.Load("../../.env")
+
 	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
+
 	db := initDB()
 
-	// Initialize repositories
+	// Repositories
 	userRepo := repositories.NewUserRepo(db)
 	requestRepo := repositories.NewRequestRepo(db)
 	departmentRepo := repositories.NewDepartmentRepo(db)
@@ -44,19 +47,30 @@ func init() {
 	expectedDocumentTemplateRepo := repositories.NewExpectedDocumentTemplateRepo(db)
 	requestCommentRepo := repositories.NewRequestCommentRepo(db)
 	statsRepo := repositories.NewStatsRepo(db)
+	tagRepo := repositories.NewTagRepo(db)
 	txManager := repositories.NewTxManager(db)
 
-	// Initialize S3
+	// S3
 	var err error
 	S3Client, err = newS3Client()
 	if err != nil {
 		log.Fatal("Failed to initialize S3 client:", err)
 	}
 
-	// Initialize services
+	// Services
 	fileStorage := services.NewFileStorageService(S3Client, utils.RequireEnv("S3_BUCKET_NAME"), Logger)
+
 	UserService = services.NewUserService(userRepo, Logger)
-	RequestService = services.NewRequestService(requestRepo, userRepo, requestTemplateRepo, expectedDocumentRepo, expectedDocumentTemplateRepo, txManager, Logger, fileStorage)
+	RequestService = services.NewRequestService(
+		requestRepo,
+		userRepo,
+		requestTemplateRepo,
+		expectedDocumentRepo,
+		expectedDocumentTemplateRepo,
+		txManager,
+		Logger,
+		fileStorage,
+	)
 	DepartmentService = services.NewDepartmentService(departmentRepo, Logger)
 	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, departmentRepo, Logger)
 	ExpectedDocumentService = services.NewExpectedDocumentService(expectedDocumentRepo, requestRepo, Logger)
@@ -75,6 +89,7 @@ func init() {
 		Logger,
 	)
 	StatsService = services.NewStatsService(statsRepo, Logger)
+	TagService = services.NewTagService(tagRepo, Logger)
 }
 
 func initDB() *sql.DB {
@@ -82,8 +97,8 @@ func initDB() *sql.DB {
 	user := utils.RequireEnv("DB_USER")
 	name := utils.RequireEnv("DB_NAME")
 	password := utils.RequireEnv("DB_PASSWORD")
-	port := 5432
 
+	port := 5432
 	if p := os.Getenv("DB_PORT"); p != "" {
 		var err error
 		port, err = strconv.Atoi(p)
@@ -101,7 +116,6 @@ func initDB() *sql.DB {
 	if err != nil {
 		log.Fatal("Failed to open DB connection:", err)
 	}
-
 	if err := db.Ping(); err != nil {
 		log.Fatal("Cannot connect to database:", err)
 	}

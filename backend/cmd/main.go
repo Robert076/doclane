@@ -14,6 +14,7 @@ import (
 	invitation_handler "github.com/Robert076/doclane/backend/handlers/invitation"
 	request_handler "github.com/Robert076/doclane/backend/handlers/requests"
 	stats_handler "github.com/Robert076/doclane/backend/handlers/stats"
+	tag_handler "github.com/Robert076/doclane/backend/handlers/tags"
 	template_handler "github.com/Robert076/doclane/backend/handlers/templates"
 	user_handler "github.com/Robert076/doclane/backend/handlers/users"
 	"github.com/aws/aws-lambda-go/lambda"
@@ -127,6 +128,8 @@ func buildRouter() (http.Handler, *chi.Mux) {
 				})
 				r.Post("/archive", template_handler.CloseRequestTemplateHandler)
 				r.Post("/unarchive", template_handler.ReopenRequestTemplateHandler)
+				r.Get("/tags", tag_handler.GetTagsByTemplateIDHandler)
+				r.Put("/tags", tag_handler.SetTemplateTagsHandler)
 			})
 		})
 
@@ -140,6 +143,16 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Get("/my-codes", invitation_handler.GetMyInvitationCodesHandler)
 			r.Get("/by-department", invitation_handler.GetInvitationCodesByDepartmentHandler)
 			r.Delete("/{id}", invitation_handler.DeleteInvitationCodeHandler)
+		})
+
+		r.Route("/tags", func(r chi.Router) {
+			r.Get("/", tag_handler.GetTagsHandler)
+			r.Post("/", tag_handler.CreateTagHandler)
+			r.Route("/{id}", func(r chi.Router) {
+				r.Get("/", tag_handler.GetTagByIDHandler)
+				r.Patch("/", tag_handler.UpdateTagHandler)
+				r.Delete("/", tag_handler.DeleteTagHandler)
+			})
 		})
 	})
 

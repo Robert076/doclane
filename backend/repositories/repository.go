@@ -69,8 +69,8 @@ type IExpectedDocumentTemplateRepo interface {
 }
 
 type IDepartmentRepo interface {
-	GetAllDepartments(ctx context.Context) ([]models.Department, error)
-	GetDepartmentByID(ctx context.Context, id int) (models.Department, error)
+	GetAllDepartments(ctx context.Context) ([]models.DepartmentDTORead, error)
+	GetDepartmentByID(ctx context.Context, id int) (models.DepartmentDTORead, error)
 	CreateDepartment(ctx context.Context, name string) (int, error)
 }
 
@@ -98,6 +98,16 @@ type IRequestCommentRepo interface {
 	GetCommentByID(ctx context.Context, commentID int) (models.RequestCommentDTO, error)
 	AddComment(ctx context.Context, comment models.RequestComment) (int, error)
 	GetLastCommentFromUser(ctx context.Context, userID int) (models.RequestComment, error)
+}
+
+type ITagRepo interface {
+	GetTags(ctx context.Context) ([]models.Tag, error)
+	GetTagByID(ctx context.Context, id int) (models.Tag, error)
+	GetTagsByTemplateID(ctx context.Context, templateID int) ([]models.Tag, error)
+	CreateTag(ctx context.Context, dto models.TagDTOCreate) (models.Tag, error)
+	UpdateTag(ctx context.Context, id int, dto models.TagDTOUpdate) (models.Tag, error)
+	DeleteTag(ctx context.Context, id int) error
+	SetTemplateTags(ctx context.Context, templateID int, tagIDs []int) error
 }
 
 type IStatsRepo interface {

@@ -19,7 +19,7 @@ func NewDepartmentService(repo repositories.IDepartmentRepo, logger *slog.Logger
 	return &DepartmentService{repo: repo, logger: logger}
 }
 
-func (s *DepartmentService) GetAllDepartments(ctx context.Context, claims types.JWTClaims) ([]models.Department, error) {
+func (s *DepartmentService) GetAllDepartments(ctx context.Context, claims types.JWTClaims) ([]models.DepartmentDTORead, error) {
 	departments, err := s.repo.GetAllDepartments(ctx)
 	if err != nil {
 		s.logger.Error("failed to fetch departments",

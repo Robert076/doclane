@@ -18,58 +18,16 @@ func NewRequestTemplateRepo(db *sql.DB) *RequestTemplateRepo {
 	return &RequestTemplateRepo{db: db}
 }
 
-func (r *RequestTemplateRepo) GetRequestTemplatesByDepartment(ctx context.Context, departmentID int) ([]models.RequestTemplateDTORead, error) {
-	query := `
-		SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
-			t.created_by, t.created_at, t.updated_at, t.is_closed,
-			u.first_name, u.last_name, d.name
-		FROM document_request_templates t
-		JOIN users u ON u.id = t.created_by
-		JOIN departments d ON d.id = t.department_id
-		WHERE t.department_id = $1
-		ORDER BY t.created_at DESC
-	`
-	rows, err := r.db.QueryContext(ctx, query, departmentID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	templates := make([]models.RequestTemplateDTORead, 0)
-	for rows.Next() {
-		var t models.RequestTemplateDTORead
-		if err := rows.Scan(
-			&t.ID,
-			&t.Title,
-			&t.Description,
-			&t.DepartmentID,
-			&t.IsRecurring,
-			&t.RecurrenceCron,
-			&t.CreatedBy,
-			&t.CreatedAt,
-			&t.UpdatedAt,
-			&t.IsClosed,
-			&t.AuthorFirstName,
-			&t.AuthorLastName,
-			&t.DepartmentName,
-		); err != nil {
-			return nil, err
-		}
-		templates = append(templates, t)
-	}
-	return templates, rows.Err()
-}
-
 func (r *RequestTemplateRepo) GetAllRequestTemplates(ctx context.Context) ([]models.RequestTemplateDTORead, error) {
 	query := `
-		SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
-			t.created_by, t.created_at, t.updated_at, t.is_closed,
-			u.first_name, u.last_name, d.name
-		FROM document_request_templates t
-		JOIN users u ON u.id = t.created_by
-		JOIN departments d ON d.id = t.department_id
-		ORDER BY t.created_at DESC
-	`
+        SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
+            t.created_by, t.created_at, t.updated_at, t.is_closed,
+            u.first_name, u.last_name, d.name
+        FROM document_request_templates t
+        JOIN users u ON u.id = t.created_by
+        JOIN departments d ON d.id = t.department_id
+        ORDER BY t.created_at DESC
+    `
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
@@ -80,54 +38,88 @@ func (r *RequestTemplateRepo) GetAllRequestTemplates(ctx context.Context) ([]mod
 	for rows.Next() {
 		var t models.RequestTemplateDTORead
 		if err := rows.Scan(
-			&t.ID,
-			&t.Title,
-			&t.Description,
-			&t.DepartmentID,
-			&t.IsRecurring,
-			&t.RecurrenceCron,
-			&t.CreatedBy,
-			&t.CreatedAt,
-			&t.UpdatedAt,
-			&t.IsClosed,
-			&t.AuthorFirstName,
-			&t.AuthorLastName,
-			&t.DepartmentName,
+			&t.ID, &t.Title, &t.Description, &t.DepartmentID,
+			&t.IsRecurring, &t.RecurrenceCron, &t.CreatedBy,
+			&t.CreatedAt, &t.UpdatedAt, &t.IsClosed,
+			&t.AuthorFirstName, &t.AuthorLastName, &t.DepartmentName,
 		); err != nil {
 			return nil, err
 		}
 		templates = append(templates, t)
 	}
-	return templates, rows.Err()
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := r.hydrateTags(ctx, templates); err != nil {
+		return nil, err
+	}
+	return templates, nil
+}
+
+func (r *RequestTemplateRepo) GetRequestTemplatesByDepartment(ctx context.Context, departmentID int) ([]models.RequestTemplateDTORead, error) {
+	query := `
+        SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
+            t.created_by, t.created_at, t.updated_at, t.is_closed,
+            u.first_name, u.last_name, d.name
+        FROM document_request_templates t
+        JOIN users u ON u.id = t.created_by
+        JOIN departments d ON d.id = t.department_id
+        WHERE t.department_id = $1
+        ORDER BY t.created_at DESC
+    `
+	rows, err := r.db.QueryContext(ctx, query, departmentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	templates := make([]models.RequestTemplateDTORead, 0)
+	for rows.Next() {
+		var t models.RequestTemplateDTORead
+		if err := rows.Scan(
+			&t.ID, &t.Title, &t.Description, &t.DepartmentID,
+			&t.IsRecurring, &t.RecurrenceCron, &t.CreatedBy,
+			&t.CreatedAt, &t.UpdatedAt, &t.IsClosed,
+			&t.AuthorFirstName, &t.AuthorLastName, &t.DepartmentName,
+		); err != nil {
+			return nil, err
+		}
+		templates = append(templates, t)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	if err := r.hydrateTags(ctx, templates); err != nil {
+		return nil, err
+	}
+	return templates, nil
 }
 
 func (r *RequestTemplateRepo) GetRequestTemplateByID(ctx context.Context, id int) (models.RequestTemplateDTORead, error) {
 	var t models.RequestTemplateDTORead
 	query := `
-		SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
-			t.created_by, t.created_at, t.updated_at, t.is_closed,
-			u.first_name, u.last_name, d.name
-		FROM document_request_templates t
-		JOIN users u ON u.id = t.created_by
-		JOIN departments d ON d.id = t.department_id
-		WHERE t.id = $1
-	`
+        SELECT t.id, t.title, t.description, t.department_id, t.is_recurring, t.recurrence_cron,
+            t.created_by, t.created_at, t.updated_at, t.is_closed,
+            u.first_name, u.last_name, d.name
+        FROM document_request_templates t
+        JOIN users u ON u.id = t.created_by
+        JOIN departments d ON d.id = t.department_id
+        WHERE t.id = $1
+    `
 	err := r.db.QueryRowContext(ctx, query, id).Scan(
-		&t.ID,
-		&t.Title,
-		&t.Description,
-		&t.DepartmentID,
-		&t.IsRecurring,
-		&t.RecurrenceCron,
-		&t.CreatedBy,
-		&t.CreatedAt,
-		&t.UpdatedAt,
-		&t.IsClosed,
-		&t.AuthorFirstName,
-		&t.AuthorLastName,
-		&t.DepartmentName,
+		&t.ID, &t.Title, &t.Description, &t.DepartmentID,
+		&t.IsRecurring, &t.RecurrenceCron, &t.CreatedBy,
+		&t.CreatedAt, &t.UpdatedAt, &t.IsClosed,
+		&t.AuthorFirstName, &t.AuthorLastName, &t.DepartmentName,
 	)
-	return t, err
+	if err != nil {
+		return t, err
+	}
+	templates := []models.RequestTemplateDTORead{t}
+	if err := r.hydrateTags(ctx, templates); err != nil {
+		return t, err
+	}
+	return templates[0], nil
 }
 
 func (r *RequestTemplateRepo) AddRequestTemplate(ctx context.Context, tmp models.RequestTemplate) (int, error) {
@@ -229,4 +221,46 @@ func (r *RequestTemplateRepo) PatchRequestTemplate(ctx context.Context, template
 
 	_, err := r.db.ExecContext(ctx, query, args...)
 	return err
+}
+
+func (r *RequestTemplateRepo) hydrateTags(ctx context.Context, templates []models.RequestTemplateDTORead) error {
+	if len(templates) == 0 {
+		return nil
+	}
+
+	// collect all template IDs
+	placeholders := make([]string, len(templates))
+	args := make([]interface{}, len(templates))
+	idIndex := make(map[int][]int) // template_id -> indices in slice
+	for i, t := range templates {
+		placeholders[i] = fmt.Sprintf("$%d", i+1)
+		args[i] = t.ID
+		idIndex[t.ID] = append(idIndex[t.ID], i)
+	}
+
+	query := fmt.Sprintf(`
+        SELECT tt.template_id, t.id, t.name, t.color, t.created_at
+        FROM template_tags tt
+        JOIN tags t ON t.id = tt.tag_id
+        WHERE tt.template_id IN (%s)
+        ORDER BY t.name ASC
+    `, strings.Join(placeholders, ", "))
+
+	rows, err := r.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var templateID int
+		var tag models.Tag
+		if err := rows.Scan(&templateID, &tag.ID, &tag.Name, &tag.Color, &tag.CreatedAt); err != nil {
+			return err
+		}
+		for _, idx := range idIndex[templateID] {
+			templates[idx].Tags = append(templates[idx].Tags, tag)
+		}
+	}
+	return rows.Err()
 }

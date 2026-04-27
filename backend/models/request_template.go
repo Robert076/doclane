@@ -20,6 +20,7 @@ type RequestTemplateDTORead struct {
 	AuthorFirstName *string `json:"author_first_name"`
 	AuthorLastName  *string `json:"author_last_name"`
 	DepartmentName  string  `json:"department_name"`
+	Tags            []Tag   `json:"tags"`
 }
 
 type RequestTemplateDTOPatch struct {

@@ -12,7 +12,7 @@ import (
 func InsertAdminHandler(w http.ResponseWriter, r *http.Request) {
 	adminParams := services.RegisterParams{
 		Email:     "admin@admin.com",
-		Password:  "admin",
+		Password:  "adminadmin",
 		FirstName: "Adminescu",
 		LastName:  "Adminovici",
 		Role:      "admin",

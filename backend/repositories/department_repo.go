@@ -15,22 +15,29 @@ func NewDepartmentRepo(db *sql.DB) *DepartmentRepo {
 	return &DepartmentRepo{db: db}
 }
 
-func (r *DepartmentRepo) GetAllDepartments(ctx context.Context) ([]models.Department, error) {
+func (r *DepartmentRepo) GetAllDepartments(ctx context.Context) ([]models.DepartmentDTORead, error) {
 	query := `
-		SELECT id, name, created_at, updated_at
-		FROM departments
-		ORDER BY created_at DESC
-	`
+        SELECT 
+            d.id, 
+            d.name, 
+            d.created_at, 
+            d.updated_at,
+            COUNT(u.id) AS member_count
+        FROM departments d
+        LEFT JOIN users u ON u.department_id = d.id
+        GROUP BY d.id, d.name, d.created_at, d.updated_at
+        ORDER BY d.created_at DESC
+    `
 	rows, err := r.db.QueryContext(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	departments := make([]models.Department, 0)
+	departments := make([]models.DepartmentDTORead, 0)
 	for rows.Next() {
-		var d models.Department
-		if err := rows.Scan(&d.ID, &d.Name, &d.CreatedAt, &d.UpdatedAt); err != nil {
+		var d models.DepartmentDTORead
+		if err := rows.Scan(&d.ID, &d.Name, &d.CreatedAt, &d.UpdatedAt, &d.MemberCount); err != nil {
 			return nil, err
 		}
 		departments = append(departments, d)
@@ -38,10 +45,27 @@ func (r *DepartmentRepo) GetAllDepartments(ctx context.Context) ([]models.Depart
 	return departments, rows.Err()
 }
 
-func (r *DepartmentRepo) GetDepartmentByID(ctx context.Context, id int) (models.Department, error) {
-	var d models.Department
-	query := `SELECT id, name, created_at, updated_at FROM departments WHERE id = $1`
-	err := r.db.QueryRowContext(ctx, query, id).Scan(&d.ID, &d.Name, &d.CreatedAt, &d.UpdatedAt)
+func (r *DepartmentRepo) GetDepartmentByID(ctx context.Context, id int) (models.DepartmentDTORead, error) {
+	var d models.DepartmentDTORead
+	query := `
+        SELECT 
+            d.id, 
+            d.name, 
+            d.created_at, 
+            d.updated_at,
+            COUNT(u.id) AS member_count
+        FROM departments d
+        LEFT JOIN users u ON u.department_id = d.id
+        WHERE d.id = $1
+        GROUP BY d.id, d.name, d.created_at, d.updated_at
+    `
+	err := r.db.QueryRowContext(ctx, query, id).Scan(
+		&d.ID,
+		&d.Name,
+		&d.CreatedAt,
+		&d.UpdatedAt,
+		&d.MemberCount,
+	)
 	return d, err
 }
 
