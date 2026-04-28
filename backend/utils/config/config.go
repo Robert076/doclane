@@ -72,7 +72,7 @@ func init() {
 	BedrockService = services.NewBedrockService(bedrockClient, Logger)
 	PollyService = services.NewPollyService(pollyClient, Logger)
 
-	UserService = services.NewUserService(userRepo, Logger)
+	UserService = services.NewUserService(userRepo, requestRepo, Logger)
 	RequestService = services.NewRequestService(
 		requestRepo,
 		userRepo,

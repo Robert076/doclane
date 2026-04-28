@@ -15,8 +15,9 @@ import (
 )
 
 type UserService struct {
-	repo   repositories.IUserRepo
-	logger *slog.Logger
+	repo        repositories.IUserRepo
+	requestRepo repositories.IRequestRepo
+	logger      *slog.Logger
 }
 
 type RegisterParams struct {
@@ -33,8 +34,8 @@ type LoginParams struct {
 	Password string
 }
 
-func NewUserService(repo repositories.IUserRepo, logger *slog.Logger) *UserService {
-	return &UserService{repo: repo, logger: logger}
+func NewUserService(repo repositories.IUserRepo, requestRepo repositories.IRequestRepo, logger *slog.Logger) *UserService {
+	return &UserService{repo: repo, requestRepo: requestRepo, logger: logger}
 }
 
 func (service *UserService) GetUsers(ctx context.Context, caller types.JWTClaims, limit *int, offset *int, orderBy *string, order *string, search *string) ([]models.User, error) {
@@ -308,13 +309,41 @@ func (service *UserService) UpdateUserDepartment(ctx context.Context, caller typ
 		return errors.ErrForbidden{Msg: "Only admins can move users between departments."}
 	}
 
-	if _, err := service.repo.GetUserByID(ctx, userID); err != nil {
+	user, err := service.repo.GetUserByID(ctx, userID)
+	if err != nil {
 		service.logger.Error("user not found when trying to update department",
 			slog.Int("user_id", userID),
 			slog.Int("jwt_user_id", caller.UserID),
 			slog.Any("error", err),
 		)
 		return err
+	}
+
+	if user.DepartmentID == nil {
+		service.logger.Warn("cannot change department for non-department member",
+			slog.Int("jwt_user_id", caller.UserID),
+			slog.Int("user_id", userID),
+		)
+		return errors.ErrBadRequest{Msg: "Cannot change department for non-department member."}
+	}
+
+	reqs, err := service.requestRepo.GetRequestsByDepartment(ctx, departmentID, nil)
+	if err != nil {
+		service.logger.Error("error when retrieving requests by department",
+			slog.Int("jwt_user_id", caller.UserID),
+			slog.Any("error", err),
+		)
+		return err
+	}
+
+	for _, req := range reqs {
+		if req.ClaimedBy != nil && *req.ClaimedBy == userID {
+			service.logger.Warn("cannot change department for user unless he unclaims all requests first",
+				slog.Int("jwt_user_id", caller.UserID),
+				slog.Int("user_id", userID),
+			)
+			return errors.ErrBadRequest{Msg: "User must unclaim all requests before he can be moved."}
+		}
 	}
 
 	if err := service.repo.UpdateUserDepartment(ctx, userID, departmentID); err != nil {
