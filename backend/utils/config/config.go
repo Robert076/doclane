@@ -12,8 +12,12 @@ import (
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/services"
 	"github.com/Robert076/doclane/backend/utils"
-	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
+	"github.com/aws/aws-sdk-go-v2/service/polly"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/textract"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
@@ -28,6 +32,9 @@ var RequestTemplateService *services.RequestTemplateService
 var RequestCommentService *services.RequestCommentService
 var StatsService *services.StatsService
 var TagService *services.TagService
+var TextractService *services.TextractService
+var BedrockService *services.BedrockService
+var PollyService *services.PollyService
 var S3Client *s3.Client
 
 func init() {
@@ -50,15 +57,20 @@ func init() {
 	tagRepo := repositories.NewTagRepo(db)
 	txManager := repositories.NewTxManager(db)
 
-	// S3
-	var err error
-	S3Client, err = newS3Client()
-	if err != nil {
-		log.Fatal("Failed to initialize S3 client:", err)
-	}
+	// AWS
+	awsCfg := initAWSConfig()
+	S3Client = s3.NewFromConfig(awsCfg)
+	textractClient := textract.NewFromConfig(awsCfg)
+	bedrockClient := bedrockruntime.NewFromConfig(awsCfg)
+	pollyClient := polly.NewFromConfig(awsCfg)
+
+	bucket := utils.RequireEnv("S3_BUCKET_NAME")
 
 	// Services
-	fileStorage := services.NewFileStorageService(S3Client, utils.RequireEnv("S3_BUCKET_NAME"), Logger)
+	fileStorage := services.NewFileStorageService(S3Client, bucket, Logger)
+	TextractService = services.NewTextractService(textractClient, bucket, Logger)
+	BedrockService = services.NewBedrockService(bedrockClient, Logger)
+	PollyService = services.NewPollyService(pollyClient, Logger)
 
 	UserService = services.NewUserService(userRepo, Logger)
 	RequestService = services.NewRequestService(
@@ -70,6 +82,9 @@ func init() {
 		txManager,
 		Logger,
 		fileStorage,
+		TextractService,
+		BedrockService,
+		PollyService,
 	)
 	DepartmentService = services.NewDepartmentService(departmentRepo, Logger)
 	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, departmentRepo, Logger)
@@ -123,11 +138,11 @@ func initDB() *sql.DB {
 	return db
 }
 
-func newS3Client() (*s3.Client, error) {
+func initAWSConfig() aws.Config {
 	ctx := context.Background()
-	cfg, err := config.LoadDefaultConfig(ctx, config.WithRegion("eu-west-1"))
+	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion("eu-west-1"))
 	if err != nil {
-		return nil, err
+		log.Fatal("Failed to load AWS config:", err)
 	}
-	return s3.NewFromConfig(cfg), nil
+	return cfg
 }

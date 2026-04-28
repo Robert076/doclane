@@ -22,6 +22,9 @@ type RequestService struct {
 	expectedDocTmplRepo repositories.IExpectedDocumentTemplateRepo
 	txManager           repositories.ITxManager
 	fileStorage         IFileStorageService
+	textract            ITextractService
+	bedrock             IBedrockService
+	polly               IPollyService
 	logger              *slog.Logger
 }
 
@@ -34,6 +37,9 @@ func NewRequestService(
 	txManager repositories.ITxManager,
 	logger *slog.Logger,
 	fileStorage IFileStorageService,
+	textract ITextractService,
+	bedrock IBedrockService,
+	polly IPollyService,
 ) *RequestService {
 	return &RequestService{
 		requestRepo:         requestRepo,
@@ -42,8 +48,11 @@ func NewRequestService(
 		expectedDocRepo:     expectedDocRepo,
 		expectedDocTmplRepo: expectedDocTmplRepo,
 		txManager:           txManager,
-		logger:              logger,
 		fileStorage:         fileStorage,
+		textract:            textract,
+		bedrock:             bedrock,
+		polly:               polly,
+		logger:              logger,
 	}
 }
 
@@ -722,4 +731,139 @@ func (s *RequestService) GetExamplePresignedURL(ctx context.Context, claims type
 		return nil, err
 	}
 	return &presignedURL, nil
+}
+
+func (s *RequestService) ExtractFileText(ctx context.Context, claims types.JWTClaims, fileID int) (string, error) {
+	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
+		s.logger.Warn("unauthorized attempt to extract file text",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("file_id", fileID),
+		)
+		return "", errors.ErrForbidden{Msg: "Only staff can analyze documents."}
+	}
+
+	file, err := s.requestRepo.GetFileByID(ctx, fileID)
+	if err != nil {
+		s.logger.Error("could not fetch file by id",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("file_id", fileID),
+			slog.Any("error", err),
+		)
+		return "", err
+	}
+
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, file.RequestID); err != nil {
+		return "", err
+	}
+
+	text, err := s.textract.ExtractText(ctx, file.FilePath)
+	if err != nil {
+		s.logger.Error("textract extraction failed",
+			slog.Int("file_id", fileID),
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return "", err
+	}
+
+	s.logger.Info("file text extracted successfully",
+		slog.Int("file_id", fileID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return text, nil
+}
+
+func (s *RequestService) InterpretFileText(ctx context.Context, claims types.JWTClaims, fileID int, documentTitle string) (string, error) {
+	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
+		s.logger.Warn("unauthorized attempt to interpret file",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("file_id", fileID),
+		)
+		return "", errors.ErrForbidden{Msg: "Only staff can interpret documents."}
+	}
+
+	file, err := s.requestRepo.GetFileByID(ctx, fileID)
+	if err != nil {
+		s.logger.Error("could not fetch file by id",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("file_id", fileID),
+			slog.Any("error", err),
+		)
+		return "", err
+	}
+
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, file.RequestID); err != nil {
+		return "", err
+	}
+
+	extractedText, err := s.textract.ExtractText(ctx, file.FilePath)
+	if err != nil {
+		s.logger.Error("textract failed during interpretation",
+			slog.Int("file_id", fileID),
+			slog.Any("error", err),
+		)
+		return "", err
+	}
+
+	interpretation, err := s.bedrock.InterpretDocument(ctx, extractedText, documentTitle)
+	if err != nil {
+		s.logger.Error("bedrock interpretation failed",
+			slog.Int("file_id", fileID),
+			slog.Any("error", err),
+		)
+		return "", err
+	}
+
+	s.logger.Info("file interpreted successfully",
+		slog.Int("file_id", fileID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return interpretation, nil
+}
+
+func (s *RequestService) SpeakFileText(ctx context.Context, claims types.JWTClaims, fileID int) ([]byte, error) {
+	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
+		s.logger.Warn("unauthorized attempt to speak file",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("file_id", fileID),
+		)
+		return nil, errors.ErrForbidden{Msg: "Only staff can use this feature."}
+	}
+
+	file, err := s.requestRepo.GetFileByID(ctx, fileID)
+	if err != nil {
+		s.logger.Error("could not fetch file",
+			slog.Int("file_id", fileID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, file.RequestID); err != nil {
+		return nil, err
+	}
+
+	text, err := s.textract.ExtractText(ctx, file.FilePath)
+	if err != nil {
+		s.logger.Error("textract failed for speech",
+			slog.Int("file_id", fileID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	audio, err := s.polly.SynthesizeSpeech(ctx, text)
+	if err != nil {
+		s.logger.Error("polly failed",
+			slog.Int("file_id", fileID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	s.logger.Info("file spoken successfully",
+		slog.Int("file_id", fileID),
+		slog.Int("jwt_user_id", claims.UserID),
+	)
+	return audio, nil
 }
