@@ -1,41 +1,50 @@
 .clickable-card {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--gap-10, 10px); 
-  padding: 10px 15px;
-  border-radius: var(--border-radius-default);
-  background-color: #f9f9f9;
-  color: var(--text-color-primary);
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.2s, box-shadow 0.2s, transform 0.1s;
-  border: 1px solid rgba(0, 0, 0, 0.05);
-  
-  width: 80%;
-  margin: 20px auto 0 auto; 
-}
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--gap-10, 10px);
+    padding: 10px 15px;
+    border-radius: var(--border-radius-default);
+    color: #374151;
+    font-size: 14px;
+    cursor: pointer;
+    width: 80%;
+    margin: 20px auto 0 auto;
+    transition: all 0.2s ease;
 
-.clickable-card-icon {
-  width: 20px;
-  height: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0; 
-}
-
-.clickable-card-text {
-  margin: 0;
-  font-weight: 500;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.06),
+        0 0 0 0.5px rgba(255, 255, 255, 0.6) inset;
 }
 
 .clickable-card:hover {
-  background-color: #f0f0f0;
-  box-shadow: var(--box-shadow-default);
-  transform: translateY(-1px); 
+    background: rgba(255, 255, 255, 0.82);
+    border-color: rgba(255, 87, 34, 0.2);
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.08),
+        0 0 0 0.5px rgba(255, 255, 255, 0.7) inset;
+    transform: translateY(-1px);
 }
 
 .clickable-card:active {
-  transform: translateY(0);
+    transform: translateY(0);
+}
+
+.clickable-card-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-primary);
+}
+
+.clickable-card-text {
+    margin: 0;
+    font-weight: 500;
 }

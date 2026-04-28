@@ -186,7 +186,17 @@ export default function TemplatesSection({
                 <div className="templates-section">
                         <div className="templates-toolbar">
                                 {isAdmin && (
-                                        <div className="templates-toolbar-action">
+                                        <div className="templates-toolbar-actions">
+                                                <ButtonPrimary
+                                                        text="Șablon nou"
+                                                        fullWidth
+                                                        variant="primary"
+                                                        onClick={() =>
+                                                                router.push(
+                                                                        "/dashboard/templates/create",
+                                                                )
+                                                        }
+                                                />
                                                 <ButtonPrimary
                                                         text="Gestionează taguri"
                                                         fullWidth

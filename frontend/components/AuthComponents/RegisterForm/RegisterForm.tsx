@@ -6,7 +6,6 @@ import Input from "@/components/InputComponents/Input";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import SeparatorWithText from "@/components/OtherComponents/Separators/SeparatorWithText/SeparatorWithText";
 import ClickableCard from "../ClickableCard/ClickableCard";
-import LoginFormFooter from "../LoginFormFooter/LoginFormFooter";
 import LoginFormHeader from "../LoginFormHeader/LoginFormHeader";
 import "./RegisterForm.css";
 
@@ -125,7 +124,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({
                                 icon={<MdLogin size={20} />}
                                 onClick={() => router.push("/login")}
                         />
-                        <LoginFormFooter />
                 </div>
         );
 };

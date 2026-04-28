@@ -1,35 +1,53 @@
 .select-wrapper {
-  display: flex;
-  flex-direction: column;
-  margin: var(--margin-y-10);
+    display: flex;
+    flex-direction: column;
+    margin: var(--margin-y-10);
 }
 
 .select-label {
-  margin-bottom: 5px;
-  font-weight: 500;
-  font-size: var(--font-size-m);
+    margin-bottom: 5px;
+    font-weight: 500;
+    font-size: var(--font-size-s);
+    color: #374151;
 }
 
 .select {
-  height: var(--height-input-and-button);
-  background-color: white;
-  border: var(--border-default);
-  border-radius: var(--border-radius-default);
-  font-size: var(--font-size-m);
-  padding: 0 10px;
-  box-sizing: border-box;
-  outline: none;
-  appearance: none;
-  cursor: pointer;
-  color: #1a202c;
-  font-family: inherit;
-  width: 80%;
+    height: var(--height-input-and-button);
+    border-radius: var(--border-radius-default);
+    font-size: var(--font-size-m);
+    padding: 0 32px 0 10px;
+    box-sizing: border-box;
+    outline: none;
+    appearance: none;
+    cursor: pointer;
+    color: #1a202c;
+    font-family: inherit;
+    width: 80%;
+    transition: all 0.2s ease;
+
+    background: rgba(255, 255, 255, 0.55) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.06),
+        0 0 0 0.5px rgba(255, 255, 255, 0.6) inset;
 }
 
 .select:focus {
-  border: 1px solid var(--color-primary);
+    background-color: rgba(255, 255, 255, 0.78);
+    border-color: rgba(255, 87, 34, 0.4);
+    box-shadow:
+        0 0 0 3px rgba(255, 87, 34, 0.1),
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        0 0 0 0.5px rgba(255, 255, 255, 0.8) inset;
 }
 
 .select option[value=""] {
-  color: var(--text-color-secondary);
+    color: var(--text-color-secondary);
+}
+
+.select option {
+    background: #fff;
+    color: #1a202c;
 }

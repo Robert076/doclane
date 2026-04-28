@@ -2,21 +2,29 @@
     display: flex;
     flex-direction: column;
     padding: 20px;
-    background: #fff;
-    border: var(--border-default);
-    border-radius: var(--border-radius-default);
-    box-shadow: var(--box-shadow-default);
     gap: 16px;
+    border-radius: var(--border-radius-default);
+
+    background: rgba(255, 255, 255, 0.72);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.06),
+        0 0 0 0.5px rgba(255, 255, 255, 0.6) inset;
 }
+
 .expected-document-slot-top {
     display: flex;
     flex-direction: column;
     gap: 10px;
 }
+
 .expected-document-slot-status-row {
     display: flex;
     align-items: center;
 }
+
 .expected-document-slot-title-row {
     display: flex;
     align-items: center;
@@ -24,6 +32,7 @@
     gap: 16px;
     width: 100%;
 }
+
 .expected-document-slot-info {
     display: flex;
     flex-direction: column;
@@ -31,31 +40,37 @@
     flex: 1;
     align-items: flex-start;
 }
+
 .expected-document-slot-title {
     font-size: var(--font-size-m);
     font-weight: 600;
     color: #111827;
 }
+
 .expected-document-slot-description {
     font-size: var(--font-size-s);
     color: #6b7280;
     line-height: 1.5;
 }
+
 .expected-document-slot-notes {
     font-size: var(--font-size-s);
     color: #6b7280;
     line-height: 1.5;
 }
+
 .upload-button-wrapper {
     flex-shrink: 0;
     width: 18%;
     margin-left: auto;
 }
+
 .upload-button-wrapper--actions {
     flex-shrink: 0;
-    width: 32%;
+    width: 40%;
     margin-left: auto;
 }
+
 .expected-document-slot-pending {
     display: flex;
     align-items: center;
@@ -66,25 +81,94 @@
 }
 
 .expected-document-slot-example-btn {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        background: none;
-        border: var(--border-default);
-        border-radius: var(--border-radius-default);
-        padding: 4px 10px;
-        font-size: var(--font-size-s);
-        color: #374151;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-family: inherit;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: var(--border-radius-default);
+    padding: 4px 10px;
+    font-size: var(--font-size-s);
+    color: #374151;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.05),
+        0 0 0 0.5px rgba(255, 255, 255, 0.5) inset;
 }
 
 .expected-document-slot-example-btn:hover {
-        background-color: #f3f4f6;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        0 0 0 0.5px rgba(255, 255, 255, 0.7) inset;
+    transform: translateY(-1px);
 }
 
 .expected-document-slot-example-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.extracted-text {
+    border-radius: var(--border-radius-default);
+    overflow: hidden;
+
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.05),
+        0 0 0 0.5px rgba(255, 255, 255, 0.5) inset;
+}
+
+.extracted-text-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-color-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.extracted-text--interpreted .extracted-text-header {
+    background: rgba(245, 243, 255, 0.6);
+    color: #7e22ce;
+}
+
+.extracted-text-close {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1rem;
+    color: var(--text-color-secondary);
+    line-height: 1;
+    transition: color 0.15s ease;
+}
+
+.extracted-text-close:hover {
+    color: #1f2937;
+}
+
+.extracted-text-content {
+    padding: 12px;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 300px;
+    overflow-y: auto;
+    font-family: inherit;
+    color: #374151;
 }

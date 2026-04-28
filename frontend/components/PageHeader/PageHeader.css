@@ -1,4 +1,20 @@
-.professional-view .professional-header .overview-p {
+.professional-header {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.overview-h1 {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: #1a202c;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+}
+
+.overview-p {
+    font-size: var(--font-size-s);
     color: var(--text-color-secondary);
-    margin: var(--margin-y-10);
+    line-height: 1.5;
 }

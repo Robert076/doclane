@@ -7,6 +7,7 @@ import {
         RequestComment,
 } from "@/types";
 import { doclaneHTTPHelper } from "./core";
+import { cookies } from "next/headers";
 
 export async function getAllRequests(search?: string): Promise<APIResponse<Request[]>> {
         const qs = search ? `?search=${encodeURIComponent(search)}` : "";
@@ -125,6 +126,65 @@ export async function presignDocumentURL(
         return doclaneHTTPHelper(`/requests/${requestId}/files/${fileId}/presign`, {
                 method: "GET",
         });
+}
+
+export async function extractFileText(
+        requestId: number,
+        fileId: number,
+): Promise<APIResponse<{ text: string }>> {
+        return doclaneHTTPHelper(`/requests/${requestId}/files/${fileId}/extract`, {
+                method: "GET",
+        });
+}
+
+export async function interpretFileText(
+        requestId: number,
+        fileId: number,
+        documentTitle: string,
+): Promise<APIResponse<{ interpretation: string }>> {
+        return doclaneHTTPHelper(
+                `/requests/${requestId}/files/${fileId}/interpret?title=${encodeURIComponent(documentTitle)}`,
+                { method: "GET" },
+        );
+}
+
+// in requests.ts
+export async function speakFileText(
+        requestId: number,
+        fileId: number,
+): Promise<APIResponse<{ audio: string }>> {
+        const cookieStore = await cookies();
+        const authCookie = cookieStore.get("auth_cookie");
+        const fetchUrl = `${process.env.BACKEND_URL}/requests/${requestId}/files/${fileId}/speak`;
+
+        try {
+                const response = await fetch(fetchUrl, {
+                        method: "GET",
+                        headers: {
+                                Authorization: `Bearer ${authCookie?.value}`,
+                        },
+                });
+
+                if (!response.ok) {
+                        return {
+                                success: false,
+                                message: "Eroare la generarea audio.",
+                                error: "Failed",
+                        };
+                }
+
+                const buffer = await response.arrayBuffer();
+                const base64 = Buffer.from(buffer).toString("base64");
+
+                return { success: true, message: "OK", data: { audio: base64 } };
+        } catch (error) {
+                logger.error(`Error during speak: ${error}`);
+                return {
+                        success: false,
+                        message: "Something went wrong",
+                        error: "Something went wrong",
+                };
+        }
 }
 
 export async function presignExampleURL(expectedDocID: number): Promise<APIResponse<string>> {

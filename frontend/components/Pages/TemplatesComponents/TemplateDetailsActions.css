@@ -1,13 +1,18 @@
 .template-actions {
-  background: white;
-  border: var(--border-default);
-  border-radius: var(--border-radius-default);
-  padding: var(--padding-details-card);
-  box-shadow: var(--box-shadow-default);
+    border-radius: var(--border-radius-default);
+    padding: var(--padding-details-card);
+
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.06),
+        0 0 0 0.5px rgba(255, 255, 255, 0.6) inset;
 }
 
-.template-actions .template-actions-buttons {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.template-action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }

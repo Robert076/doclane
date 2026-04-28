@@ -5,44 +5,48 @@
     margin: var(--margin-y-10);
 }
 
+.textarea-wrapper--full-width {
+    width: 100%;
+}
+
 .textarea-wrapper label {
     margin-bottom: 5px;
     font-weight: 500;
+    font-size: var(--font-size-s);
+    color: #374151;
 }
 
-textarea {
-    border: var(--border-default);
-    border-radius: var(--border-radius-default);
-    box-shadow: var(--box-shadow-default);
-    min-height: 230px;
-    max-height: 300px;
-    min-width: 100%;
-    max-width: 100%;
-    font-size: var(--font-size-m);
+.textarea-wrapper textarea {
+    width: 100%;
     padding: 10px;
-    resize: vertical;
-}
-
-textarea:focus {
-    outline: 1px solid var(--color-primary);
-}
-
-.input-with-icon .input-icon {
-    margin-right: 8px; 
-    display: flex;
-    align-items: center;
-}
-
-.input-with-icon input {
-    flex: 1; 
-    border: none;
-    outline: none;
+    box-sizing: border-box;
+    border-radius: var(--border-radius-default);
     font-size: var(--font-size-m);
-    background: transparent;
-    height: 100%;
+    font-family: inherit;
+    color: #1a202c;
+    resize: vertical;
+    outline: none;
+    transition: all 0.2s ease;
+    line-height: 1.5;
+
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.06),
+        0 0 0 0.5px rgba(255, 255, 255, 0.6) inset;
 }
 
-.textarea-wrapper--full-width,
-.textarea-wrapper--full-width textarea {
-  width: 100%;
+.textarea-wrapper textarea::placeholder {
+    color: #94a3b8;
+}
+
+.textarea-wrapper textarea:focus {
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(255, 87, 34, 0.4);
+    box-shadow:
+        0 0 0 3px rgba(255, 87, 34, 0.1),
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        0 0 0 0.5px rgba(255, 255, 255, 0.8) inset;
 }

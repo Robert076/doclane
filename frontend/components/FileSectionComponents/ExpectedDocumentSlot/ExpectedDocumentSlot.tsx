@@ -28,6 +28,9 @@ export default function ExpectedDocumentSlot({
         uploadedFiles,
 }: ExpectedDocumentSlotProps) {
         const [isLoadingExample, setIsLoadingExample] = useState(false);
+        const [extractedText, setExtractedText] = useState<string | null>(null);
+        const [interpretedText, setInterpretedText] = useState<string | null>(null);
+
         const user = useUser();
         const canManage = user.role === "admin" || user.department_id !== null;
 
@@ -131,13 +134,26 @@ export default function ExpectedDocumentSlot({
                                                                 expectedDocument.id
                                                         }
                                                         documentTitle={expectedDocument.title}
+                                                        latestFileId={
+                                                                uploadedFiles[
+                                                                        uploadedFiles.length -
+                                                                                1
+                                                                ]?.id ?? null
+                                                        }
                                                         onApprove={approve}
                                                         onReject={reject}
                                                         onReset={reset}
+                                                        onExtractedText={(text) =>
+                                                                setExtractedText(text)
+                                                        }
+                                                        onInterpretedText={(text) =>
+                                                                setInterpretedText(text)
+                                                        }
                                                 />
                                         </div>
                                 </div>
                         </div>
+
                         {uploadedFiles.length > 0 && (
                                 <div className="expected-document-slot-files">
                                         {paginatedItems.map((file) => (
@@ -150,6 +166,44 @@ export default function ExpectedDocumentSlot({
                                                         setCurrentPage={setCurrentPage}
                                                 />
                                         )}
+                                </div>
+                        )}
+
+                        {extractedText && (
+                                <div className="extracted-text">
+                                        <div className="extracted-text-header">
+                                                <span>Text extras</span>
+                                                <button
+                                                        type="button"
+                                                        className="extracted-text-close"
+                                                        onClick={() => setExtractedText(null)}
+                                                >
+                                                        ×
+                                                </button>
+                                        </div>
+                                        <pre className="extracted-text-content">
+                                                {extractedText}
+                                        </pre>
+                                </div>
+                        )}
+
+                        {interpretedText && (
+                                <div className="extracted-text extracted-text--interpreted">
+                                        <div className="extracted-text-header">
+                                                <span>Interpretare AI</span>
+                                                <button
+                                                        type="button"
+                                                        className="extracted-text-close"
+                                                        onClick={() =>
+                                                                setInterpretedText(null)
+                                                        }
+                                                >
+                                                        ×
+                                                </button>
+                                        </div>
+                                        <pre className="extracted-text-content">
+                                                {interpretedText}
+                                        </pre>
                                 </div>
                         )}
                 </div>

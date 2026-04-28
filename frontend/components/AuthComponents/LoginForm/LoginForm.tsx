@@ -5,7 +5,6 @@ import ClickableCard from "../ClickableCard/ClickableCard";
 import Input from "@/components/InputComponents/Input";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import SeparatorWithText from "@/components/OtherComponents/Separators/SeparatorWithText/SeparatorWithText";
-import LoginFormFooter from "../LoginFormFooter/LoginFormFooter";
 import LoginFormHeader from "../LoginFormHeader/LoginFormHeader";
 import { MdCardGiftcard } from "react-icons/md";
 import { useRouter } from "next/navigation";
@@ -53,7 +52,6 @@ const LoginForm: React.FC<LoginFormProps> = ({
                                 icon={<MdCardGiftcard size={20} />}
                                 onClick={() => router.push("/register")}
                         />
-                        <LoginFormFooter />
                 </div>
         );
 };

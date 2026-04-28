@@ -1,94 +1,105 @@
 .details-header {
-  margin-bottom: 2.5rem;
+    margin-bottom: 2.5rem;
 }
 
 .header-main {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
 }
 
 .header-main h1 {
-  margin: 0;
-  line-height: 1;
-  font-size: var(--font-size-xl);
+    margin: 0;
+    line-height: 1;
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: #1a202c;
+    letter-spacing: -0.02em;
 }
 
 .back-link {
-  color: #718096;
-  text-decoration: none;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-  display: inline-block;
-  transition: color 0.2s;
+    color: #718096;
+    text-decoration: none;
+    font-size: 0.875rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+    transition: color 0.2s;
 }
 
 .back-link:hover {
-  color: var(--color-primary);
+    color: var(--color-primary);
 }
 
 .title-display-container {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: var(--font-size-xl);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: var(--font-size-xl);
 }
 
 .title-edit-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 3%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
 }
 
 .title-input {
-  flex: 1;
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  padding: 0;
-  margin: 0;
-  border: none;
-  border-radius: 0;
-  outline: none;
-  background: transparent;
-  line-height: 1;
+    flex: 1;
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    padding: 4px 8px;
+    margin: 0;
+    border: none;
+    border-bottom: 2px solid rgba(255, 87, 34, 0.4);
+    border-radius: 0;
+    outline: none;
+    background: transparent;
+    line-height: 1;
+    color: #1a202c;
+    transition: border-color 0.2s ease;
+}
+
+.title-input:focus {
+    border-bottom-color: var(--color-primary);
 }
 
 .icon-button {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: background-color 0.2s;
-  font-size: 1.1rem;
-  flex-shrink: 0;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    font-size: 1.1rem;
+    flex-shrink: 0;
 }
 
 .edit-button {
-  color: #6b7280;
+    color: #6b7280;
 }
 
 .edit-button:hover {
-  background-color: #f3f4f6;
+    background: rgba(0, 0, 0, 0.06);
+    color: #374151;
 }
 
 .save-button {
-  color: #10b981;
+    color: #10b981;
 }
 
 .save-button:hover {
-  background-color: #d1fae5;
+    background: rgba(16, 185, 129, 0.1);
 }
 
 .cancel-button {
-  color: #ef4444;
+    color: #ef4444;
 }
 
 .cancel-button:hover {
-  background-color: #fee2e2;
+    background: rgba(239, 68, 68, 0.1);
 }

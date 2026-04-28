@@ -16,6 +16,7 @@
 .expected-documents-label {
     font-weight: 500;
     font-size: var(--font-size-m);
+    color: #374151;
 }
 
 .expected-documents-empty {
@@ -29,10 +30,15 @@
     flex-direction: column;
     gap: 12px;
     padding: 16px;
-    background: #fff;
-    border: var(--border-default);
     border-radius: var(--border-radius-default);
-    box-shadow: var(--box-shadow-default);
+
+    background: rgba(255, 255, 255, 0.65);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.06),
+        0 0 0 0.5px rgba(255, 255, 255, 0.6) inset;
 }
 
 .expected-document-item-header {
@@ -62,57 +68,73 @@
 }
 
 .expected-document-remove:hover {
-    background-color: #fee2e2;
+    background-color: rgba(254, 226, 226, 0.7);
     color: #ef4444;
 }
 
 .expected-document-example {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        width: 80%;
-
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 80%;
 }
 
 .expected-document-example-label {
-        font-size: var(--font-size-m);
-        font-weight: 500;
-        color: #374151;
+    font-size: var(--font-size-s);
+    font-weight: 500;
+    color: #374151;
 }
 
 .expected-document-example-upload {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 10px 14px;
-        border: var(--border-default);
-        border-radius: var(--border-radius-default);
-        cursor: pointer;
-        box-shadow: var(--box-shadow-default);
-        color: var(--text-color-secondary);
-        font-size: var(--font-size-m);
-        transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    border-radius: var(--border-radius-default);
+    cursor: pointer;
+    color: var(--text-color-secondary);
+    font-size: var(--font-size-s);
+    transition: all 0.2s ease;
+
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.05),
+        0 0 0 0.5px rgba(255, 255, 255, 0.5) inset;
 }
 
 .expected-document-example-upload:hover {
-        border-color: var(--color-primary);
-        color: #374151;
+    background: rgba(255, 255, 255, 0.78);
+    border-color: rgba(255, 87, 34, 0.3);
+    color: #374151;
+    transform: translateY(-1px);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.08),
+        0 0 0 0.5px rgba(255, 255, 255, 0.7) inset;
 }
 
 .expected-document-example-preview {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 14px;
-        border: var(--border-default);
-        border-radius: var(--border-radius-default);
-        background: #f9fafb;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    border-radius: var(--border-radius-default);
+
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.05),
+        0 0 0 0.5px rgba(255, 255, 255, 0.5) inset;
 }
 
 .expected-document-example-name {
-        font-size: var(--font-size-m);
-        color: #374151;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+    font-size: var(--font-size-s);
+    color: #374151;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

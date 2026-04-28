@@ -74,7 +74,6 @@ export default function RequestComments({
                                                 text="Adaugă"
                                                 disabled={isPending}
                                                 onClick={handleSubmit}
-                                                fullWidth
                                                 variant="ghost"
                                         />
                                 </div>

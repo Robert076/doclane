@@ -1,21 +1,27 @@
 .not-found-container {
-  text-align: center;
-  padding: 2rem;
-  background: #f8fafc;
-  border: 2px dashed #cbd5e1;
-  border-radius: 8px;
-  margin: 1.5rem 0;
+    text-align: center;
+    padding: 2rem;
+    border-radius: var(--border-radius-default);
+    margin: 1.5rem 0;
+
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    border: 1.5px dashed rgba(0, 0, 0, 0.12);
+    box-shadow:
+        0 1px 4px rgba(0, 0, 0, 0.04),
+        0 0 0 0.5px rgba(255, 255, 255, 0.5) inset;
 }
 
 .not-found-text {
-  margin: 0.25rem 0;
-  color: #64748b;
-  font-size: 0.875rem;
-  font-weight: 500;
+    margin: 0.25rem 0;
+    color: #475569;
+    font-size: 0.875rem;
+    font-weight: 600;
 }
 
 .not-found-subtext {
-  margin: 0.25rem 0;
-  color: #64748b;
-  font-size: 0.875rem;
+    margin: 0.25rem 0;
+    color: #94a3b8;
+    font-size: 0.8rem;
 }

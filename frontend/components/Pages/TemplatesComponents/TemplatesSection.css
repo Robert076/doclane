@@ -16,6 +16,10 @@
     gap: 12px;
 }
 
-.templates-toolbar-action {
-    width: 200px;
+
+.templates-toolbar-actions {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    width: 420px;
 }
