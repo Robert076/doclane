@@ -5,6 +5,7 @@ import Input from "@/components/InputComponents/Input";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import { updatePassword } from "@/lib/api/users";
 import toast from "react-hot-toast";
+import "@/components/Pages/SettingsComponents/ProfileSection.css";
 
 export default function PasswordSection() {
         const router = useRouter();

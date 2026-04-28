@@ -1,34 +1,41 @@
 .profile-section {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
 }
 
 .profile-card {
-  background: white;
-  border: var(--border-default);
-  border-radius: var(--border-radius-default);
-  box-shadow: var(--box-shadow-default);
-  padding: 1.5rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1.25rem;
+    border-radius: var(--border-radius-default);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.06),
+        0 0 0 0.5px rgba(255, 255, 255, 0.6) inset;
 }
 
 .profile-card-title {
-  font-size: var(--font-size-m);
-  font-weight: 600;
-  color: #1a202c;
+    font-size: var(--font-size-m);
+    font-weight: 600;
+    color: #1a202c;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .profile-form {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .profile-save {
-  width: 200px;
-  margin-top: 0.5rem;
+    width: 200px;
+    margin-top: 0.5rem;
 }

@@ -78,8 +78,16 @@ export default function DepartmentMembersSection({
                                 <div className="department-members-actions">
                                         <div>
                                                 <ButtonPrimary
+                                                        text="Adaugă membru"
+                                                        fullWidth
+                                                        onClick={() => setIsAddModalOpen(true)}
+                                                />
+                                        </div>
+                                        <div>
+                                                <ButtonPrimary
                                                         text="Vezi șabloane"
                                                         fullWidth
+                                                        variant="ghost"
                                                         onClick={() =>
                                                                 router.push(
                                                                         `/dashboard/templates?department=${departmentId}`,
@@ -89,15 +97,9 @@ export default function DepartmentMembersSection({
                                         </div>
                                         <div>
                                                 <ButtonPrimary
-                                                        text="Adaugă membru"
-                                                        fullWidth
-                                                        onClick={() => setIsAddModalOpen(true)}
-                                                />
-                                        </div>
-                                        <div>
-                                                <ButtonPrimary
                                                         text="Coduri invitație"
                                                         fullWidth
+                                                        variant="ghost"
                                                         onClick={handleOpenCodes}
                                                         disabled={isLoadingCodes}
                                                 />

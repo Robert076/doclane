@@ -1,18 +1,22 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+const PUBLIC_PATHS = ["/login", "/register"];
+
 export default function middleware(request: NextRequest) {
         const token = request.cookies.get("auth_cookie")?.value;
         const { pathname } = request.nextUrl;
 
-        if (!token && pathname !== "/login" && pathname !== "/register") {
+        const isPublic = PUBLIC_PATHS.some((p) => pathname.startsWith(p));
+
+        if (!token && !isPublic) {
                 const url = request.nextUrl.clone();
                 url.pathname = "/login";
                 url.searchParams.set("callbackUrl", pathname);
                 return NextResponse.redirect(url);
         }
 
-        if (token && pathname === "/login") {
+        if (token && isPublic) {
                 const url = request.nextUrl.clone();
                 url.pathname = "/dashboard/requests";
                 return NextResponse.redirect(url);
@@ -28,5 +32,5 @@ export default function middleware(request: NextRequest) {
 }
 
 export const config = {
-        matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.[\\w]+$).*)"],
+        matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\..*).*)"],
 };

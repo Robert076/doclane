@@ -20,6 +20,6 @@
 .templates-toolbar-actions {
     display: flex;
     flex-direction: row;
-    gap: 8px;
+    gap: 18px;
     width: 420px;
 }

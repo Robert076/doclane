@@ -39,7 +39,7 @@ export default function DepartmentsSection({ departments }: DepartmentsSectionPr
                                         <ButtonPrimary
                                                 text="Departament nou"
                                                 fullWidth
-                                                variant="ghost"
+                                                variant="primary"
                                                 onClick={() => setIsCreateModalOpen(true)}
                                         />
                                 </div>

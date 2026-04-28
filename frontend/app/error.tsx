@@ -17,22 +17,20 @@ export default function GlobalError({
 
         return (
                 <div className="error-page">
-                        <img src="/error.jpg" alt="" height={150} />
-                        <h1 className="error-title">Oops! Something went wrong...</h1>
-
-                        <p className="error-message">
-                                {error.message ||
-                                        "An error appeared in the system. And we don't know what went wrong."}
-                        </p>
-
-                        <div className="button-wrapper">
-                                <ButtonPrimary text="Try again" onClick={() => reset()} />
+                        <div className="error-card">
+                                <img src="/error.jpg" alt="" />
+                                <h1 className="error-title">Oops! Something went wrong...</h1>
+                                <p className="error-message">
+                                        {error.message || "An error appeared in the system."}
+                                </p>
+                                <div className="button-wrapper">
+                                        <ButtonPrimary
+                                                text="Try again"
+                                                fullWidth
+                                                onClick={() => reset()}
+                                        />
+                                </div>
                         </div>
                 </div>
         );
-}
-
-function extractStatusCode(message: string): string {
-        const match = message.match(/\d{3}/);
-        return match ? match[0] : "UNK";
 }
