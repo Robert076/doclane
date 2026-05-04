@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"log"
 	"log/slog"
 	"time"
 
@@ -78,10 +79,12 @@ func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 		return nil, err
 	}
 
+	log.Print("=========\nHello world 1111111 from add template\n=============")
 	uploadByIndex, rollbackS3, err := s.uploadExampleFiles(ctx, docs)
 	if err != nil {
 		return nil, err
 	}
+	log.Print("=========\nHello world 2222222 from add template\n=============")
 
 	template.CreatedBy = claims.UserID
 
