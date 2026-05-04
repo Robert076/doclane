@@ -7,7 +7,6 @@ import (
 	"log"
 	"log/slog"
 	"os"
-	"strconv"
 
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/services"
@@ -17,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/polly"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/textract"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -42,7 +42,8 @@ func init() {
 
 	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	db := initDB()
+	awsCfg := initAWSConfig()
+	db := initDB(awsCfg)
 
 	// Repositories
 	userRepo := repositories.NewUserRepo(db)
@@ -58,7 +59,6 @@ func init() {
 	txManager := repositories.NewTxManager(db)
 
 	// AWS
-	awsCfg := initAWSConfig()
 	S3Client = s3.NewFromConfig(awsCfg)
 	textractClient := textract.NewFromConfig(awsCfg)
 	bedrockClient := bedrockruntime.NewFromConfig(awsCfg)
@@ -107,24 +107,53 @@ func init() {
 	TagService = services.NewTagService(tagRepo, Logger)
 }
 
-func initDB() *sql.DB {
-	host := utils.RequireEnv("DB_HOST")
-	user := utils.RequireEnv("DB_USER")
-	name := utils.RequireEnv("DB_NAME")
-	password := utils.RequireEnv("DB_PASSWORD")
+func initDB(cfg aws.Config) *sql.DB {
+	var host string
+	var user string
+	var name string
+	var password string
+	var port string
+	sslMode := "disable"
 
-	port := 5432
-	if p := os.Getenv("DB_PORT"); p != "" {
-		var err error
-		port, err = strconv.Atoi(p)
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
+		ssmClient := ssm.NewFromConfig(cfg)
+
+		host = utils.RequireEnv("DB_HOST")
+		port = utils.RequireEnv("DB_PORT")
+		name = utils.RequireEnv("DB_NAME")
+		sslMode = "require"
+
+		usernamePath := utils.RequireEnv("SSM_USERNAME_PATH")
+		passwordPath := utils.RequireEnv("SSM_PASSWORD_PATH")
+
+		userParam, err := ssmClient.GetParameter(context.Background(), &ssm.GetParameterInput{
+			Name:           aws.String(usernamePath),
+			WithDecryption: aws.Bool(true),
+		})
 		if err != nil {
-			log.Fatal("DB_PORT must be a number")
+			log.Fatalf("failed to get SSM username param: %v", err)
 		}
+		user = aws.ToString(userParam.Parameter.Value)
+
+		passParam, err := ssmClient.GetParameter(context.Background(), &ssm.GetParameterInput{
+			Name:           aws.String(passwordPath),
+			WithDecryption: aws.Bool(true),
+		})
+		if err != nil {
+			log.Fatalf("failed to get SSM password param: %v", err)
+		}
+		password = aws.ToString(passParam.Parameter.Value)
+	} else {
+		host = utils.RequireEnv("DB_HOST")
+		port = utils.RequireEnv("DB_PORT")
+		user = utils.RequireEnv("DB_USER")
+		name = utils.RequireEnv("DB_NAME")
+		password = utils.RequireEnv("DB_PASSWORD")
 	}
 
 	psqlInfo := fmt.Sprintf(
-		"host=%s port=%d user=%s dbname=%s password=%s sslmode=disable timezone=UTC",
-		host, port, user, name, password,
+		"host=%s port=%s user=%s dbname=%s password=%s sslmode=%s timezone=UTC",
+		host, port, user, name, password, sslMode,
 	)
 
 	db, err := sql.Open("postgres", psqlInfo)
