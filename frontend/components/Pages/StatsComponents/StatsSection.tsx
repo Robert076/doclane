@@ -117,7 +117,7 @@ export default function StatsSection({ stats }: Props) {
                                         Cereri în ultimele 7 zile
                                 </h3>
                                 <ResponsiveContainer width="100%" height={220}>
-                                        <AreaChart data={stats.requests_last_7_days}>
+                                        <AreaChart data={stats.requests_last_7_days ?? []}>
                                                 <defs>
                                                         <linearGradient
                                                                 id="colorCount"
@@ -185,7 +185,7 @@ export default function StatsSection({ stats }: Props) {
                                         Cereri deschise per departament
                                 </h3>
                                 <ResponsiveContainer width="100%" height={220}>
-                                        <BarChart data={stats.requests_per_department}>
+                                        <BarChart data={stats.requests_per_department ?? []}>
                                                 <CartesianGrid
                                                         strokeDasharray="3 3"
                                                         stroke="#f1f5f9"
@@ -221,7 +221,10 @@ export default function StatsSection({ stats }: Props) {
                                         </h3>
                                         <ResponsiveContainer width="100%" height={280}>
                                                 <BarChart
-                                                        data={stats.requests_per_locality}
+                                                        data={
+                                                                stats.requests_per_locality ??
+                                                                []
+                                                        }
                                                         layout="vertical"
                                                 >
                                                         <CartesianGrid
@@ -289,7 +292,7 @@ export default function StatsSection({ stats }: Props) {
                                 <h3 className="stats-chart-title">Top 5 șabloane folosite</h3>
                                 <ResponsiveContainer width="100%" height={220}>
                                         <BarChart
-                                                data={stats.most_used_templates}
+                                                data={stats.most_used_templates ?? []}
                                                 layout="vertical"
                                         >
                                                 <CartesianGrid
