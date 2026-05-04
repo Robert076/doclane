@@ -119,15 +119,50 @@ export default function TemplatesSection({
 
         if (openTemplates.length === 0) {
                 return (
-                        <NotFound
-                                text="Nu există niciun șablon încă."
-                                subtext={
-                                        isAdmin
-                                                ? "Creează primul șablon pentru a permite cetățenilor să depună cereri."
-                                                : "Nu există șabloane disponibile momentan."
-                                }
-                                background="#fff"
-                        />
+                        <div className="templates-section">
+                                <div className="templates-toolbar">
+                                        {isAdmin && (
+                                                <div className="templates-toolbar-actions">
+                                                        <ButtonPrimary
+                                                                text="Șablon nou"
+                                                                fullWidth
+                                                                variant="primary"
+                                                                onClick={() =>
+                                                                        router.push(
+                                                                                "/dashboard/templates/create",
+                                                                        )
+                                                                }
+                                                        />
+                                                        <ButtonPrimary
+                                                                text="Gestionează taguri"
+                                                                fullWidth
+                                                                variant="ghost"
+                                                                onClick={() =>
+                                                                        setIsTagsModalOpen(
+                                                                                true,
+                                                                        )
+                                                                }
+                                                        />
+                                                </div>
+                                        )}
+                                </div>
+                                <NotFound
+                                        text="Nu există niciun șablon încă."
+                                        subtext={
+                                                isAdmin
+                                                        ? "Creează primul șablon pentru a permite cetățenilor să depună cereri."
+                                                        : "Nu există șabloane disponibile momentan."
+                                        }
+                                        background="#fff"
+                                />
+                                {isAdmin && (
+                                        <ManageTagsModal
+                                                isOpen={isTagsModalOpen}
+                                                onClose={() => setIsTagsModalOpen(false)}
+                                                tags={tags}
+                                        />
+                                )}
+                        </div>
                 );
         }
 
