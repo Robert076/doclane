@@ -19,6 +19,7 @@ interface RequestProps {
         archived?: boolean;
         isStale?: boolean;
         isDueSoon?: boolean;
+        cancelled?: boolean;
 }
 
 export default function RequestCard({
