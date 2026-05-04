@@ -165,8 +165,8 @@ func buildRouter() (http.Handler, *chi.Mux) {
 func main() {
 	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
 		_, mux := buildRouter()
-		adapter := chiadapter.NewV2(mux)
-		lambda.Start(adapter.ProxyWithContextV2)
+		adapter := chiadapter.New(mux)
+		lambda.Start(adapter.ProxyWithContext)
 	} else {
 		handler, _ := buildRouter()
 		if err := http.ListenAndServe(":8080", handler); err != nil {
