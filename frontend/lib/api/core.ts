@@ -65,8 +65,8 @@ export async function doclaneHTTPHelper<T = unknown>(
                 logger.error(`Error during HTTP call: ${error}`);
                 return {
                         success: false,
-                        message: "Something went wrong",
-                        error: "Something went wrong",
+                        message: "Something went wrong, " + error,
+                        error: "Something went wrong, " + error,
                 };
         }
 }
