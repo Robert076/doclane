@@ -8,6 +8,7 @@ import {
 } from "@/types";
 import { doclaneHTTPHelper } from "./core";
 import { cookies } from "next/headers";
+import { logger } from "../logger";
 
 export async function getAllRequests(search?: string): Promise<APIResponse<Request[]>> {
         const qs = search ? `?search=${encodeURIComponent(search)}` : "";

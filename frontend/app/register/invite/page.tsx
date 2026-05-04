@@ -1,4 +1,5 @@
 "use client";
+import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
@@ -7,11 +8,10 @@ import { getInvitationCodeInfo } from "@/lib/api/invitation_codes";
 import RegisterForm from "@/components/AuthComponents/RegisterForm/RegisterForm";
 import LoadingSkeleton from "@/components/ViewComponents/LoadingSkeleton/LoadingSkeleton";
 
-export default function InviteRegisterPage() {
+function InviteRegisterPage() {
         const router = useRouter();
         const searchParams = useSearchParams();
         const code = searchParams.get("code");
-
         const [departmentName, setDepartmentName] = useState<string | null>(null);
         const [isValidating, setIsValidating] = useState(true);
         const [isSubmitting, setIsSubmitting] = useState(false);
@@ -21,7 +21,6 @@ export default function InviteRegisterPage() {
                         router.replace("/register");
                         return;
                 }
-
                 getInvitationCodeInfo(code).then((res) => {
                         if (res.success && res.data) {
                                 setDepartmentName(res.data.department_name);
@@ -70,5 +69,13 @@ export default function InviteRegisterPage() {
                                 />
                         </div>
                 </div>
+        );
+}
+
+export default function InviteRegisterPageWrapper() {
+        return (
+                <Suspense fallback={<LoadingSkeleton />}>
+                        <InviteRegisterPage />
+                </Suspense>
         );
 }
