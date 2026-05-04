@@ -79,12 +79,14 @@ func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 		return nil, err
 	}
 
-	log.Print("=========\nHello world 1111111 from add template\n=============")
 	uploadByIndex, rollbackS3, err := s.uploadExampleFiles(ctx, docs)
 	if err != nil {
+		s.logger.Error("error when uploading files to S3",
+			slog.Int("jwt_user_id", claims.UserID),
+			slog.Any("error", err)
+		)
 		return nil, err
 	}
-	log.Print("=========\nHello world 2222222 from add template\n=============")
 
 	template.CreatedBy = claims.UserID
 
