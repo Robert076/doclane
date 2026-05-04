@@ -11,8 +11,8 @@ import (
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/services"
 	"github.com/Robert076/doclane/backend/utils"
+	"github.com/Robert076/doclane/backend/utils/awscfg"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	awsconfig "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/polly"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -42,7 +42,7 @@ func init() {
 
 	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
-	awsCfg := initAWSConfig()
+	awsCfg := awscfg.InitAWSConfig()
 	db := initDB(awsCfg)
 
 	// Repositories
@@ -165,13 +165,4 @@ func initDB(cfg aws.Config) *sql.DB {
 	}
 
 	return db
-}
-
-func initAWSConfig() aws.Config {
-	ctx := context.Background()
-	cfg, err := awsconfig.LoadDefaultConfig(ctx, awsconfig.WithRegion("eu-west-1"))
-	if err != nil {
-		log.Fatal("Failed to load AWS config:", err)
-	}
-	return cfg
 }

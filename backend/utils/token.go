@@ -9,8 +9,10 @@ import (
 
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/types"
+	"github.com/Robert076/doclane/backend/utils/awscfg"
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/golang-jwt/jwt"
-	"github.com/joho/godotenv"
 )
 
 type contextKey string
@@ -20,11 +22,24 @@ const ClaimsKey contextKey = "jwtClaims"
 var JWTSecret string
 
 func init() {
-	godotenv.Load("../../.env")
-	JWTSecret = os.Getenv("JWT_SECRET")
-	if JWTSecret == "" {
-		log.Fatal("JWT_SECRET env var is not set")
+	var jwt string
+	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
+		awsCfg := awscfg.InitAWSConfig()
+		ssmClient := ssm.NewFromConfig(awsCfg)
+
+		jwtPath := os.Getenv("JWT_SECRET_PATH")
+		jwtParam, err := ssmClient.GetParameter(context.Background(), &ssm.GetParameterInput{
+			Name:           aws.String(jwtPath),
+			WithDecryption: aws.Bool(true),
+		})
+		if err != nil {
+			log.Fatalf("error when trying to get jwt from SSM %v", err)
+		}
+		jwt = *jwtParam.Parameter.Value
+	} else {
+		jwt = RequireEnv("JWT_SECRET")
 	}
+	JWTSecret = jwt
 }
 
 func GenerateJWT(user models.User) (string, error) {
