@@ -83,6 +83,7 @@ export default function RequestComments({
                                 <NotFound
                                         text="Nu există niciun comentariu încă"
                                         subtext="Începe prin a adăuga primul comentariu."
+                                        background="#fff"
                                 />
                         ) : (
                                 <>

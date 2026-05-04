@@ -23,7 +23,7 @@ export default function CancelledRequestsSection({ requests, user }: Props) {
                         <NotFound
                                 text="Nu există dosare anulate."
                                 subtext="Dosarele retrase de utilizatori vor apărea aici."
-                                background="white"
+                                background="#fff"
                         />
                 );
         }
@@ -39,7 +39,7 @@ export default function CancelledRequestsSection({ requests, user }: Props) {
                                 <NotFound
                                         text="Nu am găsit niciun dosar"
                                         subtext="Nu există niciun rezultat care să corespundă căutării tale."
-                                        background="white"
+                                        background="#fff"
                                 />
                         ) : (
                                 <div className="archived-grid">

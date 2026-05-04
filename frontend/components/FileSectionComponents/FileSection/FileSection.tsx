@@ -30,6 +30,7 @@ export default function FileSection({
                         <NotFound
                                 text="Nu există documente așteptate."
                                 subtext="Dosarul nu are niciun document atașat."
+                                background="#fff"
                         />
                 );
         }

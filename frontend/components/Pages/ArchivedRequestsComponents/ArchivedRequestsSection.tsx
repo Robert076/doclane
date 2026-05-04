@@ -78,6 +78,7 @@ export default function ArchivedRequestsSection({ requests, user }: Props) {
                         <NotFound
                                 text="Nu există dosare arhivate."
                                 subtext="Dosarele arhivate vor apărea aici."
+                                background="#fff"
                         />
                 );
         }
@@ -122,6 +123,7 @@ export default function ArchivedRequestsSection({ requests, user }: Props) {
                                 <NotFound
                                         text="Nu am găsit niciun dosar"
                                         subtext="Nu există niciun rezultat care să corespundă căutării tale."
+                                        background="#fff"
                                 />
                         ) : (
                                 <>
