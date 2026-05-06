@@ -11,7 +11,6 @@
 
 \par The deployment of the app was done on AWS. The architecture is leveraging a mostly serverless architecture for a multitude of reasons, some of them being: cost efficiency, scalability and no overhead on managing servers. 
 
-
 \par AWS is the leading cloud provider, covering roughly 31\% of the global market as of 2026. Part of the reason it is so widely used is because it was the first to market, so it had the most amount of time out of all competitors to refine their services and offerings, which is half of the reason it was chosen. The other half was because the author of this thesis project is a certified Solutions Architect Professional on AWS and had a bias to pick this provider.
 
 \begin{center}
@@ -64,12 +63,6 @@
 
 \par An internet gateway was provisioned and added to the route table of the public subnet, such that internet access is possible to and from it. Private subnets are associated with a corresponding route table that only has local routes and the public subnet is associated with a route table that contains a route to the internet. So the thing that makes a subnet public or private is whether or not the associated route table has a route to the internet gateway or not. 
 
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/vpc_subnets.png}
-    \captionsetup{type=figure} 
-    \captionof{figure}{Subnets of the Doclane VPC}
-\end{center}
-
 \subsubsection{Security}
 
 \par When it comes to network security, the architecture leverages Security Groups for securing traffic at the Lambda level and at the RDS level. It also leverages NACLs (Network Access Control Lists) for securing traffic at the subnet level, WAF (Web Application Firewall) for securing layer 7 (application layer) traffic and Shield for layer 3 (network layer) and layer 4 (transport layer) attacks.
@@ -78,21 +71,9 @@
 
 \par What makes Security Groups stateful is that if some traffic is allowed inbound into our resource (by the inbound rules), then the corresponding outbound traffic is allowed out from our resource regardless of whether we explicitly allow it or not in the outbound rules. Security Groups work with "allow" type of rules. Everything is denied by default.
 
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/security_group_example.png}
-    \captionsetup{type=figure} 
-    \captionof{figure}{An example of a Security Group that is used by Lambda}
-\end{center}
-
 \par A NACL (Network Access Control List) in AWS is a stateless firewall that operates at the subnet level. It cannot be attached to resources such as Lambda, EC2, RDS, but rather to the subnets that contain them. It consists of inbound / outbound rules, inbound rules meaning what kind of traffic is allowed in, while outbound rules control what traffic is allowed to go outside the subnet.
 
 \par What makes NACLs stateless is that if some traffic is allowed inbound into our subnet (by the inbound rules), that does not make the corresponding traffic automatically allowed to go out of the subnet. Outbound traffic must be explicitly allowed for it to be able to go outside, regardless of where it originates from.
-
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/network_acl_doclane_vpc.png}
-    \captionsetup{type=figure} 
-    \captionof{figure}{NACL used by the Doclane' VPC subnets}
-\end{center}
 
 \par WAF (Web Application Firewall) in AWS is a service that is basically a virtual firewall that can be applied to some resources. It contains features such as filtering out spam traffic, bot traffic, enforces rate limiting on your resources, and protects your service from common application layer exploits such as cross-site-scripting, SQL injections and more. In our case, it is applied to the CloudFront distribution, but more on that later.
 
@@ -101,12 +82,6 @@
 \par The entire communication within the application, except for the traffic that comes from clients, is done privately, over AWS network. It never reaches the public internet. Lambda talking to RDS (Relational Database Service) is private, Lambda talking to S3 is private, Lambda putting logs in CloudWatch is private, Lambda getting configuration parameters from SSM (Systems Manager) Parameter Store is private.
 
 \par This is achieved with the use of VPC Endpoints, specifically the Interface Endpoint type. The only one place a Gateway Endpoint is used over an Interface Endpoint is when Lambda talks to S3. Interface endpoints are part of AWS Private Link, and they leverage an ENI (Elastic Network Interface) that is assigned a private IP and serves as the main entry point for a specific service. 
-
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/vpc-endpoints.png}
-    \captionsetup{type=figure} 
-    \captionof{figure}{VPC Endpoints of Doclane.}
-\end{center}
 
 \par Unline Interface Endpoints, Gateway ones are not part of Private Link and they do not have a private IP, they work more like an Internet Gateway redirecting traffic to a certain prefix list of AWS, including S3 and DynamoDB.
 
@@ -124,12 +99,6 @@
 
 \par The RDS database is protected by a Security Group that only allows inbound traffic from Lambda's Security Group, which makes it safe as any traffic not originating from Lambda will be dropped. Granting inbound access only to a certain Security Group is a best practice on AWS, as this is as granular as permissions can get.
 
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/inbound_rules_rds_sg.png}
-    \captionsetup{type=figure} 
-    \captionof{figure}{Inbound rules of the RDS Security Group}
-\end{center}
-
 \par It is deployed in a private subnet so no public IP was assigned to it, and no internet access is possible to it. The only way to access it is through a bastion host that was set up in the public subnet.
 
 \subsection{Backend layer}
@@ -139,12 +108,6 @@
 \par Lambda is intended for short workloads, which is exactly what is needed for Doclane. In order to have an idea for Lambda's intended running time, the default that AWS sets for it is 3 seconds, and the maximum one can go for is 15 minutes.
 
 \par In our case, a typical request might last 1 second, or slightly more depending on if it is a cold start. A cold start (as covered in the disadvantages of serverless architectures section) happens when our serverless service (such as Lambda) was not used for some time, hence it is not warmed up and ready to serve requests. Cold starts can take from milliseconds to seconds, depending on the size of the package that needs to be loaded.
-
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/lambda_summary.png}
-    \captionsetup{type=figure} 
-    \captionof{figure}{Overview of the Lambda Backend from AWS Console}
-\end{center}
 
 \subsubsection{Lambda in a VPC}
 
@@ -161,18 +124,11 @@
 
 \par An ENI (Elastic Network Interface) is AWS' abstraction of a network card. It can be attached to resources in order to give them properties such as private IPs, public IPs, MAC addresses, Security Groups and more. What AWS did was basically decouple the networking logic from the resource itself, which is a brilliant move.
 
-
 \subsection{Logging and monitoring}
 
 \par In order to ensure that what happens in the application is monitored, logging has been set up in the backend. All the logs that the backend generates are being sent to CloudWatch by the Lambda function (this is why it needs permissions to push logs to CloudWatch).
 
 \par In case some errors occurs in the app, the debug can happen quickly, since logs can be filtered by type for example, out of many other options.
-
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/cloudwatch_lgos_lambda.png}
-    \captionsetup{type=figure} 
-    \captionof{figure}{Sample of logs from the backend in CloudWatch}
-\end{center}
 
 \subsection{Identity Access and Management}
 
@@ -212,6 +168,61 @@
     \captionof{figure}{Sample of CloudFormation code for the VPC.}
 \end{center}
 
+\section{Machine Learning}
+
+\par This section goes into detail on the AWS services leveraged to build the machine learning assisted features aforementioned in the implementation chapter.
+
+\subsection{Transcribe}
+
+\par Transcribe is a fully managed serverless service offered by AWS that extracts text from documents. API calls are made to Transcribe from Doclane in order to extract text from documents.
+
+\subsection{Polly}
+
+\par Polly is a fully managed serverless service offered by AWS that generates speech from text. API calls are made to Polly to generate speech from selected documents.
+
+\subsection{Bedrock}
+
+\par Bedrock is a fully managed serverless service offered by AWS that gives you access to different LLMs that you can prompt. In our case we use the Nova Lite model from Amazon to interpret whether a document provided by an user is actually what it is required by the request.
+
+\section {Web servers}
+
+\par The frontend part of the app is hosted on EC2 (Elastic Compute Cloud) instances that are part of an ASG (Auto Scaling Group) in private subnets, load balanced by an ALB (Application Load Balancer) which is also deployed in the private subnets, frontend by a CloudFront distribution that actually servers the user traffic.
+
+\par This tight security setup ensures no other access than through CloudFront is permitted to go into the ALB, and therefore on our web servers. This helps in multiple ways, some of them being: CloudFront is natively integrated with WAF, making it essentially a firewall for the traffic that wants to go through to the ALB, and not only that but it ensures that the application always serves cached content if possible, resorting to fetching data from the server only in case it's not in the cache.
+
+\subsection{EC2}
+
+\par Elastic Compute Cloud is a service offering from AWS that gives you servers that you manage yourself. All operating system patches, security patches etc. are handled by you. The only thing that AWS gives you is compute power, memory (RAM) and networking capabilities. EC2 gives you full control over everything, even over stuff that would normally be managed by AWS in many different scenarios.
+
+\subsubsection{Amazon Machine Image}
+
+\par AMIs are basically templates for your servers. In Doclane's case, an image has been preconfigured with the cloned frontend code, all dependencies installed and ready to spin up the server. If you were to do things the old fashioned way, every time you started a new server you would install dependencies and clone the repository at the very least, which would result in longer boot times. Having a preconfigured (or as the AWS community calls it: "Golden AMI") is the way to avoid long startup times.
+
+\par There is a significant reduction in time needed for the servers to spin up in case high traffic is happening, since the servers only need to boot up and then start the web application. No other commands need to be run.
+
+\subsubsection{Auto Scaling Groups}
+
+\par Manually spinning up servers during peak traffic would be cumbersome. Hence, Auto Scaling Groups are here to ensure that the application scales on its own, always being able to handle sudden spikes. Think of Auto Scaling Groups as an orchestrator for EC2 Instances. It ensures that at least a minimum and at most a maximum of instances are running. As a developer, you set those limits.
+
+\par In Doclane's case, CPU is being tracked to be at most at an average of 70\% utilization. If it ever goes higher than that, additional servers are being launched to offload the traffic.
+
+\par Auto Scaling Groups don't just manage random EC2 Instances, they manage what's called a Target Group. A target group is what actually groups EC2 Instances together in one bundle. Think of it as a "tag" for those instances, making the Auto Scaling Group know what it is managing.
+
+\subsubsection{Load Balancing}
+
+\par In order to ensure scalability and high availability, the servers that are inside of the Auto Scaling Group are being fronted by an Application Load Balancer.
+
+\par An Application Load Balancer in AWS is in essence a reverse proxy, splitting requests from clients among the targets it manages. This ensures uniform distribution of requests on the web servers, not overloading one and underloading another.
+
+\par The routing algorithm that is being used is Round Robin, what this means as simple as possible is that it sends requests one by one to each target, in order. So after sending a request to the first server, the next request will go to the second one.
+
+\par Another popular routing algorithm is the Least Outstanding Requests, which ensures that it sends requests to the servers with the least ongoing requests. However Round Robin is usually suited for short lived tasks.
+
+\subsection{CloudFront}
+
+\par CloudFront is a CDN (Content Delivery Network) offered by AWS that leverages global locations (called "Edge Locations") to cache content close to the users. Latency is significantly reduced since commonly accessed content lives close to the users, hence improving the overall user experience of the application.
+
+\par You have full control over caching behaviour, including the ability to invalidate the cache at any moment, making it a powerful tool. CloudFront is massively beneficial to reduce traffic on your architecture, acting as a buffer between users and your servers.
 
 \section{Continuous Integration / Continuous Deployment}
 
@@ -221,12 +232,6 @@
 
 \par CI/CD has been done with the help of GitHub Actions. GitHub Actions are convenient to use when your repository is already on GitHub, hence why they were chosen.
 
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/deployment/cicd/cicd.png}
-    \captionsetup{type=figure} 
-    \captionof{figure}{Sample of GitHub Actions file for the backend.}
-\end{center}
-
 \par Without going into too much detail, it is worth knowing how secure this entire process is. Let's take the backend deployment as an example.
 
 \par Updates happen leveraging the least-privilege principle, without any permanent credentials ever existing or being stored anywhere. The GitHub Action worker generates and ID token using GitHub's OIDC (OpenID Connect is a popular authentication protocol, built on top of OAuth). GitHub then signs this token with their private key, and this signed token is then passed to AWS to prove the identity of the runner.
@@ -234,12 +239,6 @@
 \par Now AWS won't just see a token signed by GitHub and accept it, that would be catastrophic. What happens instead is that in that token signed by GitHub there is useful information about the runner such as which repository it's running in, who owns it, on what branch it's running, and so on. This is trustable information since nobody can access the repository and push without being allowed by the owner of the repository.
 
 \par In AWS, an OIDC provider is created in IAM, trusting GitHub and allowing Role Assumptions for the worker as long as it proves it's from exactly the main branch of the Doclane repository. The security is so tight that even changing the branch you are pushing to will deny the worker any access to AWS.
-
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/deployment/cicd/oidc1.png}
-    \captionsetup{type=figure} 
-    \captionof{figure}{OIDC provider.}
-\end{center}
 
 \par Role Assumption in AWS is a concept that allows generating temporary credentials to perform actions in an AWS account, leveraging the STS (Secure Token Service) from AWS. Credentials are short-lived, for example in Doclane the shortest duration was chosen, that being one hour. Once the credentials expire they cannot be used anymore, and even if they somehow get leaked the damage would be minimal.
 
@@ -250,3 +249,4 @@
     \captionsetup{type=figure} 
     \captionof{figure}{The least-privilege principle shown in the assumed role by the worker.}
 \end{center}
+

@@ -1,0 +1,139 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: |
+  Private API Gateway needed for the web servers to interact with Lambda
+
+Resources:
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties: 
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref EC2TargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  EC2TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckIntervalSeconds: 30
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 15
+      HealthyThresholdCount: 5
+      Matcher:
+        HttpCode: '200'
+      Name: doclane-target-group
+      Port: 80
+      Protocol: HTTP
+      TargetGroupAttributes:
+      - Key: deregistration_delay.timeout_seconds
+        Value: '20'
+      UnhealthyThresholdCount: 3
+      VpcId: !ImportValue doclane-vpc-id
+
+
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Scheme: internal
+      Subnets:
+        - !ImportValue doclane-private-subnet-1-id
+        - !ImportValue doclane-private-subnet-2-id
+      SecurityGroups:
+        - !ImportValue doclane-elb-security-group
+
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: !Sub ${AWS::StackName}-launch-template
+      LaunchTemplateData:
+        ImageId: ami-0fa5679a6903eec37
+        InstanceType: t3.small
+        KeyName: doclane-bastion-key
+        SecurityGroupIds:
+          - !ImportValue doclane-web-server-security-group
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            cd frontend && npm start
+
+  CloudFrontVpcOrigin:
+    Type: AWS::CloudFront::VpcOrigin
+    Properties:
+      VpcOriginEndpointConfig:
+        Name: doclane-alb-vpc-origin
+        Arn: !Ref ApplicationLoadBalancer
+        HTTPPort: 80
+        HTTPSPort: 443
+        OriginProtocolPolicy: http-only  
+
+  ALBSecurityGroupIngress:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      GroupId: !ImportValue doclane-elb-security-group
+      IpProtocol: tcp
+      FromPort: 80
+      ToPort: 80
+      SourcePrefixListId: pl-4fa04526  # CloudFront managed prefix list for eu-west-1
+
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    DependsOn: CloudFrontVpcOrigin
+    Properties:
+      DistributionConfig:
+        Enabled: true
+        Comment: doclane CloudFront to internal ALB via VPC origin
+        Aliases:
+          - licenta.robert-beres.com
+        ViewerCertificate:
+          AcmCertificateArn: arn:aws:acm:us-east-1:659775407830:certificate/ff21ed20-6c5a-4cea-9e82-9c6c38ac20b5
+          SslSupportMethod: sni-only
+          MinimumProtocolVersion: TLSv1.2_2021
+        Origins:
+          - Id: ALBVpcOrigin
+            DomainName: !GetAtt ApplicationLoadBalancer.DNSName
+            VpcOriginConfig:
+              VpcOriginId: !GetAtt CloudFrontVpcOrigin.Id
+              OriginReadTimeout: 30
+              OriginKeepaliveTimeout: 5
+        DefaultCacheBehavior:
+          TargetOriginId: ALBVpcOrigin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+            - PUT
+            - POST
+            - PATCH
+            - DELETE
+          CachedMethods:
+            - GET
+            - HEAD
+          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad       # CachingDisabled
+          OriginRequestPolicyId: 216adef6-5c7f-47e4-b989-5492eafa07d3 # AllViewer
+
+  DNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId: Z05160421FUY610YN0X0I
+      Name: licenta.robert-beres.com
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt CloudFrontDistribution.DomainName
+        HostedZoneId: Z2FDTNDATAQYW2
+        EvaluateTargetHealth: false
+
+  WebServerGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      MaxSize: '2'
+      MinSize: '1'
+      TargetGroupARNs:
+        - !Ref EC2TargetGroup
+      VPCZoneIdentifier:
+        - !ImportValue doclane-private-subnet-1-id
+        - !ImportValue doclane-private-subnet-2-id

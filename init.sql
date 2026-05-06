@@ -39,7 +39,7 @@ CREATE TABLE invitation_codes (
 );
 
 -- Request templates
-CREATE TABLE request_templates (
+CREATE TABLE document_request_templates (
     id              SERIAL PRIMARY KEY,
     title           TEXT        NOT NULL,
     description     TEXT,
@@ -55,7 +55,7 @@ CREATE TABLE request_templates (
 -- Expected document templates
 CREATE TABLE expected_document_templates (
     id                          SERIAL PRIMARY KEY,
-    document_request_template_id INTEGER NOT NULL REFERENCES request_templates(id) ON DELETE CASCADE,
+    document_request_template_id INTEGER NOT NULL REFERENCES document_request_templates(id) ON DELETE CASCADE,
     title                       TEXT    NOT NULL,
     description                 TEXT    NOT NULL DEFAULT '',
     example_file_path           TEXT,
@@ -69,13 +69,15 @@ CREATE TABLE document_requests (
     description      TEXT,
     assignee         INTEGER     NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
     department_id    INTEGER     NOT NULL REFERENCES departments(id) ON DELETE RESTRICT,
-    template_id      INTEGER     REFERENCES request_templates(id) ON DELETE SET NULL,
+    template_id      INTEGER     REFERENCES document_request_templates(id) ON DELETE SET NULL,
     is_recurring     BOOLEAN     NOT NULL DEFAULT FALSE,
     recurrence_cron  TEXT,
     is_scheduled     BOOLEAN     NOT NULL DEFAULT FALSE,
     scheduled_for    TIMESTAMPTZ,
     is_cancelled     BOOLEAN     NOT NULL DEFAULT FALSE,
     is_closed        BOOLEAN     NOT NULL DEFAULT FALSE,
+    closed_at        TIMESTAMPTZ,
+    claimed_at       TIMESTAMPTZ,
     last_uploaded_at TIMESTAMPTZ,
     next_due_at      TIMESTAMPTZ,
     due_date         TIMESTAMPTZ,
@@ -128,7 +130,7 @@ CREATE TABLE tags (
 );
 
 CREATE TABLE template_tags (
-    template_id INT NOT NULL REFERENCES templates(id) ON DELETE CASCADE,
+    template_id INT NOT NULL REFERENCES document_request_templates(id) ON DELETE CASCADE,
     tag_id INT NOT NULL REFERENCES tags(id) ON DELETE CASCADE,
     PRIMARY KEY (template_id, tag_id)
 );
@@ -138,7 +140,7 @@ CREATE INDEX idx_users_department_id          ON users(department_id);
 CREATE INDEX idx_users_role                   ON users(role);
 CREATE INDEX idx_invitation_codes_department  ON invitation_codes(department_id);
 CREATE INDEX idx_invitation_codes_created_by  ON invitation_codes(created_by);
-CREATE INDEX idx_request_templates_dept       ON request_templates(department_id);
+CREATE INDEX idx_request_templates_dept       ON document_request_templates(department_id);
 CREATE INDEX idx_document_requests_assignee   ON document_requests(assignee);
 CREATE INDEX idx_document_requests_dept       ON document_requests(department_id);
 CREATE INDEX idx_document_requests_claimed_by ON document_requests(claimed_by);

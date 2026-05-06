@@ -57,6 +57,15 @@ export default function CreateTemplateForm({ departments }: Props) {
                 e.preventDefault();
                 if (!validate() || isSubmitting) return;
 
+                const totalSize = expectedDocuments.reduce((acc, doc) => {
+                        return acc + (doc.exampleFile?.size ?? 0);
+                }, 0);
+                if (totalSize > 900_000) {
+                        toast.error(
+                                "Fișierele atașate depășesc limita de 1MB. Te rugăm să reduci dimensiunea.",
+                        );
+                        return;
+                }
                 setIsSubmitting(true);
                 const res = await createTemplate({
                         title: title.trim(),

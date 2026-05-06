@@ -219,6 +219,24 @@ Resources:
                                 - Key: Description
                                   Value: Needed for Lambda to be able to decrypt SSM Secure Strings since Lambda has no internet access.
 
+        InterfaceEndpointAPIGateway:
+                Type: AWS::EC2::VPCEndpoint
+                Properties:
+                        ServiceName: !Sub com.amazonaws.${AWS::Region}.execute-api
+                        VpcEndpointType: Interface
+                        SubnetIds:
+                                - !Ref PrivateSubnet1
+                                - !Ref PrivateSubnet2
+                        PrivateDnsEnabled: true
+                        VpcId: !Ref VPC
+                        SecurityGroupIds:
+                                - !Ref EndpointSG
+                        Tags:
+                                - Key: Name
+                                  Value: doclane-interface-endpoint-apigateway
+                                - Key: Description
+                                  Value: Needed for front-end web servers to invoke the private API Gateway.
+
         EndpointSG:
                 Type: AWS::EC2::SecurityGroup
                 Properties:
@@ -230,7 +248,7 @@ Resources:
                                 - Key: Description
                                   Value: Used for the interface endpoints in the deployment such that only Lambda SG can access it.
 
-        EndpointSGIngress:
+        EndpointSGIngressFromLambda:
                 Type: AWS::EC2::SecurityGroupIngress
                 Properties:
                         GroupId: !Ref EndpointSG
@@ -238,6 +256,15 @@ Resources:
                         FromPort: 443
                         ToPort: 443
                         SourceSecurityGroupId: !Ref LambdaBackendSG
+
+        EndpointSGIngressFromWebServer:
+                Type: AWS::EC2::SecurityGroupIngress
+                Properties:
+                        GroupId: !Ref EndpointSG
+                        IpProtocol: tcp
+                        FromPort: 443
+                        ToPort: 443
+                        SourceSecurityGroupId: !Ref WebServerSG
 
         BastionSG:
                 Type: AWS::EC2::SecurityGroup
@@ -313,7 +340,51 @@ Resources:
                         ToPort: 5432
                         SourceSecurityGroupId: !Ref LambdaBackendSG
 
+        WebServerSG:
+                Type: AWS::EC2::SecurityGroup
+                Properties:
+                        GroupDescription: Security Group used for the web servers. Allows http traffic to the web servers of Doclane. Used for the front-end web servers.
+                        GroupName: doclane-web-sg
+                        VpcId: !Ref VPC
+                        Tags:
+                                - Key: Name
+                                  Value: doclane-web-sg
+                                - Key: Description
+                                  Value: Security Group used for the web servers. Allows http traffic to the web servers of Doclane. Used for the front-end web servers.
+                        SecurityGroupIngress:
+                                - IpProtocol: tcp
+                                  FromPort: 80
+                                  ToPort: 80
+                                  CidrIp: 0.0.0.0/0
+                                - IpProtocol: tcp
+                                  FromPort: 443
+                                  ToPort: 443
+                                  CidrIp: 0.0.0.0/0
+                                - IpProtocol: tcp
+                                  FromPort: 3000
+                                  ToPort: 3000
+                                  CidrIp: 0.0.0.0/0
+                                - IpProtocol: tcp
+                                  FromPort: 22
+                                  ToPort: 22
+                                  SourceSecurityGroupId: !Ref BastionSG
+
+        ELBSecurityGroup:
+                Type: AWS::EC2::SecurityGroup
+                Properties:
+                        GroupDescription: Security group for the ALB, allows inbound https traffic
+                        VpcId: !Ref VPC
+                        SecurityGroupIngress:
+                                - IpProtocol: tcp
+                                  FromPort: 443
+                                  ToPort: 443
+                                  CidrIp: 0.0.0.0/0
+
 Outputs:
+        VpcId:
+                Value: !Ref VPC
+                Export:
+                        Name: doclane-vpc-id
         PrivateSubnet1Id:
                 Value: !Ref PrivateSubnet1
                 Export:
@@ -362,3 +433,18 @@ Outputs:
                 Value: !Ref BastionSG
                 Export:
                         Name: doclane-bastion-sg-id
+
+        ApiGatewayVpcEndpoint:
+                Value: !Ref InterfaceEndpointAPIGateway
+                Export:
+                        Name: doclane-api-gateway-interface-endpoint-id
+
+        ELBSecurityGroup:
+                Value: !Ref ELBSecurityGroup
+                Export:
+                        Name: doclane-elb-security-group
+
+        WebServerSecurityGroup:
+                Value: !Ref WebServerSG
+                Export:
+                        Name: doclane-web-server-security-group

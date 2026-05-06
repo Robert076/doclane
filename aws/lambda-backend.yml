@@ -10,7 +10,7 @@ Resources:
                 Type: AWS::Lambda::Function
                 Properties:
                         Architectures:
-                                - x86_64
+                                - arm64
                         FunctionName: DoclaneBackend
                         Role: !GetAtt LambdaBackendRole.Arn
                         Handler: bootstrap
@@ -34,6 +34,7 @@ Resources:
                                         SSM_USERNAME_PATH: /doclane/rds/username
                                         SSM_PASSWORD_PATH: /doclane/rds/password
                                         S3_BUCKET_NAME: doclane-documents
+                                        JWT_SECRET_PATH: /doclane/jwt-secret
 
         LambdaBackendRole:
                 Type: AWS::IAM::Role
@@ -48,29 +49,37 @@ Resources:
                                           Action: sts:AssumeRole
                         ManagedPolicyArns:
                                 - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
-                        Policies:
-                                - PolicyName: doclane-backend-policy
-                                  PolicyDocument:
-                                          Version: "2012-10-17"
-                                          Statement:
-                                                  - Effect: Allow
-                                                    Action:
-                                                            - ssm:GetParameter
-                                                    Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/doclane/*
-                                                  - Effect: Allow
-                                                    Action:
-                                                            - kms:Decrypt
-                                                    Resource: "*"
-                                                  - Effect: Allow
-                                                    Action:
-                                                            - s3:GetObject
-                                                            - s3:PutObject
-                                                            - s3:DeleteObject
-                                                    Resource: !Sub arn:aws:s3:::doclane-documents/*
-                                                  - Effect: Allow
-                                                    Action:
-                                                            - s3:GetObject
-                                                    Resource: arn:aws:s3:::doclane-rds-lambda-code/*
+
+        LambdaAdminSeedEvent:
+                Type: AWS::Lambda::async
+
+        LambdaBackendPolicy:
+                Type: AWS::IAM::Policy
+                Properties:
+                        PolicyName: doclane-lambda-backend-policy
+                        Roles:
+                                - !Ref LambdaBackendRole
+                        PolicyDocument:
+                                Version: "2012-10-17"
+                                Statement:
+                                        - Effect: Allow
+                                          Action:
+                                                  - ssm:GetParameter
+                                          Resource: !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/doclane/*
+                                        - Effect: Allow
+                                          Action:
+                                                  - kms:Decrypt
+                                          Resource: "*"
+                                        - Effect: Allow
+                                          Action:
+                                                  - s3:GetObject
+                                                  - s3:PutObject
+                                                  - s3:DeleteObject
+                                          Resource: !Sub arn:aws:s3:::doclane-documents/*
+                                        - Effect: Allow
+                                          Action:
+                                                  - s3:GetObject
+                                          Resource: arn:aws:s3:::doclane-rds-lambda-code/*
 
 Outputs:
         LambdaFunctionName:
