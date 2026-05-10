@@ -4,6 +4,12 @@ Description: |
         The RDS Database of Doclane. Robert is an AWS Certified Professional as a student btw, got it like that.
         Clean asf.
 
+Parameters:
+        AZ1:
+                Type: String
+        DbInstanceType:
+                Type: String
+
 Resources:
         RDS:
                 Type: AWS::RDS::DBInstance
@@ -19,9 +25,9 @@ Resources:
                         BackupRetentionPeriod: 0
                         CertificateRotationRestart: true
                         ApplyImmediately: true
-                        DBInstanceClass: db.t3.micro
+                        DBInstanceClass: !Ref DbInstanceType
                         DBParameterGroupName: !Ref RDSParameterGroup
-                        AvailabilityZone: !ImportValue doclane-az1
+                        AvailabilityZone: !Ref AZ1
                         MasterUsername: !Sub "{{resolve:ssm:/doclane/rds/username}}"
                         MasterUserPassword: !Sub "{{resolve:ssm:/doclane/rds/password}}"
                         StorageEncrypted: true

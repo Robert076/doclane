@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"log"
 	"log/slog"
 	"time"
 
@@ -83,15 +82,13 @@ func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 	if err != nil {
 		s.logger.Error("error when uploading files to S3",
 			slog.Int("jwt_user_id", claims.UserID),
-			slog.Any("error", err)
+			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
 	template.CreatedBy = claims.UserID
-/*pq: insert or update on table 
-"expected_document_templates" violates 
-foreign key constraint "expected_document_templates_document_request_template_id_fkey"*/
+
 	templateID, err := s.insertTemplateWithDocsTx(ctx, template, docs, uploadByIndex)
 	if err != nil {
 		rollbackS3()

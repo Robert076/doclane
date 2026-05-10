@@ -353,21 +353,13 @@ Resources:
                                   Value: Security Group used for the web servers. Allows http traffic to the web servers of Doclane. Used for the front-end web servers.
                         SecurityGroupIngress:
                                 - IpProtocol: tcp
-                                  FromPort: 80
-                                  ToPort: 80
-                                  CidrIp: 0.0.0.0/0
-                                - IpProtocol: tcp
-                                  FromPort: 443
-                                  ToPort: 443
-                                  CidrIp: 0.0.0.0/0
-                                - IpProtocol: tcp
-                                  FromPort: 3000
-                                  ToPort: 3000
-                                  CidrIp: 0.0.0.0/0
-                                - IpProtocol: tcp
                                   FromPort: 22
                                   ToPort: 22
                                   SourceSecurityGroupId: !Ref BastionSG
+                                - IpProtocol: tcp
+                                  FromPort: 80
+                                  ToPort: 80
+                                  SourceSecurityGroupId: !Ref ELBSecurityGroup
 
         ELBSecurityGroup:
                 Type: AWS::EC2::SecurityGroup

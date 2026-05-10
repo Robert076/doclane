@@ -442,3 +442,11 @@ func (service *UserService) ValidateUserForRegister(ctx context.Context, email, 
 
 	return nil
 }
+
+func (s *UserService) OnRequestEvent(ctx context.Context, event types.RequestEvent) error {
+	var systemCaller = types.JWTClaims{
+		UserID: 0,
+		Role:   types.RoleAdmin,
+	}
+	return s.NotifyUser(ctx, systemCaller, event.AssigneeID)
+}

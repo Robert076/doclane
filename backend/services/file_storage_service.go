@@ -63,8 +63,12 @@ func (s *FileStorageService) GeneratePresignedURL(ctx context.Context, key strin
 	}
 
 	presignedReq, err := presignClient.PresignGetObject(ctx, presignParams, func(opts *s3.PresignOptions) {
-		opts.Expires = 15 * time.Minute
+		opts.Expires = expiry
 	})
+
+	if err != nil {
+		return "", err
+	}
 
 	return presignedReq.URL, err
 }

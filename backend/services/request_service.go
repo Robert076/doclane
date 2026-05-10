@@ -26,6 +26,7 @@ type RequestService struct {
 	bedrock             IBedrockService
 	polly               IPollyService
 	logger              *slog.Logger
+	observers           []IRequestObserver
 }
 
 func NewRequestService(
@@ -40,6 +41,7 @@ func NewRequestService(
 	textract ITextractService,
 	bedrock IBedrockService,
 	polly IPollyService,
+	observers []IRequestObserver,
 ) *RequestService {
 	return &RequestService{
 		requestRepo:         requestRepo,
@@ -54,6 +56,14 @@ func NewRequestService(
 		polly:               polly,
 		logger:              logger,
 	}
+}
+
+type IRequestObserver interface {
+	OnRequestEvent(ctx context.Context, event types.RequestEvent) error
+}
+
+func (s *RequestService) RegisterObserver(o IRequestObserver) {
+	s.observers = append(s.observers, o)
 }
 
 func (service *RequestService) ProcessRecurringRequests(ctx context.Context) error {

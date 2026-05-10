@@ -50,9 +50,6 @@ Resources:
                         ManagedPolicyArns:
                                 - arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole
 
-        LambdaAdminSeedEvent:
-                Type: AWS::Lambda::async
-
         LambdaBackendPolicy:
                 Type: AWS::IAM::Policy
                 Properties:
