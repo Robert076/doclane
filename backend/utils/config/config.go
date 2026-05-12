@@ -85,6 +85,7 @@ func init() {
 		TextractService,
 		BedrockService,
 		PollyService,
+		[]services.IRequestObserver{},
 	)
 	DepartmentService = services.NewDepartmentService(departmentRepo, Logger)
 	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, departmentRepo, Logger)

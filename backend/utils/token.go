@@ -13,6 +13,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/golang-jwt/jwt"
+	"github.com/joho/godotenv"
 )
 
 type contextKey string
@@ -37,6 +38,7 @@ func init() {
 		}
 		jwt = *jwtParam.Parameter.Value
 	} else {
+		godotenv.Load("../../.env")
 		jwt = RequireEnv("JWT_SECRET")
 	}
 	JWTSecret = jwt
