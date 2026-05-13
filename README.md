@@ -55,6 +55,7 @@ The system is built around a simple workflow:
 
 ## Technologies
 
+- Cloud provider: AWS
 - Backend: Go (Golang)
 - Frontend: Next.js
 - Database: PostgreSQL
