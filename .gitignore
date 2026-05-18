@@ -26,6 +26,7 @@ profile.cov
 *.out
 *.toc
 *.fmt
+*.sh
 *.fot
 *.cb
 *.cb2
