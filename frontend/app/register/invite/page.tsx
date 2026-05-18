@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
-import { register } from "@/lib/api/auth";
+import { register } from "@/lib/client/auth";
 import { getInvitationCodeInfo } from "@/lib/api/invitation_codes";
 import RegisterForm from "@/components/AuthComponents/RegisterForm/RegisterForm";
 import LoadingSkeleton from "@/components/ViewComponents/LoadingSkeleton/LoadingSkeleton";
@@ -40,19 +40,24 @@ function InviteRegisterPage() {
         }) => {
                 if (!code) return;
                 setIsSubmitting(true);
-                const response = await register(
-                        data.email,
-                        data.password,
-                        data.firstName,
-                        data.lastName,
-                        code,
-                );
-                setIsSubmitting(false);
-                if (response.success) {
-                        toast.success("Cont creat cu succes!");
-                        router.push("/login");
-                } else {
-                        toast.error(response.message);
+                try {
+                        const pending = await register(
+                                data.email,
+                                data.password,
+                                data.firstName,
+                                data.lastName,
+                                code,
+                        );
+                        sessionStorage.setItem(
+                                "pendingRegistration",
+                                JSON.stringify(pending),
+                        );
+                        toast.success("Verifică-ți emailul pentru codul de confirmare.");
+                        router.push("/register/confirm");
+                } catch (err: any) {
+                        toast.error(err?.message ?? "Înregistrarea a eșuat.");
+                } finally {
+                        setIsSubmitting(false);
                 }
         };
 

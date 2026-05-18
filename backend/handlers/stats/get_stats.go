@@ -10,13 +10,13 @@ import (
 )
 
 func GetStatsHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	stats, err := config.StatsService.GetStats(r.Context(), *claims)
+	stats, err := config.StatsService.GetStats(r.Context(), claims)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

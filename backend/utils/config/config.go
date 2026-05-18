@@ -36,9 +36,18 @@ var TextractService *services.TextractService
 var BedrockService *services.BedrockService
 var PollyService *services.PollyService
 var S3Client *s3.Client
+var (
+	AWSRegion         string
+	CognitoUserPoolID string
+	CognitoClientID   string
+)
 
 func init() {
 	godotenv.Load("../../.env")
+
+	AWSRegion = utils.RequireEnv("AWS_REGION")
+	CognitoUserPoolID = utils.RequireEnv("COGNITO_USER_POOL_ID")
+	CognitoClientID = utils.RequireEnv("COGNITO_CLIENT_ID")
 
 	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 

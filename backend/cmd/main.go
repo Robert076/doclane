@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	// hello world
-	"github.com/Robert076/doclane/backend/handlers/auth"
 	auth_middleware "github.com/Robert076/doclane/backend/handlers/auth/middleware"
 	comment_handler "github.com/Robert076/doclane/backend/handlers/comments"
 	department_handler "github.com/Robert076/doclane/backend/handlers/departments"
@@ -18,6 +16,7 @@ import (
 	tag_handler "github.com/Robert076/doclane/backend/handlers/tags"
 	template_handler "github.com/Robert076/doclane/backend/handlers/templates"
 	user_handler "github.com/Robert076/doclane/backend/handlers/users"
+	"github.com/Robert076/doclane/backend/utils/config"
 	"github.com/aws/aws-lambda-go/lambda"
 	chiadapter "github.com/awslabs/aws-lambda-go-api-proxy/chi"
 	"github.com/go-chi/chi/v5"
@@ -26,7 +25,6 @@ import (
 )
 
 func buildRouter() (http.Handler, *chi.Mux) {
-	// hello from lambda with arm64
 	r := chi.NewRouter()
 
 	corsHandler := cors.New(cors.Options{
@@ -43,31 +41,38 @@ func buildRouter() (http.Handler, *chi.Mux) {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("Hello World!"))
-		if err != nil {
+		if _, err := w.Write([]byte("Hello World!")); err != nil {
 			log.Fatal(err)
 		}
 	})
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("Healthy"))
-		if err != nil {
+		if _, err := w.Write([]byte("Healthy")); err != nil {
 			log.Fatal(err)
 		}
 	})
 
+	// Public routes — no auth required
 	r.Route("/api/auth", func(r chi.Router) {
-		r.Post("/login", auth.LoginHandler)
-		r.Post("/register", auth.RegisterHandler)
-		r.Post("/logout", auth.LogoutHandler)
-		r.Post("/insert-admin", insertadmin_handler.InsertAdminHandler)
+		// Login and register are gone — Cognito handles those on the frontend.
+		// This is the only auth route left: called once after Cognito confirms
+		// a new user's email, to create their record in the application DB.
+		r.Post("/sync", user_handler.SyncUserHandler)
 	})
 
 	r.Get("/api/invitations/info", invitation_handler.GetInvitationCodeInfoHandler)
 	r.Post("/api/internal/process-recurring", request_handler.ProcessRecurringRequestsHandler)
 
+	// Protected routes — AuthGuard verifies the Cognito token, MustBeActive
+	// ensures the account has not been deactivated.
+	// After the /api/auth route group, before /api
+	r.Post("/api/auth/insert-admin", insertadmin_handler.InsertAdminHandler)
 	r.Route("/api", func(r chi.Router) {
-		r.Use(auth_middleware.AuthGuard)
+		r.Use(auth_middleware.AuthGuard(
+			config.AWSRegion,
+			config.CognitoUserPoolID,
+			config.CognitoClientID,
+		))
 		r.Use(auth_middleware.MustBeActive)
 
 		r.Get("/stats", stats_handler.GetStatsHandler)
@@ -76,7 +81,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Get("/", user_handler.GetUsersHandler)
 			r.Get("/me", user_handler.GetCurrentUserHandler)
 			r.Patch("/me/profile", user_handler.UpdateProfileHandler)
-			r.Patch("/me/password", user_handler.UpdatePasswordHandler)
+			// /me/password is gone — password changes go through Cognito on the frontend
 			r.Get("/by-department", user_handler.GetUsersByDepartmentHandler)
 			r.Get("/{id}", user_handler.GetUserByIDHandler)
 			r.Post("/notify/{id}", user_handler.NotifyUserHandler)

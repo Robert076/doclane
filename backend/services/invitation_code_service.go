@@ -44,7 +44,7 @@ func generateInvitationCode() (string, error) {
 
 func (s *InvitationCodeService) CreateInvitationCode(
 	ctx context.Context,
-	claims types.JWTClaims,
+	claims types.CallerContext,
 	departmentID int,
 	expiresInDays int,
 ) (string, error) {
@@ -111,7 +111,7 @@ func (s *InvitationCodeService) CreateInvitationCode(
 
 func (s *InvitationCodeService) GetInvitationCodes(
 	ctx context.Context,
-	claims types.JWTClaims,
+	claims types.CallerContext,
 ) ([]models.InvitationCode, error) {
 	if !claims.IsAdmin() {
 		return nil, errors.ErrForbidden{Msg: "Only admins can view invitation codes."}
@@ -140,7 +140,7 @@ func (s *InvitationCodeService) GetInvitationCodes(
 
 func (s *InvitationCodeService) GetInvitationCodesByDepartment(
 	ctx context.Context,
-	claims types.JWTClaims,
+	claims types.CallerContext,
 	departmentID int,
 ) ([]models.InvitationCode, error) {
 	if !claims.IsAdmin() {
@@ -250,7 +250,7 @@ func (s *InvitationCodeService) GetInvitationCodeInfo(
 
 func (s *InvitationCodeService) DeleteInvitationCode(
 	ctx context.Context,
-	claims types.JWTClaims,
+	claims types.CallerContext,
 	codeID int,
 ) error {
 	if !claims.IsAdmin() {

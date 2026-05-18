@@ -19,7 +19,7 @@ func NewDepartmentService(repo repositories.IDepartmentRepo, logger *slog.Logger
 	return &DepartmentService{repo: repo, logger: logger}
 }
 
-func (s *DepartmentService) GetAllDepartments(ctx context.Context, claims types.JWTClaims) ([]models.DepartmentDTORead, error) {
+func (s *DepartmentService) GetAllDepartments(ctx context.Context, claims types.CallerContext) ([]models.DepartmentDTORead, error) {
 	departments, err := s.repo.GetAllDepartments(ctx)
 	if err != nil {
 		s.logger.Error("failed to fetch departments",
@@ -35,7 +35,7 @@ func (s *DepartmentService) GetAllDepartments(ctx context.Context, claims types.
 	return departments, nil
 }
 
-func (s *DepartmentService) CreateDepartment(ctx context.Context, claims types.JWTClaims, name string) (int, error) {
+func (s *DepartmentService) CreateDepartment(ctx context.Context, claims types.CallerContext, name string) (int, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("unauthorized attempt to create department",
 			slog.Int("jwt_user_id", claims.UserID),

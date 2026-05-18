@@ -10,13 +10,13 @@ import (
 )
 
 func GetCancelledRequestsHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	requests, err := config.RequestService.GetCancelledRequests(r.Context(), *claims)
+	requests, err := config.RequestService.GetCancelledRequests(r.Context(), claims)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

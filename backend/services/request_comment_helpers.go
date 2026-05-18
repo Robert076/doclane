@@ -22,7 +22,7 @@ func (s *RequestCommentService) validateComment(comment models.RequestComment) e
 	return nil
 }
 
-func (s *RequestCommentService) checkUserIsParticipantOfRequest(ctx context.Context, claims types.JWTClaims, requestID int) (*models.RequestDTORead, error) {
+func (s *RequestCommentService) checkUserIsParticipantOfRequest(ctx context.Context, claims types.CallerContext, requestID int) (*models.RequestDTORead, error) {
 	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
 	if err != nil {
 		s.logger.Error("error getting request from db",
@@ -50,7 +50,7 @@ func (s *RequestCommentService) checkUserIsParticipantOfRequest(ctx context.Cont
 	return &req, nil
 }
 
-func (s *RequestCommentService) checkUserHasAccessToReadComment(ctx context.Context, claims types.JWTClaims, commentID int) (*models.RequestCommentDTO, error) {
+func (s *RequestCommentService) checkUserHasAccessToReadComment(ctx context.Context, claims types.CallerContext, commentID int) (*models.RequestCommentDTO, error) {
 	comm, err := s.commentRepo.GetCommentByID(ctx, commentID)
 	if err != nil {
 		s.logger.Error("error getting comment from db",

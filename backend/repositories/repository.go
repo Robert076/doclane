@@ -12,11 +12,11 @@ type IUserRepo interface {
 	GetUsers(ctx context.Context, limit *int, offset *int, orderBy *string, order *string, search *string) ([]models.User, error)
 	GetUserByID(ctx context.Context, id int) (models.User, error)
 	GetUserByEmail(ctx context.Context, email string) (models.User, error)
+	GetUserByCognitoSub(ctx context.Context, cognitoSub string) (models.User, error)
 	GetUsersByDepartment(ctx context.Context, departmentID int) ([]models.User, error)
 	AddUser(ctx context.Context, user models.User) (int, error)
 	NotifyUser(ctx context.Context, userId int, time time.Time) error
 	DeactivateUser(ctx context.Context, userId int) error
-	UpdatePassword(ctx context.Context, userID int, hashedPassword string) error
 	UpdateUserProfile(ctx context.Context, userID int, dto models.UserProfilePatchDTO) error
 	UpdateUserDepartment(ctx context.Context, userID int, departmentID int) error
 }

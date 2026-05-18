@@ -12,10 +12,10 @@ CREATE TABLE departments (
 -- Users
 CREATE TABLE users (
     id            SERIAL PRIMARY KEY,
+    cognito_sub   VARCHAR(128)  NOT NULL UNIQUE,
     email         CITEXT        NOT NULL UNIQUE,
     first_name    TEXT          NOT NULL,
     last_name     TEXT          NOT NULL,
-    password_hash TEXT          NOT NULL,
     role          TEXT          NOT NULL DEFAULT 'member' CHECK (role IN ('admin', 'member', 'citizen')),
     department_id INTEGER       REFERENCES departments(id) ON DELETE SET NULL,
     is_active     BOOLEAN       NOT NULL DEFAULT TRUE,
@@ -99,7 +99,7 @@ CREATE TABLE expected_documents (
 );
 
 -- Documents (uploaded files)
-CREATE TABLE documents (
+CREATE TABLE document_files (
     id                      SERIAL PRIMARY KEY,
     document_request_id     INTEGER     NOT NULL REFERENCES document_requests(id) ON DELETE CASCADE,
     expected_document_id    INTEGER     NOT NULL REFERENCES expected_documents(id) ON DELETE CASCADE,
@@ -113,7 +113,7 @@ CREATE TABLE documents (
 );
 
 -- Request comments
-CREATE TABLE request_comments (
+CREATE TABLE document_comments (
     id          SERIAL PRIMARY KEY,
     request_id  INTEGER     NOT NULL REFERENCES document_requests(id) ON DELETE CASCADE,
     user_id     INTEGER     NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -135,19 +135,36 @@ CREATE TABLE template_tags (
     PRIMARY KEY (template_id, tag_id)
 );
 
--- Indexes
-CREATE INDEX idx_users_department_id          ON users(department_id);
-CREATE INDEX idx_users_role                   ON users(role);
-CREATE INDEX idx_invitation_codes_department  ON invitation_codes(department_id);
-CREATE INDEX idx_invitation_codes_created_by  ON invitation_codes(created_by);
-CREATE INDEX idx_request_templates_dept       ON document_request_templates(department_id);
-CREATE INDEX idx_document_requests_assignee   ON document_requests(assignee);
-CREATE INDEX idx_document_requests_dept       ON document_requests(department_id);
+-- Users
+CREATE INDEX idx_users_department_id ON users(department_id);
+CREATE INDEX idx_users_role ON users(role);
+
+-- Invitation codes
+CREATE INDEX idx_invitation_codes_department ON invitation_codes(department_id);
+CREATE INDEX idx_invitation_codes_created_by ON invitation_codes(created_by);
+
+-- Request templates
+CREATE INDEX idx_request_templates_dept ON document_request_templates(department_id);
+CREATE INDEX idx_request_templates_created_by ON document_request_templates(created_by);
+
+-- Document requests
+CREATE INDEX idx_document_requests_assignee ON document_requests(assignee);
+CREATE INDEX idx_document_requests_dept ON document_requests(department_id);
 CREATE INDEX idx_document_requests_claimed_by ON document_requests(claimed_by);
-CREATE INDEX idx_document_requests_template   ON document_requests(template_id);
-CREATE INDEX idx_expected_documents_request   ON expected_documents(document_request_id);
-CREATE INDEX idx_documents_request            ON documents(document_request_id);
-CREATE INDEX idx_documents_expected           ON documents(expected_document_id);
-CREATE INDEX idx_documents_uploaded_by        ON documents(uploaded_by);
-CREATE INDEX idx_request_comments_request     ON request_comments(request_id);
-CREATE INDEX idx_request_comments_user        ON request_comments(user_id);
+CREATE INDEX idx_document_requests_template ON document_requests(template_id);
+
+-- Expected documents
+CREATE INDEX idx_expected_documents_request ON expected_documents(document_request_id);
+
+-- Document files
+CREATE INDEX idx_document_files_request ON document_files(document_request_id);
+CREATE INDEX idx_document_files_expected ON document_files(expected_document_id);
+CREATE INDEX idx_document_files_uploaded_by ON document_files(uploaded_by);
+
+-- Document comments
+CREATE INDEX idx_document_comments_request ON document_comments(request_id);
+CREATE INDEX idx_document_comments_user ON document_comments(user_id);
+
+-- Template tags
+CREATE INDEX idx_template_tags_tag ON template_tags(tag_id);
+

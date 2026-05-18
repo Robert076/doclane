@@ -13,7 +13,7 @@ import (
 
 func GetUsersByDepartmentHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Println(">>> GetUsersByDepartmentHandler called")
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -31,7 +31,7 @@ func GetUsersByDepartmentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := config.UserService.GetUsersByDepartment(r.Context(), *claims, deptID)
+	users, err := config.UserService.GetUsersByDepartment(r.Context(), claims, deptID)
 	if err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: "Could not fetch users by department."})
 		return

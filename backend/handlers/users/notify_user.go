@@ -19,19 +19,19 @@ func NotifyUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userClaims, err := utils.GetClaimsFromContext(r.Context())
+	userClaims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
-	err = config.UserService.NotifyUser(r.Context(), *userClaims, idInt)
+	err = config.UserService.NotifyUser(r.Context(), userClaims, idInt)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
 	}
 
-	u, err := config.UserService.GetUserByID(r.Context(), *userClaims, idInt)
+	u, err := config.UserService.GetUserByID(r.Context(), userClaims, idInt)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

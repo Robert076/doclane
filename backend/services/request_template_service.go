@@ -41,7 +41,7 @@ func NewRequestTemplateService(
 	}
 }
 
-func (s *RequestTemplateService) GetRequestTemplates(ctx context.Context, claims types.JWTClaims) ([]models.RequestTemplateDTORead, error) {
+func (s *RequestTemplateService) GetRequestTemplates(ctx context.Context, claims types.CallerContext) ([]models.RequestTemplateDTORead, error) {
 	templates, err := s.templateRepo.GetAllRequestTemplates(ctx)
 	if err != nil {
 		s.logger.Error("failed to fetch templates",
@@ -57,13 +57,13 @@ func (s *RequestTemplateService) GetRequestTemplates(ctx context.Context, claims
 	return templates, nil
 }
 
-func (s *RequestTemplateService) GetRequestTemplateByID(ctx context.Context, claims types.JWTClaims, requestTemplateID int) (*models.RequestTemplateDTORead, error) {
+func (s *RequestTemplateService) GetRequestTemplateByID(ctx context.Context, claims types.CallerContext, requestTemplateID int) (*models.RequestTemplateDTORead, error) {
 	return s.checkUserCanAccessTemplate(ctx, claims, requestTemplateID)
 }
 
 func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 	ctx context.Context,
-	claims types.JWTClaims,
+	claims types.CallerContext,
 	template models.RequestTemplate,
 	docs []types.ExpectedDocumentTemplateInput,
 ) (*int, error) {
@@ -109,7 +109,7 @@ func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 
 func (s *RequestTemplateService) DeleteExpectedDocumentTemplate(
 	ctx context.Context,
-	claims types.JWTClaims,
+	claims types.CallerContext,
 	expectedDocRequestTemplateID int,
 	requestTemplateID int,
 ) error {
@@ -133,7 +133,7 @@ func (s *RequestTemplateService) DeleteExpectedDocumentTemplate(
 	return nil
 }
 
-func (s *RequestTemplateService) GetExpectedDocumentTemplatesByRequestTemplateID(ctx context.Context, claims types.JWTClaims, requestTemplateID int) ([]models.ExpectedDocumentTemplate, error) {
+func (s *RequestTemplateService) GetExpectedDocumentTemplatesByRequestTemplateID(ctx context.Context, claims types.CallerContext, requestTemplateID int) ([]models.ExpectedDocumentTemplate, error) {
 	if _, err := s.checkUserCanAccessTemplate(ctx, claims, requestTemplateID); err != nil {
 		return nil, err
 	}
@@ -151,7 +151,7 @@ func (s *RequestTemplateService) GetExpectedDocumentTemplatesByRequestTemplateID
 	return documentRequestTemplates, nil
 }
 
-func (s *RequestTemplateService) PresignExample(ctx context.Context, claims types.JWTClaims, requestTemplateID int, expectedDocID int) (*string, error) {
+func (s *RequestTemplateService) PresignExample(ctx context.Context, claims types.CallerContext, requestTemplateID int, expectedDocID int) (*string, error) {
 	template, err := s.checkUserCanAccessTemplate(ctx, claims, requestTemplateID)
 	if err != nil {
 		return nil, err
@@ -196,7 +196,7 @@ func (s *RequestTemplateService) PresignExample(ctx context.Context, claims type
 	return &presignedURL, nil
 }
 
-func (s *RequestTemplateService) CloseRequestTemplate(ctx context.Context, claims types.JWTClaims, requestTemplateID int) error {
+func (s *RequestTemplateService) CloseRequestTemplate(ctx context.Context, claims types.CallerContext, requestTemplateID int) error {
 	if _, err := s.checkUserCanAccessTemplate(ctx, claims, requestTemplateID); err != nil {
 		return err
 	}
@@ -217,7 +217,7 @@ func (s *RequestTemplateService) CloseRequestTemplate(ctx context.Context, claim
 	return nil
 }
 
-func (s *RequestTemplateService) ReopenRequestTemplate(ctx context.Context, claims types.JWTClaims, requestTemplateID int) error {
+func (s *RequestTemplateService) ReopenRequestTemplate(ctx context.Context, claims types.CallerContext, requestTemplateID int) error {
 	if _, err := s.checkUserCanAccessTemplate(ctx, claims, requestTemplateID); err != nil {
 		return err
 	}
@@ -238,7 +238,7 @@ func (s *RequestTemplateService) ReopenRequestTemplate(ctx context.Context, clai
 	return nil
 }
 
-func (s *RequestTemplateService) DeleteRequestTemplate(ctx context.Context, claims types.JWTClaims, requestTemplateID int) error {
+func (s *RequestTemplateService) DeleteRequestTemplate(ctx context.Context, claims types.CallerContext, requestTemplateID int) error {
 	if _, err := s.checkUserCanAccessTemplate(ctx, claims, requestTemplateID); err != nil {
 		return err
 	}
@@ -259,7 +259,7 @@ func (s *RequestTemplateService) DeleteRequestTemplate(ctx context.Context, clai
 	return nil
 }
 
-func (s *RequestTemplateService) PatchRequestTemplate(ctx context.Context, claims types.JWTClaims, requestTemplateID int, dto models.RequestTemplateDTOPatch) error {
+func (s *RequestTemplateService) PatchRequestTemplate(ctx context.Context, claims types.CallerContext, requestTemplateID int, dto models.RequestTemplateDTOPatch) error {
 	if err := validateRequestTemplatePatchDTO(dto); err != nil {
 		return err
 	}

@@ -19,7 +19,7 @@ func NewStatsService(db repositories.IStatsRepo, logger *slog.Logger) *StatsServ
 	return &StatsService{db: db, logger: logger}
 }
 
-func (s *StatsService) GetStats(ctx context.Context, claims types.JWTClaims) (*models.Stats, error) {
+func (s *StatsService) GetStats(ctx context.Context, claims types.CallerContext) (*models.Stats, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("unauthorized attempt to get stats",
 			slog.Int("jwt_user_id", claims.UserID),

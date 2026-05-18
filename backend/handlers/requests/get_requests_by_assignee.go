@@ -12,7 +12,7 @@ import (
 )
 
 func GetRequestsByAssigneeHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -31,7 +31,7 @@ func GetRequestsByAssigneeHandler(w http.ResponseWriter, r *http.Request) {
 		searchPtr = &search
 	}
 
-	reqs, err := config.RequestService.GetRequestsByAssignee(r.Context(), *claims, assigneeID, searchPtr)
+	reqs, err := config.RequestService.GetRequestsByAssignee(r.Context(), claims, assigneeID, searchPtr)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

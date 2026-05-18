@@ -12,7 +12,7 @@ import (
 )
 
 func GetCommentByID(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -25,7 +25,7 @@ func GetCommentByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	comm, err := config.RequestCommentService.GetCommentByID(r.Context(), *claims, idInt)
+	comm, err := config.RequestCommentService.GetCommentByID(r.Context(), claims, idInt)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

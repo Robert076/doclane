@@ -29,11 +29,11 @@ func NewRequestCommentService(
 	}
 }
 
-func (s *RequestCommentService) GetCommentByID(ctx context.Context, claims types.JWTClaims, commentID int) (*models.RequestCommentDTO, error) {
+func (s *RequestCommentService) GetCommentByID(ctx context.Context, claims types.CallerContext, commentID int) (*models.RequestCommentDTO, error) {
 	return s.checkUserHasAccessToReadComment(ctx, claims, commentID)
 }
 
-func (s *RequestCommentService) GetCommentsByRequestID(ctx context.Context, claims types.JWTClaims, requestID int) ([]models.RequestCommentDTO, error) {
+func (s *RequestCommentService) GetCommentsByRequestID(ctx context.Context, claims types.CallerContext, requestID int) ([]models.RequestCommentDTO, error) {
 	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, requestID); err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func (s *RequestCommentService) GetCommentsByRequestID(ctx context.Context, clai
 	return comments, nil
 }
 
-func (s *RequestCommentService) AddComment(ctx context.Context, claims types.JWTClaims, requestID int, comment models.RequestComment) (*int, error) {
+func (s *RequestCommentService) AddComment(ctx context.Context, claims types.CallerContext, requestID int, comment models.RequestComment) (*int, error) {
 	if err := s.validateComment(comment); err != nil {
 		return nil, err
 	}

@@ -14,7 +14,7 @@ import (
 )
 
 func PatchRequestHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -33,7 +33,7 @@ func PatchRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := config.RequestService.PatchRequest(r.Context(), *claims, id, dto); err != nil {
+	if err := config.RequestService.PatchRequest(r.Context(), claims, id, dto); err != nil {
 		utils.WriteError(w, err)
 		return
 	}

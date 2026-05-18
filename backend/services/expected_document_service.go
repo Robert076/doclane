@@ -26,7 +26,7 @@ func NewExpectedDocumentService(expectedDocRepo repositories.IExpectedDocumentRe
 
 func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
 	ctx context.Context,
-	claims types.JWTClaims,
+	claims types.CallerContext,
 	expectedDocID int,
 	status string,
 	rejectionReason *string,

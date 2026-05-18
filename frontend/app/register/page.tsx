@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { register } from "@/lib/api/auth";
+import { register } from "@/lib/client/auth";
 import RegisterForm from "@/components/AuthComponents/RegisterForm/RegisterForm";
 
 export default function RegisterPage() {
@@ -16,18 +16,23 @@ export default function RegisterPage() {
                 lastName: string;
         }) => {
                 setIsSubmitting(true);
-                const response = await register(
-                        data.email,
-                        data.password,
-                        data.firstName,
-                        data.lastName,
-                );
-                setIsSubmitting(false);
-                if (response.success) {
-                        toast.success("Cont creat cu succes!");
-                        router.push("/login");
-                } else {
-                        toast.error(response.message);
+                try {
+                        const pending = await register(
+                                data.email,
+                                data.password,
+                                data.firstName,
+                                data.lastName,
+                        );
+                        sessionStorage.setItem(
+                                "pendingRegistration",
+                                JSON.stringify(pending),
+                        );
+                        toast.success("Verifică-ți emailul pentru codul de confirmare.");
+                        router.push("/register/confirm");
+                } catch (err: any) {
+                        toast.error(err?.message ?? "Înregistrarea a eșuat.");
+                } finally {
+                        setIsSubmitting(false);
                 }
         };
 

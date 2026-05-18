@@ -11,7 +11,7 @@ import (
 )
 
 func CreateDepartmentHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -25,7 +25,7 @@ func CreateDepartmentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := config.DepartmentService.CreateDepartment(r.Context(), *claims, body.Name)
+	id, err := config.DepartmentService.CreateDepartment(r.Context(), claims, body.Name)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

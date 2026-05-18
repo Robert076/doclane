@@ -12,7 +12,7 @@ import (
 )
 
 func ExtractFileTextHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -24,7 +24,7 @@ func ExtractFileTextHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	text, err := config.RequestService.ExtractFileText(r.Context(), *claims, fileID)
+	text, err := config.RequestService.ExtractFileText(r.Context(), claims, fileID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

@@ -15,7 +15,7 @@ func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
 	const maxRequestSize = 21 << 20
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
 
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -50,7 +50,7 @@ func AddDocumentHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := config.RequestService.AddDocument(
 		r.Context(),
-		*claims,
+		claims,
 		requestID,
 		expectedDocID,
 		header.Filename,

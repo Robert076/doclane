@@ -11,7 +11,7 @@ import (
 )
 
 func GetInvitationCodesByDepartmentHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -29,7 +29,7 @@ func GetInvitationCodesByDepartmentHandler(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	codes, err := config.InvitationCodeService.GetInvitationCodesByDepartment(r.Context(), *claims, deptID)
+	codes, err := config.InvitationCodeService.GetInvitationCodesByDepartment(r.Context(), claims, deptID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

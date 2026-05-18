@@ -46,7 +46,7 @@ func (s *TagService) GetTagByID(ctx context.Context, id int) (models.Tag, error)
 	return tag, nil
 }
 
-func (s *TagService) CreateTag(ctx context.Context, claims types.JWTClaims, dto models.TagDTOCreate) (models.Tag, error) {
+func (s *TagService) CreateTag(ctx context.Context, claims types.CallerContext, dto models.TagDTOCreate) (models.Tag, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to create tag",
 			slog.Int("jwt_user_id", claims.UserID),
@@ -96,7 +96,7 @@ func (s *TagService) CreateTag(ctx context.Context, claims types.JWTClaims, dto 
 	return tag, nil
 }
 
-func (s *TagService) UpdateTag(ctx context.Context, claims types.JWTClaims, id int, dto models.TagDTOUpdate) (models.Tag, error) {
+func (s *TagService) UpdateTag(ctx context.Context, claims types.CallerContext, id int, dto models.TagDTOUpdate) (models.Tag, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to update tag",
 			slog.Int("jwt_user_id", claims.UserID),
@@ -126,7 +126,7 @@ func (s *TagService) UpdateTag(ctx context.Context, claims types.JWTClaims, id i
 	return tag, nil
 }
 
-func (s *TagService) DeleteTag(ctx context.Context, claims types.JWTClaims, id int) error {
+func (s *TagService) DeleteTag(ctx context.Context, claims types.CallerContext, id int) error {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to delete tag",
 			slog.Int("jwt_user_id", claims.UserID),
@@ -151,7 +151,7 @@ func (s *TagService) DeleteTag(ctx context.Context, claims types.JWTClaims, id i
 	return nil
 }
 
-func (s *TagService) SetTemplateTags(ctx context.Context, claims types.JWTClaims, templateID int, tagIDs []int) error {
+func (s *TagService) SetTemplateTags(ctx context.Context, claims types.CallerContext, templateID int, tagIDs []int) error {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to set template tags",
 			slog.Int("jwt_user_id", claims.UserID),
