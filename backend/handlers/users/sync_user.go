@@ -1,8 +1,10 @@
 package user_handler
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"strings"
 
 	"github.com/Robert076/doclane/backend/services"
 	"github.com/Robert076/doclane/backend/types"
@@ -23,9 +25,29 @@ type syncUserRequest struct {
 // Cognito identity via cognito_sub. Login and registration themselves are
 // handled entirely by Cognito on the frontend.
 func SyncUserHandler(w http.ResponseWriter, r *http.Request) {
-	caller, err := utils.GetCallerFromContext(r.Context())
+	// Parse token directly — this route has no AuthGuard since the user
+	// doesn't exist in the DB yet. We verify the token manually.
+	tokenString := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
+	if tokenString == "" {
+		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
+		return
+	}
+
+	parts := strings.Split(tokenString, ".")
+	if len(parts) != 3 {
+		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
+		return
+	}
+	payload, err := base64.RawURLEncoding.DecodeString(parts[1])
 	if err != nil {
-		utils.WriteError(w, err)
+		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
+		return
+	}
+	var claims struct {
+		Sub string `json:"sub"`
+	}
+	if err := json.Unmarshal(payload, &claims); err != nil || claims.Sub == "" {
+		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
@@ -47,7 +69,7 @@ func SyncUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	params := services.SyncUserParams{
-		CognitoSub: caller.CognitoSub,
+		CognitoSub: claims.Sub,
 		Email:      req.Email,
 		FirstName:  req.FirstName,
 		LastName:   req.LastName,
