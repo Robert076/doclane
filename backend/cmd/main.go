@@ -104,6 +104,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 				r.Post("/cancel", request_handler.CancelRequestHandler)
 				r.Post("/claim", request_handler.ClaimRequestHandler)
 				r.Post("/unclaim", request_handler.UnclaimRequestHandler)
+				r.Get("/audit", request_handler.GetRequestAuditLogHandler)
 				r.Route("/comments", func(r chi.Router) {
 					r.Get("/", comment_handler.GetCommentsByRequest)
 					r.Get("/{commentID}", comment_handler.GetCommentByID)
