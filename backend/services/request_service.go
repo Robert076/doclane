@@ -27,7 +27,7 @@ type RequestService struct {
 	bedrock             IBedrockService
 	polly               IPollyService
 	logger              *slog.Logger
-	bus                 events.EventBus
+	bus                 *events.EventBus
 }
 
 func NewRequestService(
@@ -42,7 +42,7 @@ func NewRequestService(
 	textract ITextractService,
 	bedrock IBedrockService,
 	polly IPollyService,
-	bus events.EventBus,
+	bus *events.EventBus,
 ) *RequestService {
 	return &RequestService{
 		requestRepo:         requestRepo,
@@ -393,6 +393,18 @@ func (s *RequestService) ClaimRequest(ctx context.Context, claims types.CallerCo
 		slog.Int("request_id", requestID),
 		slog.Int("caller_id", claims.UserID),
 	)
+
+	s.bus.Publish(ctx, events.Event{
+		Type:         events.EventRequestClaimed,
+		ActorID:      claims.UserID,
+		ResourceID:   requestID,
+		ResourceType: events.ResourceTypeRequest,
+		Metadata: map[string]any{
+			"claimed_by": claims.UserID,
+			"title":      req.Title,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return nil
 }
 
@@ -432,6 +444,17 @@ func (s *RequestService) UnclaimRequest(ctx context.Context, claims types.Caller
 		slog.Int("request_id", requestID),
 		slog.Int("caller_id", claims.UserID),
 	)
+
+	s.bus.Publish(ctx, events.Event{
+		Type:         events.EventRequestUnclaimed,
+		ActorID:      claims.UserID,
+		ResourceID:   requestID,
+		ResourceType: events.ResourceTypeRequest,
+		Metadata: map[string]any{
+			"title": req.Title,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return nil
 }
 
@@ -460,6 +483,17 @@ func (s *RequestService) ReopenRequest(ctx context.Context, claims types.CallerC
 		slog.Int("request_id", requestID),
 		slog.Int("caller_id", claims.UserID),
 	)
+
+	s.bus.Publish(ctx, events.Event{
+		Type:         events.EventRequestReopened,
+		ActorID:      claims.UserID,
+		ResourceID:   requestID,
+		ResourceType: events.ResourceTypeRequest,
+		Metadata: map[string]any{
+			"title": req.Title,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return nil
 }
 
@@ -491,6 +525,17 @@ func (s *RequestService) CloseRequest(ctx context.Context, claims types.CallerCo
 		slog.Int("request_id", requestID),
 		slog.Int("caller_id", claims.UserID),
 	)
+
+	s.bus.Publish(ctx, events.Event{
+		Type:         events.EventRequestClosed,
+		ActorID:      claims.UserID,
+		ResourceID:   requestID,
+		ResourceType: events.ResourceTypeRequest,
+		Metadata: map[string]any{
+			"title": req.Title,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return nil
 }
 
@@ -533,6 +578,16 @@ func (s *RequestService) CancelRequest(ctx context.Context, claims types.CallerC
 		return err
 	}
 
+	s.bus.Publish(ctx, events.Event{
+		Type:         events.EventRequestCancelled,
+		ActorID:      claims.UserID,
+		ResourceID:   requestID,
+		ResourceType: events.ResourceTypeRequest,
+		Metadata: map[string]any{
+			"title": req.Title,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return nil
 }
 
@@ -682,6 +737,19 @@ func (s *RequestService) AddDocument(
 		slog.Int("file_id", id),
 		slog.Int("caller_id", claims.UserID),
 	)
+
+	s.bus.Publish(ctx, events.Event{
+		Type:         events.EventDocumentUploaded,
+		ActorID:      claims.UserID,
+		ResourceID:   id,
+		ResourceType: events.ResourceTypeDocument,
+		Metadata: map[string]any{
+			"file_name":            cleanFileName,
+			"request_id":           requestID,
+			"expected_document_id": expectedDocID,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return &id, nil
 }
 
