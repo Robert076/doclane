@@ -12,7 +12,7 @@ import (
 )
 
 func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
-	userClaims, err := utils.GetClaimsFromContext(r.Context())
+	userClaims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -58,7 +58,7 @@ func GetUsersHandler(w http.ResponseWriter, r *http.Request) {
 		searchPtr = &s
 	}
 
-	users, err := config.UserService.GetUsers(r.Context(), *userClaims, limitPtr, offsetPtr, orderByPtr, orderPtr, searchPtr)
+	users, err := config.UserService.GetUsers(r.Context(), userClaims, limitPtr, offsetPtr, orderByPtr, orderPtr, searchPtr)
 	if err != nil {
 		utils.WriteError(w, errors.ErrBadRequest{Msg: fmt.Sprintf("Could not fetch users. %v", err)})
 		return

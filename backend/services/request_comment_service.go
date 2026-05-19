@@ -29,11 +29,11 @@ func NewRequestCommentService(
 	}
 }
 
-func (s *RequestCommentService) GetCommentByID(ctx context.Context, claims types.JWTClaims, commentID int) (*models.RequestCommentDTO, error) {
+func (s *RequestCommentService) GetCommentByID(ctx context.Context, claims types.CallerContext, commentID int) (*models.RequestCommentDTO, error) {
 	return s.checkUserHasAccessToReadComment(ctx, claims, commentID)
 }
 
-func (s *RequestCommentService) GetCommentsByRequestID(ctx context.Context, claims types.JWTClaims, requestID int) ([]models.RequestCommentDTO, error) {
+func (s *RequestCommentService) GetCommentsByRequestID(ctx context.Context, claims types.CallerContext, requestID int) ([]models.RequestCommentDTO, error) {
 	if _, err := s.checkUserIsParticipantOfRequest(ctx, claims, requestID); err != nil {
 		return nil, err
 	}
@@ -42,7 +42,7 @@ func (s *RequestCommentService) GetCommentsByRequestID(ctx context.Context, clai
 	if err != nil {
 		s.logger.Error("failed to get comments by request",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -50,7 +50,7 @@ func (s *RequestCommentService) GetCommentsByRequestID(ctx context.Context, clai
 	return comments, nil
 }
 
-func (s *RequestCommentService) AddComment(ctx context.Context, claims types.JWTClaims, requestID int, comment models.RequestComment) (*int, error) {
+func (s *RequestCommentService) AddComment(ctx context.Context, claims types.CallerContext, requestID int, comment models.RequestComment) (*int, error) {
 	if err := s.validateComment(comment); err != nil {
 		return nil, err
 	}
@@ -67,7 +67,7 @@ func (s *RequestCommentService) AddComment(ctx context.Context, claims types.JWT
 	if err != nil {
 		s.logger.Error("error when trying to retrieve request for adding comment",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -76,7 +76,7 @@ func (s *RequestCommentService) AddComment(ctx context.Context, claims types.JWT
 	if req.IsCancelled || req.IsClosed {
 		s.logger.Warn("user attempted to add comment to closed or cancelled request",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrBadRequest{Msg: "Cannot add comment to closed or cancelled request."}
 	}
@@ -90,7 +90,7 @@ func (s *RequestCommentService) AddComment(ctx context.Context, claims types.JWT
 	if err != nil {
 		s.logger.Error("failed to add comment",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err

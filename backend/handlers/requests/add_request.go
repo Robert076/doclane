@@ -12,7 +12,7 @@ import (
 )
 
 func AddRequestHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -24,7 +24,7 @@ func AddRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := config.RequestService.AddRequest(r.Context(), *claims, dto)
+	id, err := config.RequestService.AddRequest(r.Context(), claims, dto)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

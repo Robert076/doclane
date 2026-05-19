@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Input from "@/components/InputComponents/Input";
 import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
-import { updatePassword } from "@/lib/api/users";
+import { changePassword } from "@/lib/api/auth";
 import toast from "react-hot-toast";
 import "@/components/Pages/SettingsComponents/ProfileSection.css";
 
@@ -33,10 +33,7 @@ export default function PasswordSection() {
                 }
 
                 setIsSubmitting(true);
-                const response = await updatePassword({
-                        current_password: currentPassword,
-                        new_password: newPassword,
-                });
+                const response = await changePassword(currentPassword, newPassword);
                 setIsSubmitting(false);
 
                 if (response.success) {

@@ -12,7 +12,7 @@ import (
 )
 
 func GetRequestTemplateByIDHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -25,7 +25,7 @@ func GetRequestTemplateByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	template, err := config.RequestTemplateService.GetRequestTemplateByID(r.Context(), *claims, templateID)
+	template, err := config.RequestTemplateService.GetRequestTemplateByID(r.Context(), claims, templateID)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

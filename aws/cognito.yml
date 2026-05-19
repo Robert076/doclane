@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Cognito User Pool for Doclane
+
+Parameters:
+  Environment:
+    Type: String
+    Default: production
+    AllowedValues:
+      - production
+      - staging
+      - development
+
+Resources:
+  DoclaneUserPool:
+    Type: AWS::Cognito::UserPool
+    Properties:
+      UserPoolName: doclane-user-pool
+      UsernameAttributes:
+        - email
+      AutoVerifiedAttributes:
+        - email
+      Policies:
+        PasswordPolicy:
+          MinimumLength: 8
+          RequireUppercase: true
+          RequireNumbers: true
+          RequireSymbols: false
+          RequireLowercase: true
+      Schema:
+        - Name: email
+          AttributeDataType: String
+          Required: true
+          Mutable: false
+      UserPoolTags:
+        Project: Doclane
+        Environment: !Ref Environment
+
+  # Production client — tokens issued here are only accepted by the prod backend
+  DoclaneUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: doclane-web-client
+      UserPoolId: !Ref DoclaneUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+      PreventUserExistenceErrors: ENABLED
+
+  # Development client — tokens issued here are only accepted by the local backend.
+  # Set COGNITO_CLIENT_ID=<DevClientId> in your local .env to use this.
+  # The prod backend uses the prod client ID so dev tokens are automatically rejected there.
+  DoclaneDevUserPoolClient:
+    Type: AWS::Cognito::UserPoolClient
+    Properties:
+      ClientName: doclane-dev-client
+      UserPoolId: !Ref DoclaneUserPool
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_USER_PASSWORD_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      AccessTokenValidity: 1
+      IdTokenValidity: 1
+      RefreshTokenValidity: 30
+      TokenValidityUnits:
+        AccessToken: hours
+        IdToken: hours
+        RefreshToken: days
+      PreventUserExistenceErrors: ENABLED
+
+  # Seeded admin user for demo purposes.
+  # After deployment, run:
+  #   aws cognito-idp admin-set-user-password \
+  #     --user-pool-id <UserPoolId> \
+  #     --username admin@admin.com \
+  #     --password Admin1234! \
+  #     --permanent
+  # Then call POST /api/auth/insert-admin with X-Seed-Secret header.
+  DoclaneAdminUser:
+    Type: AWS::Cognito::UserPoolUser
+    Properties:
+      UserPoolId: !Ref DoclaneUserPool
+      Username: admin@admin.com
+      MessageAction: SUPPRESS
+      UserAttributes:
+        - Name: email
+          Value: admin@admin.com
+        - Name: email_verified
+          Value: "true"
+
+Outputs:
+  UserPoolId:
+    Description: Cognito User Pool ID — set as COGNITO_USER_POOL_ID env var in lambda-backend.yml and local .env
+    Value: !Ref DoclaneUserPool
+    Export:
+      Name: DoclaneUserPoolId
+
+  UserPoolClientId:
+    Description: Cognito App Client ID (prod) — set as COGNITO_CLIENT_ID env var in lambda-backend.yml
+    Value: !Ref DoclaneUserPoolClient
+    Export:
+      Name: DoclaneUserPoolClientId
+
+  DevUserPoolClientId:
+    Description: Cognito App Client ID (dev) — set as COGNITO_CLIENT_ID in local .env and NEXT_PUBLIC_COGNITO_CLIENT_ID in frontend/.env.local
+    Value: !Ref DoclaneDevUserPoolClient
+    Export:
+      Name: DoclaneDevUserPoolClientId
+
+  UserPoolArn:
+    Description: Cognito User Pool ARN
+    Value: !GetAtt DoclaneUserPool.Arn
+    Export:
+      Name: DoclaneUserPoolArn

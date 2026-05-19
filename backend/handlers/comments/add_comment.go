@@ -14,7 +14,7 @@ import (
 )
 
 func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -33,7 +33,7 @@ func AddCommentHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := config.RequestCommentService.AddComment(r.Context(), *claims, reqIDInt, comm)
+	id, err := config.RequestCommentService.AddComment(r.Context(), claims, reqIDInt, comm)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

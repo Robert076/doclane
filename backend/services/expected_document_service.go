@@ -26,7 +26,7 @@ func NewExpectedDocumentService(expectedDocRepo repositories.IExpectedDocumentRe
 
 func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
 	ctx context.Context,
-	claims types.JWTClaims,
+	claims types.CallerContext,
 	expectedDocID int,
 	status string,
 	rejectionReason *string,
@@ -34,7 +34,7 @@ func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
 	if status == "rejected" && (rejectionReason == nil || *rejectionReason == "") {
 		service.logger.Warn("rejection attempted without a reason",
 			slog.Int("expected_doc_id", expectedDocID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrBadRequest{Msg: "Must provide a reason for rejecting the document."}
 	}
@@ -55,7 +55,7 @@ func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
 		}
 		if *req.ClaimedBy != claims.UserID {
 			service.logger.Warn("user tried to modify status on request that he did not claim",
-				slog.Int("jwt_user_id", claims.UserID),
+				slog.Int("caller_id", claims.UserID),
 				slog.Int("request_id", req.ID),
 			)
 			return nil, errors.ErrForbidden{Msg: "You can only work on requests that are claimed by you."}
@@ -65,7 +65,7 @@ func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
 	isDepartmentMatch := claims.DepartmentID != nil && *claims.DepartmentID == req.DepartmentID
 	if !claims.IsAdmin() && !isDepartmentMatch {
 		service.logger.Warn("unauthorized status update attempt",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("expected_doc_id", expectedDocID),
 		)
 		return nil, errors.ErrForbidden{Msg: "Only the department handling this request can update document status."}
@@ -74,7 +74,7 @@ func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
 	if err := service.expectedDocRepo.UpdateExpectedDocumentStatus(ctx, expectedDocID, status, rejectionReason); err != nil {
 		service.logger.Error("failed to update expected document status",
 			slog.Int("expected_doc_id", expectedDocID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.String("status", status),
 			slog.Any("error", err),
 		)
@@ -88,7 +88,7 @@ func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
 
 	service.logger.Info("expected document status updated",
 		slog.Int("expected_doc_id", expectedDocID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 		slog.String("status", status),
 	)
 	return &updated, nil

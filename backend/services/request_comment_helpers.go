@@ -22,11 +22,11 @@ func (s *RequestCommentService) validateComment(comment models.RequestComment) e
 	return nil
 }
 
-func (s *RequestCommentService) checkUserIsParticipantOfRequest(ctx context.Context, claims types.JWTClaims, requestID int) (*models.RequestDTORead, error) {
+func (s *RequestCommentService) checkUserIsParticipantOfRequest(ctx context.Context, claims types.CallerContext, requestID int) (*models.RequestDTORead, error) {
 	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
 	if err != nil {
 		s.logger.Error("error getting request from db",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("request_id", requestID),
 			slog.Any("error", err),
 		)
@@ -41,7 +41,7 @@ func (s *RequestCommentService) checkUserIsParticipantOfRequest(ctx context.Cont
 	isAssignee := req.Assignee == claims.UserID
 	if !isDepartmentMatch && !isAssignee {
 		s.logger.Warn("unauthorized access attempted for comments on a request",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("request_id", requestID),
 		)
 		return nil, errors.ErrForbidden{Msg: "You don't have access to this request."}
@@ -50,11 +50,11 @@ func (s *RequestCommentService) checkUserIsParticipantOfRequest(ctx context.Cont
 	return &req, nil
 }
 
-func (s *RequestCommentService) checkUserHasAccessToReadComment(ctx context.Context, claims types.JWTClaims, commentID int) (*models.RequestCommentDTO, error) {
+func (s *RequestCommentService) checkUserHasAccessToReadComment(ctx context.Context, claims types.CallerContext, commentID int) (*models.RequestCommentDTO, error) {
 	comm, err := s.commentRepo.GetCommentByID(ctx, commentID)
 	if err != nil {
 		s.logger.Error("error getting comment from db",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("comment_id", commentID),
 			slog.Any("error", err),
 		)
@@ -76,7 +76,7 @@ func (s *RequestCommentService) checkUserIsNotSpamming(ctx context.Context, jwtU
 
 	if time.Now().UTC().Sub(last.CreatedAt.UTC()) < 30*time.Second {
 		s.logger.Warn("refused to create comment for user, was timed out",
-			slog.Int("jwt_user_id", jwtUserID),
+			slog.Int("caller_id", jwtUserID),
 		)
 		return errors.ErrTooManyRequests{Msg: "Please wait before posting another comment."}
 	}

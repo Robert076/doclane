@@ -10,13 +10,13 @@ import (
 )
 
 func GetArchivedRequestsHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
 	}
 
-	requests, err := config.RequestService.GetArchivedRequests(r.Context(), *claims)
+	requests, err := config.RequestService.GetArchivedRequests(r.Context(), claims)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

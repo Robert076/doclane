@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"log/slog"
+	"time"
 
+	"github.com/Robert076/doclane/backend/events"
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/types"
@@ -13,32 +15,33 @@ import (
 type DepartmentService struct {
 	repo   repositories.IDepartmentRepo
 	logger *slog.Logger
+	bus    *events.EventBus
 }
 
-func NewDepartmentService(repo repositories.IDepartmentRepo, logger *slog.Logger) *DepartmentService {
-	return &DepartmentService{repo: repo, logger: logger}
+func NewDepartmentService(repo repositories.IDepartmentRepo, logger *slog.Logger, bus *events.EventBus) *DepartmentService {
+	return &DepartmentService{repo: repo, logger: logger, bus: bus}
 }
 
-func (s *DepartmentService) GetAllDepartments(ctx context.Context, claims types.JWTClaims) ([]models.DepartmentDTORead, error) {
+func (s *DepartmentService) GetAllDepartments(ctx context.Context, claims types.CallerContext) ([]models.DepartmentDTORead, error) {
 	departments, err := s.repo.GetAllDepartments(ctx)
 	if err != nil {
 		s.logger.Error("failed to fetch departments",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
 	s.logger.Info("fetched departments successfully",
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return departments, nil
 }
 
-func (s *DepartmentService) CreateDepartment(ctx context.Context, claims types.JWTClaims, name string) (int, error) {
+func (s *DepartmentService) CreateDepartment(ctx context.Context, claims types.CallerContext, name string) (int, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("unauthorized attempt to create department",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return 0, errors.ErrForbidden{Msg: "Only admins can create departments."}
 	}
@@ -51,7 +54,7 @@ func (s *DepartmentService) CreateDepartment(ctx context.Context, claims types.J
 	if err != nil {
 		s.logger.Error("failed to create department",
 			slog.String("name", name),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return 0, err
@@ -60,7 +63,18 @@ func (s *DepartmentService) CreateDepartment(ctx context.Context, claims types.J
 	s.logger.Info("department created successfully",
 		slog.Int("department_id", id),
 		slog.String("name", name),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
+
+	s.bus.Publish(ctx, events.Event{
+		Type:         events.EventDepartmentCreated,
+		ActorID:      claims.UserID,
+		ResourceID:   id,
+		ResourceType: events.ResourceTypeDepartment,
+		Metadata: map[string]any{
+			"name": name,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return id, nil
 }

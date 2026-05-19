@@ -111,7 +111,7 @@ func ComputeNextDueAt(dueDate *time.Time, cronExpr *string) *time.Time {
 	return &next
 }
 
-func (s *RequestService) checkUserCanEditRequest(ctx context.Context, claims types.JWTClaims, requestID int) (*models.RequestDTORead, error) {
+func (s *RequestService) checkUserCanEditRequest(ctx context.Context, claims types.CallerContext, requestID int) (*models.RequestDTORead, error) {
 	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
 	if err != nil {
 		s.logger.Error("error getting request from db",
@@ -134,7 +134,7 @@ func (s *RequestService) checkUserCanEditRequest(ctx context.Context, claims typ
 	return &req, nil
 }
 
-func (s *RequestService) checkUserIsParticipantOfRequest(ctx context.Context, claims types.JWTClaims, requestID int) (*models.RequestDTORead, error) {
+func (s *RequestService) checkUserIsParticipantOfRequest(ctx context.Context, claims types.CallerContext, requestID int) (*models.RequestDTORead, error) {
 	req, err := s.requestRepo.GetRequestByID(ctx, requestID)
 	if err != nil {
 		s.logger.Error("error getting request from db",

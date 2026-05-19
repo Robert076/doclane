@@ -12,7 +12,7 @@ import (
 )
 
 func CancelRequestHandler(w http.ResponseWriter, r *http.Request) {
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -24,7 +24,7 @@ func CancelRequestHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := config.RequestService.CancelRequest(r.Context(), *claims, requestID); err != nil {
+	if err := config.RequestService.CancelRequest(r.Context(), claims, requestID); err != nil {
 		utils.WriteError(w, err)
 		return
 	}

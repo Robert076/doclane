@@ -12,6 +12,7 @@ import StatusBadge from "@/components/Pages/RequestsComponents/StatusBadge";
 import DocumentSlotActions from "./_components/DocumentSlotActions";
 import { useDocumentStatus } from "./_hooks/useDocumentStatus";
 import "./ExpectedDocumentSlot.css";
+import ReactMarkdown from "react-markdown";
 
 interface ExpectedDocumentSlotProps {
         expectedDocument: ExpectedDocument;
@@ -188,24 +189,25 @@ export default function ExpectedDocumentSlot({
                         )}
 
                         {interpretedText && (
-                                <div className="extracted-text extracted-text--interpreted">
-                                        <div className="extracted-text-header">
-                                                <span>Interpretare AI</span>
-                                                <button
-                                                        type="button"
-                                                        className="extracted-text-close"
-                                                        onClick={() =>
-                                                                setInterpretedText(null)
-                                                        }
-                                                >
-                                                        ×
-                                                </button>
-                                        </div>
-                                        <pre className="extracted-text-content">
-                                                {interpretedText}
-                                        </pre>
-                                </div>
-                        )}
+  <div className="extracted-text extracted-text--interpreted">
+    <div className="extracted-text-header">
+      <span>Interpretare AI</span>
+      <button
+        type="button"
+        className="extracted-text-close"
+        onClick={() => setInterpretedText(null)}
+      >
+        ×
+      </button>
+    </div>
+
+    <div className="extracted-text-content">
+      <ReactMarkdown>
+        {interpretedText}
+      </ReactMarkdown>
+    </div>
+  </div>
+)}
                 </div>
         );
 }

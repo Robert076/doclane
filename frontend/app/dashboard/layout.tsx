@@ -1,5 +1,5 @@
 import Sidebar from "@/components/OtherComponents/Sidebar/Sidebar";
-
+import "@/lib/amplify";
 import { redirect } from "next/navigation";
 import { UserProvider } from "@/context/UserContext";
 import "./dashboard-layout.css";

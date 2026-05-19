@@ -141,11 +141,11 @@ func (s *RequestTemplateService) insertTemplateWithDocsTx(
 	return templateID, err
 }
 
-func (s *RequestTemplateService) checkUserCanAccessTemplate(ctx context.Context, claims types.JWTClaims, requestTemplateID int) (*models.RequestTemplateDTORead, error) {
+func (s *RequestTemplateService) checkUserCanAccessTemplate(ctx context.Context, claims types.CallerContext, requestTemplateID int) (*models.RequestTemplateDTORead, error) {
 	template, err := s.templateRepo.GetRequestTemplateByID(ctx, requestTemplateID)
 	if err != nil {
 		s.logger.Error("error getting template from db",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("template_id", requestTemplateID),
 			slog.Any("error", err),
 		)
@@ -159,7 +159,7 @@ func (s *RequestTemplateService) checkUserCanAccessTemplate(ctx context.Context,
 	isDepartmentMatch := claims.DepartmentID != nil && *claims.DepartmentID == template.DepartmentID
 	if !isDepartmentMatch {
 		s.logger.Warn("unauthorized access attempted for template",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("template_id", requestTemplateID),
 		)
 		return nil, errors.ErrForbidden{Msg: "You don't have access to this template."}

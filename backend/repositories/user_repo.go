@@ -19,6 +19,34 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
+// scanUser scans a row into a User struct.
+// All queries select the same columns in the same order, so this keeps
+// the scan list in one place instead of duplicated across every method.
+func scanUser(row interface {
+	Scan(dest ...interface{}) error
+}) (models.User, error) {
+	var user models.User
+	err := row.Scan(
+		&user.ID,
+		&user.CognitoSub,
+		&user.Email,
+		&user.FirstName,
+		&user.LastName,
+		&user.Role,
+		&user.DepartmentID,
+		&user.IsActive,
+		&user.LastNotified,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+		&user.Phone,
+		&user.Street,
+		&user.Locality,
+	)
+	return user, err
+}
+
+const userColumns = `id, cognito_sub, email, first_name, last_name, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality`
+
 func (repo *UserRepo) GetUsers(
 	ctx context.Context,
 	limit *int,
@@ -34,10 +62,7 @@ func (repo *UserRepo) GetUsers(
 		"updated_at": "updated_at",
 	}
 
-	query := `
-		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality
-		FROM users
-	`
+	query := `SELECT ` + userColumns + ` FROM users`
 
 	args := []interface{}{}
 	argIndex := 1
@@ -84,23 +109,8 @@ func (repo *UserRepo) GetUsers(
 
 	users := []models.User{}
 	for rows.Next() {
-		var user models.User
-		if err := rows.Scan(
-			&user.ID,
-			&user.Email,
-			&user.FirstName,
-			&user.LastName,
-			&user.PasswordHash,
-			&user.Role,
-			&user.DepartmentID,
-			&user.IsActive,
-			&user.LastNotified,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-			&user.Phone,
-			&user.Street,
-			&user.Locality,
-		); err != nil {
+		user, err := scanUser(rows)
+		if err != nil {
 			return nil, err
 		}
 		users = append(users, user)
@@ -110,28 +120,8 @@ func (repo *UserRepo) GetUsers(
 }
 
 func (repo *UserRepo) GetUserByID(ctx context.Context, id int) (models.User, error) {
-	query := `
-		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality
-		FROM users
-		WHERE id = $1
-	`
-	var user models.User
-	err := repo.db.QueryRowContext(ctx, query, id).Scan(
-		&user.ID,
-		&user.Email,
-		&user.FirstName,
-		&user.LastName,
-		&user.PasswordHash,
-		&user.Role,
-		&user.DepartmentID,
-		&user.IsActive,
-		&user.LastNotified,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-		&user.Phone,
-		&user.Street,
-		&user.Locality,
-	)
+	query := `SELECT ` + userColumns + ` FROM users WHERE id = $1`
+	user, err := scanUser(repo.db.QueryRowContext(ctx, query, id))
 	if err == sql.ErrNoRows {
 		return models.User{}, errors.ErrNotFound{Msg: "User not found."}
 	}
@@ -139,28 +129,20 @@ func (repo *UserRepo) GetUserByID(ctx context.Context, id int) (models.User, err
 }
 
 func (repo *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.User, error) {
-	query := `
-		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality
-		FROM users
-		WHERE email = $1
-	`
-	var user models.User
-	err := repo.db.QueryRowContext(ctx, query, email).Scan(
-		&user.ID,
-		&user.Email,
-		&user.FirstName,
-		&user.LastName,
-		&user.PasswordHash,
-		&user.Role,
-		&user.DepartmentID,
-		&user.IsActive,
-		&user.LastNotified,
-		&user.CreatedAt,
-		&user.UpdatedAt,
-		&user.Phone,
-		&user.Street,
-		&user.Locality,
-	)
+	query := `SELECT ` + userColumns + ` FROM users WHERE email = $1`
+	user, err := scanUser(repo.db.QueryRowContext(ctx, query, email))
+	if err == sql.ErrNoRows {
+		return models.User{}, errors.ErrNotFound{Msg: "User not found."}
+	}
+	return user, err
+}
+
+// GetUserByCognitoSub looks up a user by their Cognito sub claim.
+// This is called by the auth middleware on every authenticated request
+// to resolve the Cognito identity to an application user.
+func (repo *UserRepo) GetUserByCognitoSub(ctx context.Context, cognitoSub string) (models.User, error) {
+	query := `SELECT ` + userColumns + ` FROM users WHERE cognito_sub = $1`
+	user, err := scanUser(repo.db.QueryRowContext(ctx, query, cognitoSub))
 	if err == sql.ErrNoRows {
 		return models.User{}, errors.ErrNotFound{Msg: "User not found."}
 	}
@@ -168,11 +150,7 @@ func (repo *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.
 }
 
 func (repo *UserRepo) GetUsersByDepartment(ctx context.Context, departmentID int) ([]models.User, error) {
-	query := `
-		SELECT id, email, first_name, last_name, password_hash, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality
-		FROM users
-		WHERE department_id = $1
-	`
+	query := `SELECT ` + userColumns + ` FROM users WHERE department_id = $1`
 	rows, err := repo.db.QueryContext(ctx, query, departmentID)
 	if err != nil {
 		return nil, err
@@ -181,23 +159,8 @@ func (repo *UserRepo) GetUsersByDepartment(ctx context.Context, departmentID int
 
 	users := []models.User{}
 	for rows.Next() {
-		var user models.User
-		if err := rows.Scan(
-			&user.ID,
-			&user.Email,
-			&user.FirstName,
-			&user.LastName,
-			&user.PasswordHash,
-			&user.Role,
-			&user.DepartmentID,
-			&user.IsActive,
-			&user.LastNotified,
-			&user.CreatedAt,
-			&user.UpdatedAt,
-			&user.Phone,
-			&user.Street,
-			&user.Locality,
-		); err != nil {
+		user, err := scanUser(rows)
+		if err != nil {
 			return nil, err
 		}
 		users = append(users, user)
@@ -206,32 +169,29 @@ func (repo *UserRepo) GetUsersByDepartment(ctx context.Context, departmentID int
 	return users, rows.Err()
 }
 
+// AddUser inserts a new user record after they have been confirmed by Cognito.
+// password_hash is gone — Cognito owns credentials.
 func (repo *UserRepo) AddUser(ctx context.Context, user models.User) (int, error) {
 	query := `
-		INSERT INTO users (email, first_name, last_name, password_hash, role, department_id, is_active, last_notified)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO users (cognito_sub, email, first_name, last_name, role, department_id, is_active)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING id
 	`
 	var id int
 	err := repo.db.QueryRowContext(ctx, query,
+		user.CognitoSub,
 		user.Email,
 		user.FirstName,
 		user.LastName,
-		user.PasswordHash,
 		user.Role,
 		user.DepartmentID,
 		user.IsActive,
-		user.LastNotified,
 	).Scan(&id)
 	return id, err
 }
 
 func (repo *UserRepo) UpdateUserProfile(ctx context.Context, userID int, dto models.UserProfilePatchDTO) error {
-	query := `
-		UPDATE users
-		SET phone = $1, street = $2, locality = $3, updated_at = NOW()
-		WHERE id = $4
-	`
+	query := `UPDATE users SET phone = $1, street = $2, locality = $3, updated_at = NOW() WHERE id = $4`
 	_, err := repo.db.ExecContext(ctx, query, dto.Phone, dto.Street, dto.Locality, userID)
 	return err
 }
@@ -243,19 +203,13 @@ func (repo *UserRepo) UpdateUserDepartment(ctx context.Context, userID int, depa
 }
 
 func (repo *UserRepo) DeactivateUser(ctx context.Context, userId int) error {
-	query := `UPDATE users SET is_active=false WHERE id=$1`
+	query := `UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1`
 	_, err := repo.db.ExecContext(ctx, query, userId)
 	return err
 }
 
 func (repo *UserRepo) NotifyUser(ctx context.Context, userId int, time time.Time) error {
-	query := `UPDATE users SET last_notified=$1 WHERE id=$2`
+	query := `UPDATE users SET last_notified = $1 WHERE id = $2`
 	_, err := repo.db.ExecContext(ctx, query, time, userId)
-	return err
-}
-
-func (repo *UserRepo) UpdatePassword(ctx context.Context, userID int, hashedPassword string) error {
-	query := `UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2`
-	_, err := repo.db.ExecContext(ctx, query, hashedPassword, userID)
 	return err
 }

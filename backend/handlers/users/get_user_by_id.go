@@ -11,7 +11,7 @@ import (
 )
 
 func GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
-	userClaims, err := utils.GetClaimsFromContext(r.Context())
+	userClaims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, err)
 		return
@@ -24,7 +24,7 @@ func GetUserByIDHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := config.UserService.GetUserByID(r.Context(), *userClaims, idInt)
+	user, err := config.UserService.GetUserByID(r.Context(), userClaims, idInt)
 	if err != nil {
 		utils.WriteError(w, err)
 		return

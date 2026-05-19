@@ -4,11 +4,11 @@ import "time"
 
 type User struct {
 	ID           int        `db:"id" json:"id"`
+	CognitoSub   string     `db:"cognito_sub" json:"cognito_sub"`
 	Email        string     `db:"email" json:"email"`
 	FirstName    string     `db:"first_name" json:"first_name"`
 	LastName     string     `db:"last_name" json:"last_name"`
-	PasswordHash string     `db:"password_hash" json:"-"`
-	Role         string     `db:"role" json:"role"` // 'admin' | 'member'
+	Role         string     `db:"role" json:"role"`
 	DepartmentID *int       `db:"department_id" json:"department_id"`
 	IsActive     bool       `db:"is_active" json:"is_active"`
 	CreatedAt    time.Time  `db:"created_at" json:"created_at"`
@@ -23,9 +23,4 @@ type UserProfilePatchDTO struct {
 	Phone    *string `json:"phone"`
 	Street   *string `json:"street"`
 	Locality *string `json:"locality"`
-}
-
-type UserPasswordPatchDTO struct {
-	CurrentPassword string `json:"current_password"`
-	NewPassword     string `json:"new_password"`
 }

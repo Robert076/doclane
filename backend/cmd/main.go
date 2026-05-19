@@ -6,8 +6,6 @@ import (
 	"os"
 	"time"
 
-	// hello world
-	"github.com/Robert076/doclane/backend/handlers/auth"
 	auth_middleware "github.com/Robert076/doclane/backend/handlers/auth/middleware"
 	comment_handler "github.com/Robert076/doclane/backend/handlers/comments"
 	department_handler "github.com/Robert076/doclane/backend/handlers/departments"
@@ -18,6 +16,7 @@ import (
 	tag_handler "github.com/Robert076/doclane/backend/handlers/tags"
 	template_handler "github.com/Robert076/doclane/backend/handlers/templates"
 	user_handler "github.com/Robert076/doclane/backend/handlers/users"
+	"github.com/Robert076/doclane/backend/utils/config"
 	"github.com/aws/aws-lambda-go/lambda"
 	chiadapter "github.com/awslabs/aws-lambda-go-api-proxy/chi"
 	"github.com/go-chi/chi/v5"
@@ -26,11 +25,15 @@ import (
 )
 
 func buildRouter() (http.Handler, *chi.Mux) {
-	// hello from lambda with arm64
 	r := chi.NewRouter()
 
+	allowedOrigins := []string{"http://localhost:3000"}
+	if origin := os.Getenv("ALLOWED_ORIGIN"); origin != "" {
+		allowedOrigins = append(allowedOrigins, origin)
+	}
+
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -43,23 +46,19 @@ func buildRouter() (http.Handler, *chi.Mux) {
 	r.Use(middleware.Timeout(60 * time.Second))
 
 	r.Get("/", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("Hello World!"))
-		if err != nil {
+		if _, err := w.Write([]byte("Hello World!")); err != nil {
 			log.Fatal(err)
 		}
 	})
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		_, err := w.Write([]byte("Healthy"))
-		if err != nil {
+		if _, err := w.Write([]byte("Healthy")); err != nil {
 			log.Fatal(err)
 		}
 	})
 
 	r.Route("/api/auth", func(r chi.Router) {
-		r.Post("/login", auth.LoginHandler)
-		r.Post("/register", auth.RegisterHandler)
-		r.Post("/logout", auth.LogoutHandler)
+		r.Post("/sync", user_handler.SyncUserHandler)
 		r.Post("/insert-admin", insertadmin_handler.InsertAdminHandler)
 	})
 
@@ -67,7 +66,11 @@ func buildRouter() (http.Handler, *chi.Mux) {
 	r.Post("/api/internal/process-recurring", request_handler.ProcessRecurringRequestsHandler)
 
 	r.Route("/api", func(r chi.Router) {
-		r.Use(auth_middleware.AuthGuard)
+		r.Use(auth_middleware.AuthGuard(
+			config.AWSRegion,
+			config.CognitoUserPoolID,
+			config.CognitoClientID,
+		))
 		r.Use(auth_middleware.MustBeActive)
 
 		r.Get("/stats", stats_handler.GetStatsHandler)
@@ -76,7 +79,6 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Get("/", user_handler.GetUsersHandler)
 			r.Get("/me", user_handler.GetCurrentUserHandler)
 			r.Patch("/me/profile", user_handler.UpdateProfileHandler)
-			r.Patch("/me/password", user_handler.UpdatePasswordHandler)
 			r.Get("/by-department", user_handler.GetUsersByDepartmentHandler)
 			r.Get("/{id}", user_handler.GetUserByIDHandler)
 			r.Post("/notify/{id}", user_handler.NotifyUserHandler)
@@ -102,6 +104,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 				r.Post("/cancel", request_handler.CancelRequestHandler)
 				r.Post("/claim", request_handler.ClaimRequestHandler)
 				r.Post("/unclaim", request_handler.UnclaimRequestHandler)
+				r.Get("/audit", request_handler.GetRequestAuditLogHandler)
 				r.Route("/comments", func(r chi.Router) {
 					r.Get("/", comment_handler.GetCommentsByRequest)
 					r.Get("/{commentID}", comment_handler.GetCommentByID)

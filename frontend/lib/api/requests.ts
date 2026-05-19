@@ -5,6 +5,7 @@ import {
         DocumentFile,
         Request,
         RequestComment,
+        AuditEvent,
 } from "@/types";
 import { doclaneHTTPHelper } from "./core";
 import { cookies } from "next/headers";
@@ -29,6 +30,12 @@ export async function getRequestsByDepartment(
         return doclaneHTTPHelper(`/requests/department/${departmentId}`, {
                 method: "GET",
         });
+}
+
+export async function getRequestAuditLog(requestId: number): Promise<APIResponse<AuditEvent[]>> {
+  return doclaneHTTPHelper(`/requests/${requestId}/audit`, {
+    method: "GET",
+  });
 }
 
 export async function getRequestById(requestId: number): Promise<APIResponse<Request>> {

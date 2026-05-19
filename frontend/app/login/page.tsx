@@ -4,7 +4,7 @@ import "./style.css";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import LoginForm from "@/components/AuthComponents/LoginForm/LoginForm";
-import { login } from "@/lib/api/auth";
+import { login } from "@/lib/client/auth";
 
 const LoginPage = () => {
         const [email, setEmail] = useState("");
@@ -12,22 +12,17 @@ const LoginPage = () => {
         const router = useRouter();
 
         const handleLogin = async () => {
-                const loginPromise = login(email, password).then((res) => {
-                        if (!res.success) {
-                                throw new Error(res.message || "Login failed");
-                        }
-                        return res;
-                });
+    const loginPromise = login(email, password);
 
-                toast.promise(loginPromise, {
-                        loading: "Logging in...",
-                        success: "Login successful!",
-                        error: (err) => `Login failed: ${err.message}`,
-                });
+    toast.promise(loginPromise, {
+        loading: "Logging in...",
+        success: "Login successful!",
+        error: (err) => `Login failed: ${err.message}`,
+    });
 
-                await loginPromise;
-                router.push("/dashboard/requests");
-        };
+    await loginPromise;
+    router.push("/dashboard/requests");
+};
 
         return (
                 <div className="login-page-wrapper">

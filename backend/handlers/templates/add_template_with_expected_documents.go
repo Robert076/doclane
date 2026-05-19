@@ -16,7 +16,7 @@ func AddRequestTemplateWithDocumentsHandler(w http.ResponseWriter, r *http.Reque
 	const maxRequestSize = 100 << 20 // 100MB to allow multiple files
 	r.Body = http.MaxBytesReader(w, r.Body, maxRequestSize)
 
-	claims, err := utils.GetClaimsFromContext(r.Context())
+	claims, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
 		utils.WriteError(w, errors.ErrUnauthorized{Msg: "Unauthorized."})
 		return
@@ -81,7 +81,7 @@ func AddRequestTemplateWithDocumentsHandler(w http.ResponseWriter, r *http.Reque
 		docs = append(docs, input)
 	}
 
-	id, err := config.RequestTemplateService.AddRequestTemplateWithDocuments(r.Context(), *claims, template, docs)
+	id, err := config.RequestTemplateService.AddRequestTemplateWithDocuments(r.Context(), claims, template, docs)
 	if err != nil {
 		utils.WriteError(w, err)
 		return
