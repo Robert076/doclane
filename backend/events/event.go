@@ -3,12 +3,15 @@ package events
 import "time"
 
 type Event struct {
-	Type         string         // "request.claimed", "user.deactivated", "department.created"
-	ActorID      int            // who did it
-	ResourceID   int            // what was affected
-	ResourceType string         // "request", "user", "department"
-	Metadata     map[string]any // anything extra — old value, new value, reason etc.
-	OccurredAt   time.Time
+	ID             int            `json:"id"`
+	Type           string         `json:"event_type"`
+	ActorID        int            `json:"actor_id"`
+	ResourceID     int            `json:"resource_id"`
+	ResourceType   string         `json:"resource_type"`
+	Metadata       map[string]any `json:"metadata"`
+	OccurredAt     time.Time      `json:"occurred_at"`
+	ActorFirstName string         `json:"actor_first_name"`
+	ActorLastName  string         `json:"actor_last_name"`
 }
 
 const (

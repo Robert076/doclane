@@ -45,10 +45,14 @@ func (repo *AuditLogRepo) LogEvent(ctx context.Context, event events.Event) erro
 
 func (repo *AuditLogRepo) GetByResource(ctx context.Context, resourceType string, resourceID int) ([]events.Event, error) {
 	query := `
-		SELECT event_type, actor_id, resource_type, resource_id, metadata, occurred_at
-		FROM audit_log
-		WHERE resource_type = $1 AND resource_id = $2
-		ORDER BY occurred_at ASC
+		SELECT 
+		a.id, a.event_type, a.actor_id, 
+		u.first_name as actor_first_name, u.last_name as actor_last_name,
+		a.resource_type, a.resource_id, a.metadata, a.occurred_at
+		FROM audit_log a
+		LEFT JOIN users u ON u.id = a.actor_id
+		WHERE a.resource_type = $1 AND a.resource_id = $2
+		ORDER BY a.occurred_at ASC
 	`
 
 	rows, err := repo.db.QueryContext(ctx, query, resourceType, resourceID)
@@ -64,8 +68,11 @@ func (repo *AuditLogRepo) GetByResource(ctx context.Context, resourceType string
 		var metadata []byte
 
 		if err := rows.Scan(
+			&e.ID,
 			&e.Type,
 			&actorID,
+			&e.ActorFirstName,
+			&e.ActorLastName,
 			&e.ResourceType,
 			&e.ResourceID,
 			&metadata,
