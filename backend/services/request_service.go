@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/Robert076/doclane/backend/events"
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/types"
@@ -26,7 +27,7 @@ type RequestService struct {
 	bedrock             IBedrockService
 	polly               IPollyService
 	logger              *slog.Logger
-	observers           []IRequestObserver
+	bus                 events.EventBus
 }
 
 func NewRequestService(
@@ -41,7 +42,7 @@ func NewRequestService(
 	textract ITextractService,
 	bedrock IBedrockService,
 	polly IPollyService,
-	observers []IRequestObserver,
+	bus events.EventBus,
 ) *RequestService {
 	return &RequestService{
 		requestRepo:         requestRepo,
@@ -55,15 +56,8 @@ func NewRequestService(
 		bedrock:             bedrock,
 		polly:               polly,
 		logger:              logger,
+		bus:                 bus,
 	}
-}
-
-type IRequestObserver interface {
-	OnRequestEvent(ctx context.Context, event types.RequestEvent) error
-}
-
-func (s *RequestService) RegisterObserver(o IRequestObserver) {
-	s.observers = append(s.observers, o)
 }
 
 func (service *RequestService) ProcessRecurringRequests(ctx context.Context) error {
@@ -188,6 +182,19 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.Call
 		slog.Int("template_id", dto.TemplateID),
 		slog.Int("department_id", template.DepartmentID),
 	)
+
+	service.bus.Publish(ctx, events.Event{
+		Type:         events.EventRequestCreated,
+		ActorID:      claims.UserID,
+		ResourceID:   *id,
+		ResourceType: events.ResourceTypeRequest,
+		Metadata: map[string]any{
+			"title":         template.Title,
+			"department_id": template.DepartmentID,
+			"template_id":   dto.TemplateID,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return id, nil
 }
 
@@ -329,6 +336,17 @@ func (s *RequestService) PatchRequest(ctx context.Context, claims types.CallerCo
 		slog.Int("caller_id", claims.UserID),
 		slog.String("new_title", updatedDTO.Title),
 	)
+
+	s.bus.Publish(ctx, events.Event{
+		Type:         events.EventRequestUpdated,
+		ActorID:      claims.UserID,
+		ResourceID:   requestID,
+		ResourceType: events.ResourceTypeRequest,
+		Metadata: map[string]any{
+			"title": updatedDTO.Title,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return nil
 }
 
