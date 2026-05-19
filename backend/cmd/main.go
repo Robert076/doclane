@@ -52,21 +52,14 @@ func buildRouter() (http.Handler, *chi.Mux) {
 		}
 	})
 
-	// Public routes — no auth required
 	r.Route("/api/auth", func(r chi.Router) {
-		// Login and register are gone — Cognito handles those on the frontend.
-		// This is the only auth route left: called once after Cognito confirms
-		// a new user's email, to create their record in the application DB.
 		r.Post("/sync", user_handler.SyncUserHandler)
+		r.Post("/insert-admin", insertadmin_handler.InsertAdminHandler)
 	})
 
 	r.Get("/api/invitations/info", invitation_handler.GetInvitationCodeInfoHandler)
 	r.Post("/api/internal/process-recurring", request_handler.ProcessRecurringRequestsHandler)
 
-	// Protected routes — AuthGuard verifies the Cognito token, MustBeActive
-	// ensures the account has not been deactivated.
-	// After the /api/auth route group, before /api
-	r.Post("/api/auth/insert-admin", insertadmin_handler.InsertAdminHandler)
 	r.Route("/api", func(r chi.Router) {
 		r.Use(auth_middleware.AuthGuard(
 			config.AWSRegion,
