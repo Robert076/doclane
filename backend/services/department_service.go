@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"log/slog"
+	"time"
 
+	"github.com/Robert076/doclane/backend/events"
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/types"
@@ -13,10 +15,11 @@ import (
 type DepartmentService struct {
 	repo   repositories.IDepartmentRepo
 	logger *slog.Logger
+	bus    *events.EventBus
 }
 
-func NewDepartmentService(repo repositories.IDepartmentRepo, logger *slog.Logger) *DepartmentService {
-	return &DepartmentService{repo: repo, logger: logger}
+func NewDepartmentService(repo repositories.IDepartmentRepo, logger *slog.Logger, bus *events.EventBus) *DepartmentService {
+	return &DepartmentService{repo: repo, logger: logger, bus: bus}
 }
 
 func (s *DepartmentService) GetAllDepartments(ctx context.Context, claims types.CallerContext) ([]models.DepartmentDTORead, error) {
@@ -62,5 +65,16 @@ func (s *DepartmentService) CreateDepartment(ctx context.Context, claims types.C
 		slog.String("name", name),
 		slog.Int("caller_id", claims.UserID),
 	)
+
+	s.bus.Publish(ctx, events.Event{
+		Type:         events.EventDepartmentCreated,
+		ActorID:      claims.UserID,
+		ResourceID:   id,
+		ResourceType: events.ResourceTypeDepartment,
+		Metadata: map[string]any{
+			"name": name,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return id, nil
 }

@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/Robert076/doclane/backend/events"
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/services"
 	"github.com/Robert076/doclane/backend/utils"
@@ -23,6 +24,7 @@ import (
 )
 
 var Logger *slog.Logger
+var AuditLogService *services.AuditLogService
 var UserService *services.UserService
 var RequestService *services.RequestService
 var DepartmentService *services.DepartmentService
@@ -56,6 +58,7 @@ func init() {
 	db := initDB(awsCfg)
 
 	// Repositories
+	auditLogRepo := repositories.NewAuditLogRepo(db)
 	userRepo := repositories.NewUserRepo(db)
 	requestRepo := repositories.NewRequestRepo(db)
 	departmentRepo := repositories.NewDepartmentRepo(db)
@@ -82,7 +85,12 @@ func init() {
 	BedrockService = services.NewBedrockService(bedrockClient, Logger)
 	PollyService = services.NewPollyService(pollyClient, Logger)
 
-	UserService = services.NewUserService(userRepo, requestRepo, Logger)
+	// Event bus, generic, shared across services
+	eventBus := events.NewEventBus(Logger)
+
+	AuditLogService = services.NewAuditLogService(auditLogRepo, Logger)
+	eventBus.Subscribe(AuditLogService)
+	UserService = services.NewUserService(userRepo, requestRepo, Logger, eventBus)
 	RequestService = services.NewRequestService(
 		requestRepo,
 		userRepo,
@@ -95,9 +103,9 @@ func init() {
 		TextractService,
 		BedrockService,
 		PollyService,
-		[]services.IRequestObserver{},
+		eventBus,
 	)
-	DepartmentService = services.NewDepartmentService(departmentRepo, Logger)
+	DepartmentService = services.NewDepartmentService(departmentRepo, Logger, eventBus)
 	InvitationCodeService = services.NewInvitationCodeService(invitationRepo, departmentRepo, Logger)
 	ExpectedDocumentService = services.NewExpectedDocumentService(expectedDocumentRepo, requestRepo, Logger)
 	RequestTemplateService = services.NewRequestTemplateService(

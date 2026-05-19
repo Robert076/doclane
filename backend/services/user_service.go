@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/Robert076/doclane/backend/events"
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/types"
@@ -16,6 +17,7 @@ type UserService struct {
 	repo        repositories.IUserRepo
 	requestRepo repositories.IRequestRepo
 	logger      *slog.Logger
+	bus         *events.EventBus
 }
 
 type SyncUserParams struct {
@@ -27,8 +29,8 @@ type SyncUserParams struct {
 	DepartmentID *int
 }
 
-func NewUserService(repo repositories.IUserRepo, requestRepo repositories.IRequestRepo, logger *slog.Logger) *UserService {
-	return &UserService{repo: repo, requestRepo: requestRepo, logger: logger}
+func NewUserService(repo repositories.IUserRepo, requestRepo repositories.IRequestRepo, logger *slog.Logger, bus *events.EventBus) *UserService {
+	return &UserService{repo: repo, requestRepo: requestRepo, logger: logger, bus: bus}
 }
 
 // SyncUser creates a DB record for a user who has already been authenticated
@@ -223,6 +225,19 @@ func (service *UserService) NotifyUser(ctx context.Context, caller types.CallerC
 		slog.Int("user_id", id),
 		slog.Int("caller_id", caller.UserID),
 	)
+
+	service.bus.Publish(ctx, events.Event{
+		Type:         events.EventUserNotified,
+		ActorID:      caller.UserID,
+		ResourceID:   id,
+		ResourceType: events.ResourceTypeUser,
+		Metadata: map[string]any{
+			"first_name": user.FirstName,
+			"last_name":  user.LastName,
+			"email":      user.Email,
+		},
+		OccurredAt: time.Now().UTC(),
+	})
 	return nil
 }
 
@@ -337,17 +352,15 @@ func (service *UserService) DeactivateUser(ctx context.Context, caller types.Cal
 		slog.Int("user_id", id),
 		slog.Int("caller_id", caller.UserID),
 	)
-	return nil
-}
 
-// OnRequestEvent is called by the event system when a request is assigned.
-// It notifies the assignee using a system-level caller with admin privileges.
-func (service *UserService) OnRequestEvent(ctx context.Context, event types.RequestEvent) error {
-	systemCaller := types.CallerContext{
-		UserID: 0,
-		Role:   types.RoleAdmin,
-	}
-	return service.NotifyUser(ctx, systemCaller, event.AssigneeID)
+	service.bus.Publish(ctx, events.Event{
+		Type:         events.EventUserDeactivated,
+		ActorID:      caller.UserID,
+		ResourceID:   id,
+		ResourceType: events.ResourceTypeUser,
+		OccurredAt:   time.Now().UTC(),
+	})
+	return nil
 }
 
 func (service *UserService) GetUserByCognitoSub(ctx context.Context, cognitoSub string) (*models.User, error) {

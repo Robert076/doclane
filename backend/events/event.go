@@ -31,6 +31,8 @@ const (
 )
 
 const (
-	ResourceTypeRequest  = "request"
-	ResourceTypeDocument = "document"
+	ResourceTypeRequest    = "request"
+	ResourceTypeDocument   = "document"
+	ResourceTypeDepartment = "department"
+	ResourceTypeUser       = "user"
 )
