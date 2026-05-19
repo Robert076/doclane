@@ -12,11 +12,16 @@ import (
 )
 
 type syncUserRequest struct {
+	Email          string  `json:"email"`
 	FirstName      string  `json:"first_name"`
 	LastName       string  `json:"last_name"`
 	InvitationCode *string `json:"invitation_code"`
 }
 
+// SyncUserHandler is called once after Cognito confirms a new user's email.
+// It creates the user's record in the application database, linked to their
+// Cognito identity via cognito_sub. Login and registration themselves are
+// handled entirely by Cognito on the frontend.
 func SyncUserHandler(w http.ResponseWriter, r *http.Request) {
 	caller, err := utils.GetCallerFromContext(r.Context())
 	if err != nil {
@@ -30,9 +35,11 @@ func SyncUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Determine role — default to member unless the seed secret is provided.
-	// This allows seeding an admin account for demo purposes without a
-	// dedicated handler. The secret is an env var and never exposed publicly.
+	if req.Email == "" {
+		utils.WriteError(w, errors.ErrBadRequest{Msg: "Email is required."})
+		return
+	}
+
 	role := types.RoleMember
 	seedSecret := utils.RequireEnv("SEED_SECRET")
 	if r.Header.Get("X-Seed-Secret") == seedSecret && r.Header.Get("X-Role") == types.RoleAdmin {
@@ -41,7 +48,7 @@ func SyncUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	params := services.SyncUserParams{
 		CognitoSub: caller.CognitoSub,
-		Email:      r.Context().Value(types.CognitoEmailKey).(string),
+		Email:      req.Email,
 		FirstName:  req.FirstName,
 		LastName:   req.LastName,
 		Role:       role,
