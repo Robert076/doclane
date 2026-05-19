@@ -1,7 +1,6 @@
 package user_handler
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -31,14 +30,8 @@ func NotifyUserHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	u, err := config.UserService.GetUserByID(r.Context(), userClaims, idInt)
-	if err != nil {
-		utils.WriteError(w, err)
-		return
-	}
-
 	utils.WriteJSONSafe(w, http.StatusOK, types.APIResponse{
 		Success: true,
-		Msg:     fmt.Sprintf("%s %s was successfully notified.", u.FirstName, u.LastName),
+		Msg:     "Notification was sent successfully.",
 	})
 }
