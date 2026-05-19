@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/Robert076/doclane/backend/events"
 	"github.com/Robert076/doclane/backend/models"
 )
 
@@ -112,6 +113,11 @@ type ITagRepo interface {
 
 type IStatsRepo interface {
 	GetStats(ctx context.Context) (*models.Stats, error)
+}
+
+type IAuditLogRepo interface {
+	LogEvent(ctx context.Context, event events.Event) error
+	GetByResource(ctx context.Context, resourceType string, resourceID int) ([]events.Event, error)
 }
 
 type ITxManager interface {

@@ -135,6 +135,16 @@ CREATE TABLE template_tags (
     PRIMARY KEY (template_id, tag_id)
 );
 
+CREATE TABLE audit_log (
+    id            SERIAL PRIMARY KEY,
+    event_type    TEXT        NOT NULL,
+    actor_id      INTEGER     REFERENCES users(id) ON DELETE SET NULL,
+    resource_type TEXT        NOT NULL,
+    resource_id   INTEGER     NOT NULL,
+    metadata      JSONB,
+    occurred_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
 -- Users
 CREATE INDEX idx_users_department_id ON users(department_id);
 CREATE INDEX idx_users_role ON users(role);
@@ -168,3 +178,8 @@ CREATE INDEX idx_document_comments_user ON document_comments(user_id);
 -- Template tags
 CREATE INDEX idx_template_tags_tag ON template_tags(tag_id);
 
+
+-- Audit logs
+CREATE INDEX idx_audit_log_resource ON audit_log(resource_type, resource_id);
+CREATE INDEX idx_audit_log_actor    ON audit_log(actor_id);
+CREATE INDEX idx_audit_log_occurred ON audit_log(occurred_at);
