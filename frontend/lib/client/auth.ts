@@ -39,7 +39,7 @@ export async function register(
   // Return what's needed for the confirmation step
   return { email, password, firstName, lastName, invitationCode };
 }
-
+// lib/client/auth.ts
 export async function confirmRegistration(
   email: string,
   password: string,
@@ -52,20 +52,19 @@ export async function confirmRegistration(
     username: email,
     confirmationCode: code,
   });
-
   if (!isSignUpComplete) throw new Error("Confirmation failed.");
 
-  // Sign in to get a token
+  try { await signOut({ global: false }); } catch (_) {}
+  await new Promise(resolve => setTimeout(resolve, 100));
   await signIn({ username: email, password });
+
   const session = await fetchAuthSession();
   const idToken = session.tokens?.idToken?.toString();
   const accessToken = session.tokens?.accessToken?.toString();
   if (!idToken || !accessToken) throw new Error("Could not retrieve session token.");
-  await setAuthCookie(idToken, accessToken);
 
-  // Sync to your DB via server action
-  const result = await syncUser(firstName, lastName, invitationCode);
-  if (!result.success) throw new Error("Account created but sync failed. Please contact support.");
+  await setAuthCookie(idToken, accessToken);
+  return { email, firstName, lastName, invitationCode, idToken };
 }
 
 export async function logout() {

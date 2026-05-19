@@ -1,0 +1,272 @@
+.timeline-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--gap-10);
+        padding: var(--padding-l);
+        border-radius: var(--border-radius-default);
+        background: rgba(255, 255, 255, 0.72);
+        backdrop-filter: blur(20px) saturate(180%);
+        -webkit-backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        box-shadow:
+                0 2px 8px rgba(0, 0, 0, 0.06),
+                0 0 0 0.5px rgba(255, 255, 255, 0.6) inset;
+}
+
+.tl-list {
+        list-style: none;
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin: 0;
+        padding: 0;
+}
+
+.tl-item {
+        display: flex;
+        gap: 0.75rem;
+        align-items: flex-start;
+}
+
+/* Left column: dot + connecting line */
+.tl-indicator {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-shrink: 0;
+        width: 14px;
+        padding-top: 3px;
+}
+
+.tl-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 255, 255, 0.9);
+        flex-shrink: 0;
+        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08);
+        transition: transform 0.15s ease;
+}
+
+.tl-item:hover .tl-dot {
+        transform: scale(1.15);
+}
+
+.tl-line {
+        width: 1.5px;
+        flex: 1;
+        min-height: 16px;
+        background: linear-gradient(to bottom,
+                        rgba(0, 0, 0, 0.1),
+                        rgba(0, 0, 0, 0.04));
+        margin: 4px 0;
+}
+
+/* Dot colors */
+.tl-dot--created {
+        background: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.15);
+}
+
+.tl-dot--updated {
+        background: #838383;
+        box-shadow: 0 0 0 3px rgba(131, 131, 131, 0.12);
+}
+
+.tl-dot--claimed {
+        background: #1d4ed8;
+        box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12);
+}
+
+.tl-dot--unclaimed {
+        background: #b45309;
+        box-shadow: 0 0 0 3px rgba(180, 83, 9, 0.12);
+}
+
+.tl-dot--closed {
+        background: #15803d;
+        box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+}
+
+.tl-dot--reopened {
+        background: #7e22ce;
+        box-shadow: 0 0 0 3px rgba(126, 34, 206, 0.12);
+}
+
+.tl-dot--cancelled {
+        background: #b91c1c;
+        box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+}
+
+.tl-dot--uploaded {
+        background: #0369a1;
+        box-shadow: 0 0 0 3px rgba(3, 105, 161, 0.12);
+}
+
+.tl-dot--approved {
+        background: #15803d;
+        box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.12);
+}
+
+.tl-dot--rejected {
+        background: #b91c1c;
+        box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+}
+
+.tl-dot--notified {
+        background: var(--color-primary);
+        box-shadow: 0 0 0 3px rgba(255, 87, 34, 0.12);
+}
+
+.tl-dot--deactivated {
+        background: #b91c1c;
+        box-shadow: 0 0 0 3px rgba(185, 28, 28, 0.12);
+}
+
+/* Right column: content card */
+.tl-body {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.55);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.7);
+        border-radius: var(--border-radius-default);
+        padding: 0.65rem 0.9rem;
+        box-shadow:
+                0 1px 4px rgba(0, 0, 0, 0.05),
+                0 0 0 0.5px rgba(255, 255, 255, 0.5) inset;
+        margin-bottom: 10px;
+        transition: all 0.2s ease;
+}
+
+.tl-body:hover {
+        background: rgba(255, 255, 255, 0.75);
+        box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.07),
+                0 0 0 0.5px rgba(255, 255, 255, 0.7) inset;
+        transform: translateY(-1px);
+}
+
+.tl-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+}
+
+.tl-label {
+        font-size: var(--font-size-s);
+        font-weight: 600;
+        color: #1a202c;
+}
+
+.tl-time {
+        font-size: 12px;
+        color: var(--text-color-secondary);
+        white-space: nowrap;
+        flex-shrink: 0;
+}
+
+.tl-meta {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 3px;
+        line-height: 1.4;
+}
+
+.tl-meta strong {
+        color: #1a202c;
+        font-weight: 500;
+}
+
+/* Badges */
+.tl-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        margin-top: 6px;
+}
+
+.tl-badge--created {
+        background: rgba(255, 87, 34, 0.1);
+        color: #bf3a10;
+        border: 1px solid rgba(255, 87, 34, 0.2);
+}
+
+.tl-badge--updated {
+        background: #f8fafc;
+        color: #64748b;
+        border: 1px solid #e2e8f0;
+}
+
+.tl-badge--claimed {
+        background: #eff6ff;
+        color: #1d4ed8;
+        border: 1px solid #dbeafe;
+}
+
+.tl-badge--unclaimed {
+        background: #fffbeb;
+        color: #b45309;
+        border: 1px solid #fde68a;
+}
+
+.tl-badge--closed {
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+}
+
+.tl-badge--reopened {
+        background: #faf5ff;
+        color: #7e22ce;
+        border: 1px solid #e9d5ff;
+}
+
+.tl-actor {
+        font-size: 12.5px;
+        color: var(--color-primary);
+        font-weight: 500;
+        margin-top: 3px;
+}
+
+.tl-badge--cancelled {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+}
+
+.tl-badge--uploaded {
+        background: #f0f9ff;
+        color: #0369a1;
+        border: 1px solid #bae6fd;
+}
+
+.tl-badge--approved {
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+}
+
+.tl-badge--rejected {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+}
+
+.tl-badge--notified {
+        background: rgba(255, 87, 34, 0.08);
+        color: #bf3a10;
+        border: 1px solid rgba(255, 87, 34, 0.18);
+}
+
+.tl-badge--deactivated {
+        background: #fef2f2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+}

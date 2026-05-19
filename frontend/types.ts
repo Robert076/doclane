@@ -21,6 +21,18 @@ export interface User {
         last_name: string;
 }
 
+export interface AuditEvent {
+        id: number;
+        event_type: string;
+        actor_id: number | null;
+        resource_type: string;
+        resource_id: number;
+        metadata: Record<string, unknown> | null;
+        occurred_at: string;
+        actor_first_name: string;
+        actor_last_name: string;
+}
+
 export interface Department {
         id: number;
         name: string;
