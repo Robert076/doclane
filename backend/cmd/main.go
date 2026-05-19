@@ -27,8 +27,13 @@ import (
 func buildRouter() (http.Handler, *chi.Mux) {
 	r := chi.NewRouter()
 
+	allowedOrigins := []string{"http://localhost:3000"}
+	if origin := os.Getenv("ALLOWED_ORIGIN"); origin != "" {
+		allowedOrigins = append(allowedOrigins, origin)
+	}
+
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:3000"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -74,7 +79,6 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Get("/", user_handler.GetUsersHandler)
 			r.Get("/me", user_handler.GetCurrentUserHandler)
 			r.Patch("/me/profile", user_handler.UpdateProfileHandler)
-			// /me/password is gone — password changes go through Cognito on the frontend
 			r.Get("/by-department", user_handler.GetUsersByDepartmentHandler)
 			r.Get("/{id}", user_handler.GetUserByIDHandler)
 			r.Post("/notify/{id}", user_handler.NotifyUserHandler)

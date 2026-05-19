@@ -45,6 +45,7 @@ var (
 func init() {
 	godotenv.Load("../../.env")
 
+	// AWS - environment variables
 	AWSRegion = utils.RequireEnv("AWS_REGION")
 	CognitoUserPoolID = utils.RequireEnv("COGNITO_USER_POOL_ID")
 	CognitoClientID = utils.RequireEnv("COGNITO_CLIENT_ID")
@@ -67,7 +68,7 @@ func init() {
 	tagRepo := repositories.NewTagRepo(db)
 	txManager := repositories.NewTxManager(db)
 
-	// AWS
+	// AWS - clients
 	S3Client = s3.NewFromConfig(awsCfg)
 	textractClient := textract.NewFromConfig(awsCfg)
 	bedrockClient := bedrockruntime.NewFromConfig(awsCfg)
