@@ -95,7 +95,7 @@ func (service *RequestService) ProcessRecurringRequests(ctx context.Context) err
 func (service *RequestService) AddRequest(ctx context.Context, claims types.CallerContext, dto models.RequestDTOCreate) (*int, error) {
 	if claims.IsAdmin() || claims.IsDepartmentMember() {
 		service.logger.Warn("admin or department member tried to create request for themselves, got rejected",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "You are not allowed to create requests"}
 	}
@@ -103,7 +103,7 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.Call
 	user, err := service.userRepo.GetUserByID(ctx, claims.UserID)
 	if err != nil {
 		service.logger.Error("error when trying to retrieve user from db for adding request",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -111,14 +111,14 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.Call
 
 	if err := service.checkUserHasProfileConfigured(user); err != nil {
 		service.logger.Warn("user tried to make request without profile configured",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, err
 	}
 
 	if err := ValidateRequestInput(dto); err != nil {
 		service.logger.Warn("request creation failed because it did not pass validations",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -128,7 +128,7 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.Call
 	if err != nil {
 		service.logger.Warn("template not found for request creation",
 			slog.Int("template_id", dto.TemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, errors.ErrNotFound{Msg: "Template not found."}
@@ -138,7 +138,7 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.Call
 	if err != nil {
 		service.logger.Error("failed to fetch expected document templates",
 			slog.Int("template_id", dto.TemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -176,7 +176,7 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.Call
 	id, err := service.createRequestTransaction(ctx, req, expectedDocs)
 	if err != nil {
 		service.logger.Error("failed to create request",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -184,7 +184,7 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.Call
 
 	service.logger.Info("request created successfully",
 		slog.Int("request_id", *id),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 		slog.Int("template_id", dto.TemplateID),
 		slog.Int("department_id", template.DepartmentID),
 	)
@@ -194,7 +194,7 @@ func (service *RequestService) AddRequest(ctx context.Context, claims types.Call
 func (service *RequestService) GetAllRequests(ctx context.Context, claims types.CallerContext, search *string) ([]models.RequestDTORead, error) {
 	if !claims.IsAdmin() {
 		service.logger.Warn("unauthorized attempt to get all requests",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "Only admins can view all requests."}
 	}
@@ -202,7 +202,7 @@ func (service *RequestService) GetAllRequests(ctx context.Context, claims types.
 	reqs, err := service.requestRepo.GetAllRequests(ctx, search)
 	if err != nil {
 		service.logger.Error("failed to get all requests",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -213,7 +213,7 @@ func (service *RequestService) GetAllRequests(ctx context.Context, claims types.
 	}
 
 	service.logger.Info("fetched all requests successfully",
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return reqs, nil
 }
@@ -228,7 +228,7 @@ func (s *RequestService) GetRequestByID(ctx context.Context, claims types.Caller
 	if err != nil {
 		s.logger.Error("failed to get expected documents for request",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -243,7 +243,7 @@ func (service *RequestService) GetRequestsByAssignee(ctx context.Context, claims
 	if !claims.IsAdmin() && assigneeID != claims.UserID {
 		service.logger.Warn("unauthorized access attempt to requests by assignee",
 			slog.Int("assignee_id", assigneeID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "You are not allowed to view these requests."}
 	}
@@ -252,7 +252,7 @@ func (service *RequestService) GetRequestsByAssignee(ctx context.Context, claims
 	if err != nil {
 		service.logger.Error("error when retrieving requests by assignee",
 			slog.Int("assignee_id", assigneeID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -264,7 +264,7 @@ func (service *RequestService) GetRequestsByAssignee(ctx context.Context, claims
 
 	service.logger.Info("retrieved requests by assignee successfully",
 		slog.Int("assignee_id", assigneeID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return reqs, nil
 }
@@ -274,7 +274,7 @@ func (service *RequestService) GetRequestsByDepartment(ctx context.Context, clai
 	if !claims.IsAdmin() && !isMemberOfDepartment {
 		service.logger.Warn("unauthorized access attempt to requests by department",
 			slog.Int("department_id", departmentID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "You are not allowed to view these requests."}
 	}
@@ -283,7 +283,7 @@ func (service *RequestService) GetRequestsByDepartment(ctx context.Context, clai
 	if err != nil {
 		service.logger.Error("error when retrieving requests by department",
 			slog.Int("department_id", departmentID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -295,7 +295,7 @@ func (service *RequestService) GetRequestsByDepartment(ctx context.Context, clai
 
 	service.logger.Info("retrieved requests by department successfully",
 		slog.Int("department_id", departmentID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return reqs, nil
 }
@@ -303,7 +303,7 @@ func (service *RequestService) GetRequestsByDepartment(ctx context.Context, clai
 func (s *RequestService) PatchRequest(ctx context.Context, claims types.CallerContext, requestID int, updatedDTO models.RequestDTOPatch) error {
 	if err := ValidatePatchDTO(updatedDTO); err != nil {
 		s.logger.Warn("request patch validation failed",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("request_id", requestID),
 			slog.Any("error", err),
 		)
@@ -317,7 +317,7 @@ func (s *RequestService) PatchRequest(ctx context.Context, claims types.CallerCo
 	if err := s.requestRepo.UpdateRequestTitle(ctx, requestID, updatedDTO.Title); err != nil {
 		s.logger.Error("failed to update request title",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.String("new_title", updatedDTO.Title),
 			slog.Any("error", err),
 		)
@@ -326,7 +326,7 @@ func (s *RequestService) PatchRequest(ctx context.Context, claims types.CallerCo
 
 	s.logger.Info("request patched successfully",
 		slog.Int("request_id", requestID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 		slog.String("new_title", updatedDTO.Title),
 	)
 	return nil
@@ -341,7 +341,7 @@ func (s *RequestService) ClaimRequest(ctx context.Context, claims types.CallerCo
 	if err != nil {
 		s.logger.Error("failed to get request for claiming",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -365,7 +365,7 @@ func (s *RequestService) ClaimRequest(ctx context.Context, claims types.CallerCo
 	if err := s.requestRepo.ClaimRequest(ctx, requestID, claims.UserID); err != nil {
 		s.logger.Error("failed to claim request",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return errors.ErrInternalServerError{Msg: "Failed to claim request."}
@@ -373,7 +373,7 @@ func (s *RequestService) ClaimRequest(ctx context.Context, claims types.CallerCo
 
 	s.logger.Info("request claimed successfully",
 		slog.Int("request_id", requestID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
@@ -383,7 +383,7 @@ func (s *RequestService) UnclaimRequest(ctx context.Context, claims types.Caller
 	if err != nil {
 		s.logger.Error("failed to get request for unclaiming",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -404,7 +404,7 @@ func (s *RequestService) UnclaimRequest(ctx context.Context, claims types.Caller
 	if err := s.requestRepo.UnclaimRequest(ctx, requestID); err != nil {
 		s.logger.Error("failed to unclaim request",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return errors.ErrInternalServerError{Msg: "Failed to unclaim request."}
@@ -412,7 +412,7 @@ func (s *RequestService) UnclaimRequest(ctx context.Context, claims types.Caller
 
 	s.logger.Info("request unclaimed successfully",
 		slog.Int("request_id", requestID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
@@ -432,7 +432,7 @@ func (s *RequestService) ReopenRequest(ctx context.Context, claims types.CallerC
 	if err := s.requestRepo.ReopenRequest(ctx, requestID); err != nil {
 		s.logger.Error("error when trying to reopen request",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -440,7 +440,7 @@ func (s *RequestService) ReopenRequest(ctx context.Context, claims types.CallerC
 
 	s.logger.Info("reopened request successfully",
 		slog.Int("request_id", requestID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
@@ -463,7 +463,7 @@ func (s *RequestService) CloseRequest(ctx context.Context, claims types.CallerCo
 	if err := s.requestRepo.CloseRequest(ctx, requestID); err != nil {
 		s.logger.Error("error when trying to close request",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -471,7 +471,7 @@ func (s *RequestService) CloseRequest(ctx context.Context, claims types.CallerCo
 
 	s.logger.Info("closed request successfully",
 		slog.Int("request_id", requestID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
@@ -481,7 +481,7 @@ func (s *RequestService) CancelRequest(ctx context.Context, claims types.CallerC
 	if err != nil {
 		s.logger.Error("error when trying to retrieve request for cancelling it",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -491,7 +491,7 @@ func (s *RequestService) CancelRequest(ctx context.Context, claims types.CallerC
 	if status != types.StatusPending {
 		s.logger.Warn("attempt to cancel non-pending request",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return errors.ErrBadRequest{Msg: "A request cannot be closed if the status is not 'pending'."}
 	}
@@ -500,7 +500,7 @@ func (s *RequestService) CancelRequest(ctx context.Context, claims types.CallerC
 	if err != nil {
 		s.logger.Error("user tried to cancel request that he does not own",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return errors.ErrForbidden{Msg: "You are not allowed to cancel this request."}
 	}
@@ -509,7 +509,7 @@ func (s *RequestService) CancelRequest(ctx context.Context, claims types.CallerC
 	if err != nil {
 		s.logger.Error("error when trying to cancel request",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -521,7 +521,7 @@ func (s *RequestService) CancelRequest(ctx context.Context, claims types.CallerC
 func (service *RequestService) GetArchivedRequests(ctx context.Context, claims types.CallerContext) ([]models.RequestDTORead, error) {
 	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
 		service.logger.Warn("unauthorized attempt to get archived requests",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "Only admins and department members can view archived requests."}
 	}
@@ -529,7 +529,7 @@ func (service *RequestService) GetArchivedRequests(ctx context.Context, claims t
 	reqs, err := service.fetchArchivedRequests(ctx, claims)
 	if err != nil {
 		service.logger.Error("failed to get archived requests",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -540,7 +540,7 @@ func (service *RequestService) GetArchivedRequests(ctx context.Context, claims t
 	}
 
 	service.logger.Info("fetched archived requests successfully",
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return reqs, nil
 }
@@ -555,7 +555,7 @@ func (service *RequestService) fetchArchivedRequests(ctx context.Context, claims
 func (service *RequestService) GetCancelledRequests(ctx context.Context, claims types.CallerContext) ([]models.RequestDTORead, error) {
 	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
 		service.logger.Warn("unauthorized attempt to get cancelled requests",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "Only admins and department members can view cancelled requests."}
 	}
@@ -563,7 +563,7 @@ func (service *RequestService) GetCancelledRequests(ctx context.Context, claims 
 	reqs, err := service.fetchCancelledRequests(ctx, claims)
 	if err != nil {
 		service.logger.Error("failed to get cancelled requests",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -574,7 +574,7 @@ func (service *RequestService) GetCancelledRequests(ctx context.Context, claims 
 	}
 
 	service.logger.Info("fetched cancelled requests successfully",
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return reqs, nil
 }
@@ -605,7 +605,7 @@ func (s *RequestService) AddDocument(
 	}
 
 	s.logger.Info("attempting file upload",
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 		slog.Int("request_id", requestID),
 		slog.String("file_name", fileName),
 	)
@@ -662,7 +662,7 @@ func (s *RequestService) AddDocument(
 
 	s.logger.Info("file upload successful",
 		slog.Int("file_id", id),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return &id, nil
 }
@@ -676,7 +676,7 @@ func (s *RequestService) GetFilesByRequest(ctx context.Context, claims types.Cal
 	if err != nil {
 		s.logger.Error("failed to fetch files",
 			slog.Int("request_id", requestID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -684,7 +684,7 @@ func (s *RequestService) GetFilesByRequest(ctx context.Context, claims types.Cal
 
 	s.logger.Info("files retrieved successfully",
 		slog.Int("request_id", requestID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 		slog.Int("count", len(files)),
 	)
 	return files, nil
@@ -694,7 +694,7 @@ func (s *RequestService) GetFilePresignedURL(ctx context.Context, claims types.C
 	file, err := s.requestRepo.GetFileByID(ctx, fileID)
 	if err != nil {
 		s.logger.Error("could not fetch file by id",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("file_id", fileID),
 			slog.Any("error", err),
 		)
@@ -709,7 +709,7 @@ func (s *RequestService) GetFilePresignedURL(ctx context.Context, claims types.C
 	if err != nil {
 		s.logger.Error("s3 presign failed",
 			slog.Int("file_id", fileID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -735,7 +735,7 @@ func (s *RequestService) GetExamplePresignedURL(ctx context.Context, claims type
 	if err != nil {
 		s.logger.Error("s3 presign failed for example file",
 			slog.Int("expected_doc_id", expectedDocID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -746,7 +746,7 @@ func (s *RequestService) GetExamplePresignedURL(ctx context.Context, claims type
 func (s *RequestService) ExtractFileText(ctx context.Context, claims types.CallerContext, fileID int) (string, error) {
 	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
 		s.logger.Warn("unauthorized attempt to extract file text",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("file_id", fileID),
 		)
 		return "", errors.ErrForbidden{Msg: "Only staff can analyze documents."}
@@ -755,7 +755,7 @@ func (s *RequestService) ExtractFileText(ctx context.Context, claims types.Calle
 	file, err := s.requestRepo.GetFileByID(ctx, fileID)
 	if err != nil {
 		s.logger.Error("could not fetch file by id",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("file_id", fileID),
 			slog.Any("error", err),
 		)
@@ -770,7 +770,7 @@ func (s *RequestService) ExtractFileText(ctx context.Context, claims types.Calle
 	if err != nil {
 		s.logger.Error("textract extraction failed",
 			slog.Int("file_id", fileID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return "", err
@@ -778,7 +778,7 @@ func (s *RequestService) ExtractFileText(ctx context.Context, claims types.Calle
 
 	s.logger.Info("file text extracted successfully",
 		slog.Int("file_id", fileID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return text, nil
 }
@@ -786,7 +786,7 @@ func (s *RequestService) ExtractFileText(ctx context.Context, claims types.Calle
 func (s *RequestService) InterpretFileText(ctx context.Context, claims types.CallerContext, fileID int, documentTitle string) (string, error) {
 	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
 		s.logger.Warn("unauthorized attempt to interpret file",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("file_id", fileID),
 		)
 		return "", errors.ErrForbidden{Msg: "Only staff can interpret documents."}
@@ -795,7 +795,7 @@ func (s *RequestService) InterpretFileText(ctx context.Context, claims types.Cal
 	file, err := s.requestRepo.GetFileByID(ctx, fileID)
 	if err != nil {
 		s.logger.Error("could not fetch file by id",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("file_id", fileID),
 			slog.Any("error", err),
 		)
@@ -826,7 +826,7 @@ func (s *RequestService) InterpretFileText(ctx context.Context, claims types.Cal
 
 	s.logger.Info("file interpreted successfully",
 		slog.Int("file_id", fileID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return interpretation, nil
 }
@@ -834,7 +834,7 @@ func (s *RequestService) InterpretFileText(ctx context.Context, claims types.Cal
 func (s *RequestService) SpeakFileText(ctx context.Context, claims types.CallerContext, fileID int) ([]byte, error) {
 	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
 		s.logger.Warn("unauthorized attempt to speak file",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("file_id", fileID),
 		)
 		return nil, errors.ErrForbidden{Msg: "Only staff can use this feature."}
@@ -873,7 +873,7 @@ func (s *RequestService) SpeakFileText(ctx context.Context, claims types.CallerC
 
 	s.logger.Info("file spoken successfully",
 		slog.Int("file_id", fileID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return audio, nil
 }

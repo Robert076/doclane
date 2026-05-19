@@ -20,23 +20,18 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// jwksCache caches Cognito's public keys so we don't fetch them on every request.
-// Cognito rotates keys rarely — a 1 hour cache is safe.
 var (
 	jwksCache     []jwk
 	jwksCacheTime time.Time
 	jwksMu        sync.RWMutex
 )
 
-// jwk represents a single JSON Web Key from Cognito's JWKS endpoint.
 type jwk struct {
-	Kid string `json:"kid"` // Key ID — matches the "kid" header in the token
-	N   string `json:"n"`   // RSA modulus (base64url encoded)
-	E   string `json:"e"`   // RSA exponent (base64url encoded)
+	Kid string `json:"kid"`
+	N   string `json:"n"`
+	E   string `json:"e"`
 }
 
-// getPublicKey fetches Cognito's JWKS and finds the RSA public key
-// matching the given kid (key ID from the token header).
 func getPublicKey(region, userPoolID, kid string) (*rsa.PublicKey, error) {
 	jwksMu.RLock()
 	if jwksCache != nil && time.Since(jwksCacheTime) < time.Hour {
@@ -71,7 +66,6 @@ func getPublicKey(region, userPoolID, kid string) (*rsa.PublicKey, error) {
 	return findKey(result.Keys, kid)
 }
 
-// findKey finds the JWK matching the given kid and converts it to an *rsa.PublicKey.
 func findKey(keys []jwk, kid string) (*rsa.PublicKey, error) {
 	for _, k := range keys {
 		if k.Kid != kid {
@@ -98,11 +92,6 @@ func findKey(keys []jwk, kid string) (*rsa.PublicKey, error) {
 	return nil, fmt.Errorf("no key found for kid: %s", kid)
 }
 
-// AuthGuard verifies the Cognito-issued JWT and resolves the caller's identity
-// from the application database. On success it stores a CallerContext in the
-// request context under types.CallerContextKey.
-//
-// Passwords and credentials are never seen here — Cognito owns those.
 func AuthGuard(region, userPoolID, clientID string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -49,7 +49,7 @@ func (s *TagService) GetTagByID(ctx context.Context, id int) (models.Tag, error)
 func (s *TagService) CreateTag(ctx context.Context, claims types.CallerContext, dto models.TagDTOCreate) (models.Tag, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to create tag",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return models.Tag{}, errors.ErrForbidden{Msg: "Only admins can manage tags."}
 	}
@@ -57,7 +57,7 @@ func (s *TagService) CreateTag(ctx context.Context, claims types.CallerContext, 
 	tags, err := s.tagRepo.GetTags(ctx)
 	if err != nil {
 		s.logger.Error("error when retrieving tags for checking total count",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return models.Tag{}, err
@@ -66,7 +66,7 @@ func (s *TagService) CreateTag(ctx context.Context, claims types.CallerContext, 
 	MAX_TAGS := 30
 	if len(tags) > MAX_TAGS {
 		s.logger.Warn(fmt.Sprintf("max tag count of %d has been reached", MAX_TAGS),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return models.Tag{}, errors.ErrBadRequest{Msg: "Maximum tag count has been reached."}
 	}
@@ -83,7 +83,7 @@ func (s *TagService) CreateTag(ctx context.Context, claims types.CallerContext, 
 	if err != nil {
 		s.logger.Error("failed to create tag",
 			slog.String("name", dto.Name),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return models.Tag{}, err
@@ -91,7 +91,7 @@ func (s *TagService) CreateTag(ctx context.Context, claims types.CallerContext, 
 
 	s.logger.Info("tag created",
 		slog.Int("tag_id", tag.ID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return tag, nil
 }
@@ -99,7 +99,7 @@ func (s *TagService) CreateTag(ctx context.Context, claims types.CallerContext, 
 func (s *TagService) UpdateTag(ctx context.Context, claims types.CallerContext, id int, dto models.TagDTOUpdate) (models.Tag, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to update tag",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("tag_id", id),
 		)
 		return models.Tag{}, errors.ErrForbidden{Msg: "Only admins can manage tags."}
@@ -113,7 +113,7 @@ func (s *TagService) UpdateTag(ctx context.Context, claims types.CallerContext, 
 	if err != nil {
 		s.logger.Error("failed to update tag",
 			slog.Int("tag_id", id),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return models.Tag{}, err
@@ -121,7 +121,7 @@ func (s *TagService) UpdateTag(ctx context.Context, claims types.CallerContext, 
 
 	s.logger.Info("tag updated",
 		slog.Int("tag_id", id),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return tag, nil
 }
@@ -129,7 +129,7 @@ func (s *TagService) UpdateTag(ctx context.Context, claims types.CallerContext, 
 func (s *TagService) DeleteTag(ctx context.Context, claims types.CallerContext, id int) error {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to delete tag",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("tag_id", id),
 		)
 		return errors.ErrForbidden{Msg: "Only admins can manage tags."}
@@ -138,7 +138,7 @@ func (s *TagService) DeleteTag(ctx context.Context, claims types.CallerContext, 
 	if err := s.tagRepo.DeleteTag(ctx, id); err != nil {
 		s.logger.Error("failed to delete tag",
 			slog.Int("tag_id", id),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -146,7 +146,7 @@ func (s *TagService) DeleteTag(ctx context.Context, claims types.CallerContext, 
 
 	s.logger.Info("tag deleted",
 		slog.Int("tag_id", id),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
@@ -154,7 +154,7 @@ func (s *TagService) DeleteTag(ctx context.Context, claims types.CallerContext, 
 func (s *TagService) SetTemplateTags(ctx context.Context, claims types.CallerContext, templateID int, tagIDs []int) error {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to set template tags",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("template_id", templateID),
 		)
 		return errors.ErrForbidden{Msg: "Only admins can manage tags."}
@@ -163,7 +163,7 @@ func (s *TagService) SetTemplateTags(ctx context.Context, claims types.CallerCon
 	MAX_LENGTH_TAGS := 3
 	if len(tagIDs) > MAX_LENGTH_TAGS {
 		s.logger.Warn("maximum tag count reached for template",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("template_id", templateID),
 		)
 		return errors.ErrBadRequest{Msg: fmt.Sprintf("Templates can have up to %d tags.", MAX_LENGTH_TAGS)}
@@ -172,7 +172,7 @@ func (s *TagService) SetTemplateTags(ctx context.Context, claims types.CallerCon
 	if err := s.tagRepo.SetTemplateTags(ctx, templateID, tagIDs); err != nil {
 		s.logger.Error("failed to set template tags",
 			slog.Int("template_id", templateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -180,7 +180,7 @@ func (s *TagService) SetTemplateTags(ctx context.Context, claims types.CallerCon
 
 	s.logger.Info("template tags updated",
 		slog.Int("template_id", templateID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 		slog.Int("tag_count", len(tagIDs)),
 	)
 	return nil

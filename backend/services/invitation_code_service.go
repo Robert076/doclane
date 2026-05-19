@@ -50,14 +50,14 @@ func (s *InvitationCodeService) CreateInvitationCode(
 ) (string, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to create invitation code",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return "", errors.ErrForbidden{Msg: "Only admins can generate invitation codes."}
 	}
 
 	if _, err := s.departmentRepo.GetDepartmentByID(ctx, departmentID); err != nil {
 		s.logger.Warn("admin tried to create invitation code for department that does not exist",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("department_id", departmentID),
 		)
 		return "", errors.ErrNotFound{Msg: "Department not found."}
@@ -66,7 +66,7 @@ func (s *InvitationCodeService) CreateInvitationCode(
 	existingCodes, err := s.invitationRepo.GetInvitationCodesByCreator(ctx, claims.UserID)
 	if err != nil {
 		s.logger.Error("error getting codes for user",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return "", err
@@ -74,7 +74,7 @@ func (s *InvitationCodeService) CreateInvitationCode(
 
 	if len(existingCodes) >= 3 {
 		s.logger.Warn("user tried to generate too many active invitation codes",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return "", errors.ErrBadRequest{Msg: "Only 3 active codes are allowed at one time."}
 	}
@@ -96,7 +96,7 @@ func (s *InvitationCodeService) CreateInvitationCode(
 	if err = s.invitationRepo.CreateInvitationCode(ctx, departmentID, code, claims.UserID, expiresAt); err != nil {
 		s.logger.Error("failed to save invitation code to database",
 			slog.String("code", code),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return "", errors.ErrInternalServerError{Msg: "Failed to save invitation code."}
@@ -104,7 +104,7 @@ func (s *InvitationCodeService) CreateInvitationCode(
 
 	s.logger.Info("invitation code created successfully",
 		slog.String("code", code),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return code, nil
 }
@@ -120,7 +120,7 @@ func (s *InvitationCodeService) GetInvitationCodes(
 	codes, err := s.invitationRepo.GetInvitationCodesByCreator(ctx, claims.UserID)
 	if err != nil {
 		s.logger.Error("failed to fetch invitation codes",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -132,7 +132,7 @@ func (s *InvitationCodeService) GetInvitationCodes(
 	}
 
 	s.logger.Info("invitation codes retrieved successfully",
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 		slog.Int("count", len(validCodes)),
 	)
 	return validCodes, nil
@@ -145,14 +145,14 @@ func (s *InvitationCodeService) GetInvitationCodesByDepartment(
 ) ([]models.InvitationCode, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("non-admin attempted to view invitation codes by department",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "Only admins can view invitation codes."}
 	}
 
 	if _, err := s.departmentRepo.GetDepartmentByID(ctx, departmentID); err != nil {
 		s.logger.Warn("tried to get invitation codes for department that does not exist",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("department_id", departmentID),
 		)
 		return nil, errors.ErrNotFound{Msg: "Department not found."}
@@ -161,7 +161,7 @@ func (s *InvitationCodeService) GetInvitationCodesByDepartment(
 	codes, err := s.invitationRepo.GetInvitationCodesByDepartment(ctx, departmentID)
 	if err != nil {
 		s.logger.Error("failed to fetch invitation codes by department",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("department_id", departmentID),
 			slog.Any("error", err),
 		)
@@ -174,7 +174,7 @@ func (s *InvitationCodeService) GetInvitationCodesByDepartment(
 	}
 
 	s.logger.Info("invitation codes by department retrieved successfully",
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 		slog.Int("department_id", departmentID),
 		slog.Int("count", len(validCodes)),
 	)
@@ -264,7 +264,7 @@ func (s *InvitationCodeService) DeleteInvitationCode(
 	if err := s.invitationRepo.DeleteCode(ctx, codeID); err != nil {
 		s.logger.Error("failed to delete invitation code",
 			slog.Int("code_id", codeID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return errors.ErrInternalServerError{Msg: "Failed to delete invitation code."}
@@ -272,7 +272,7 @@ func (s *InvitationCodeService) DeleteInvitationCode(
 
 	s.logger.Info("invitation code deleted successfully",
 		slog.Int("code_id", codeID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }

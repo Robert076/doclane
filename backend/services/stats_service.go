@@ -22,7 +22,7 @@ func NewStatsService(db repositories.IStatsRepo, logger *slog.Logger) *StatsServ
 func (s *StatsService) GetStats(ctx context.Context, claims types.CallerContext) (*models.Stats, error) {
 	if !claims.IsAdmin() {
 		s.logger.Warn("unauthorized attempt to get stats",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "Only admins can view stats."}
 	}
@@ -30,14 +30,14 @@ func (s *StatsService) GetStats(ctx context.Context, claims types.CallerContext)
 	stats, err := s.db.GetStats(ctx)
 	if err != nil {
 		s.logger.Error("failed to get stats",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
 	s.logger.Info("stats retrieved successfully",
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return stats, nil
 }

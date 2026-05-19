@@ -22,7 +22,7 @@ func (s *InvitationCodeService) checkUserOwnsInvitationCode(ctx context.Context,
 
 	if code.CreatedBy != jwtUserID {
 		s.logger.Warn("user attempted to access another user's invitation code",
-			slog.Int("jwt_user_id", jwtUserID),
+			slog.Int("caller_id", jwtUserID),
 			slog.Int("code_created_by", code.CreatedBy),
 			slog.Int("code_id", invitationCodeID),
 		)

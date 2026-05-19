@@ -45,14 +45,14 @@ func (s *RequestTemplateService) GetRequestTemplates(ctx context.Context, claims
 	templates, err := s.templateRepo.GetAllRequestTemplates(ctx)
 	if err != nil {
 		s.logger.Error("failed to fetch templates",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
 	}
 
 	s.logger.Info("fetched templates successfully",
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return templates, nil
 }
@@ -69,7 +69,7 @@ func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 ) (*int, error) {
 	if !claims.IsAdmin() && !claims.IsDepartmentMember() {
 		s.logger.Warn("unauthorized attempt to create template",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrForbidden{Msg: "You are not allowed to create templates."}
 	}
@@ -81,7 +81,7 @@ func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 	uploadByIndex, rollbackS3, err := s.uploadExampleFiles(ctx, docs)
 	if err != nil {
 		s.logger.Error("error when uploading files to S3",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -93,7 +93,7 @@ func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 	if err != nil {
 		rollbackS3()
 		s.logger.Error("transaction failed, rolled back S3 uploads",
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -101,7 +101,7 @@ func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 
 	s.logger.Info("template created with documents",
 		slog.Int("template_id", templateID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 		slog.Int("document_count", len(docs)),
 	)
 	return &templateID, nil
@@ -120,7 +120,7 @@ func (s *RequestTemplateService) DeleteExpectedDocumentTemplate(
 	if err := s.expectedDocTmplRepo.DeleteByID(ctx, expectedDocRequestTemplateID); err != nil {
 		s.logger.Error("failed to delete expected document template",
 			slog.Int("expected_document_template_id", expectedDocRequestTemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -128,7 +128,7 @@ func (s *RequestTemplateService) DeleteExpectedDocumentTemplate(
 
 	s.logger.Info("expected document template deleted",
 		slog.Int("expected_document_template_id", expectedDocRequestTemplateID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
@@ -142,7 +142,7 @@ func (s *RequestTemplateService) GetExpectedDocumentTemplatesByRequestTemplateID
 	if err != nil {
 		s.logger.Error("failed to retrieve document templates by template id",
 			slog.Int("template_id", requestTemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -161,7 +161,7 @@ func (s *RequestTemplateService) PresignExample(ctx context.Context, claims type
 	if err != nil {
 		s.logger.Error("failed to retrieve document template by id when trying to presign url for example",
 			slog.Int("template_id", requestTemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -170,7 +170,7 @@ func (s *RequestTemplateService) PresignExample(ctx context.Context, claims type
 	if expectedDoc.RequestTemplateID != template.ID {
 		s.logger.Warn("unauthorized retrieval attempt for example document when presigning",
 			slog.Int("template_id", requestTemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Int("example_document_id", expectedDocID),
 		)
 		return nil, errors.ErrForbidden{Msg: "You are not allowed to view this file."}
@@ -179,7 +179,7 @@ func (s *RequestTemplateService) PresignExample(ctx context.Context, claims type
 	if expectedDoc.ExampleFilePath == nil {
 		s.logger.Warn("attempted document example presign when example does not exist",
 			slog.Int("template_id", requestTemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 		)
 		return nil, errors.ErrBadRequest{Msg: "This template document does not have an example."}
 	}
@@ -188,7 +188,7 @@ func (s *RequestTemplateService) PresignExample(ctx context.Context, claims type
 	if err != nil {
 		s.logger.Error("s3 presign failed for example file",
 			slog.Int("expected_doc_id", expectedDocID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return nil, err
@@ -204,7 +204,7 @@ func (s *RequestTemplateService) CloseRequestTemplate(ctx context.Context, claim
 	if err := s.templateRepo.CloseRequestTemplate(ctx, requestTemplateID); err != nil {
 		s.logger.Error("failed to close request template",
 			slog.Int("template_id", requestTemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -212,7 +212,7 @@ func (s *RequestTemplateService) CloseRequestTemplate(ctx context.Context, claim
 
 	s.logger.Info("request template closed successfully",
 		slog.Int("template_id", requestTemplateID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
@@ -225,7 +225,7 @@ func (s *RequestTemplateService) ReopenRequestTemplate(ctx context.Context, clai
 	if err := s.templateRepo.ReopenRequestTemplate(ctx, requestTemplateID); err != nil {
 		s.logger.Error("failed to reopen request template",
 			slog.Int("template_id", requestTemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -233,7 +233,7 @@ func (s *RequestTemplateService) ReopenRequestTemplate(ctx context.Context, clai
 
 	s.logger.Info("request template reopened successfully",
 		slog.Int("template_id", requestTemplateID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
@@ -246,7 +246,7 @@ func (s *RequestTemplateService) DeleteRequestTemplate(ctx context.Context, clai
 	if err := s.templateRepo.DeleteRequestTemplate(ctx, requestTemplateID); err != nil {
 		s.logger.Error("failed to delete request template",
 			slog.Int("template_id", requestTemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -254,7 +254,7 @@ func (s *RequestTemplateService) DeleteRequestTemplate(ctx context.Context, clai
 
 	s.logger.Info("request template deleted successfully",
 		slog.Int("template_id", requestTemplateID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
@@ -271,7 +271,7 @@ func (s *RequestTemplateService) PatchRequestTemplate(ctx context.Context, claim
 	if err := s.templateRepo.PatchRequestTemplate(ctx, requestTemplateID, dto); err != nil {
 		s.logger.Error("failed to patch request template",
 			slog.Int("template_id", requestTemplateID),
-			slog.Int("jwt_user_id", claims.UserID),
+			slog.Int("caller_id", claims.UserID),
 			slog.Any("error", err),
 		)
 		return err
@@ -279,7 +279,7 @@ func (s *RequestTemplateService) PatchRequestTemplate(ctx context.Context, claim
 
 	s.logger.Info("request template patched successfully",
 		slog.Int("template_id", requestTemplateID),
-		slog.Int("jwt_user_id", claims.UserID),
+		slog.Int("caller_id", claims.UserID),
 	)
 	return nil
 }
