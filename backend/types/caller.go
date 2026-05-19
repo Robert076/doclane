@@ -15,7 +15,7 @@ func (c CallerContext) IsAdmin() bool {
 }
 
 func (c CallerContext) IsDepartmentMember() bool {
-	return c.Role == RoleMember && c.UserID != 0
+	return c.Role == RoleMember && c.DepartmentID != nil
 }
 
 // ContextKey is used to store and retrieve CallerContext from request contexts
