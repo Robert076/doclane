@@ -172,3 +172,8 @@
         box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
     }
 }
+
+.sidebar-notifications {
+    padding: 0.75rem 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.07);
+}

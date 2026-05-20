@@ -25,7 +25,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                 <div
                         className={`searchbar-container ${fullWidth ? "searchbar-container--full-width" : ""} ${className}`}
                 >
-                        <svg
+                        {/* <svg
                                 className="searchbar-icon"
                                 width="20"
                                 height="20"
@@ -39,7 +39,7 @@ const SearchBar: React.FC<SearchBarProps> = ({
                                         strokeLinecap="round"
                                         strokeLinejoin="round"
                                 />
-                        </svg>
+                        </svg> */}
                         <input
                                 type="text"
                                 className="searchbar-input"

@@ -20,6 +20,7 @@
         gap: 0;
         margin: 0;
         padding: 0;
+        min-height: 420px;
 }
 
 .tl-item {
@@ -269,4 +270,16 @@
         background: #fef2f2;
         color: #b91c1c;
         border: 1px solid #fecaca;
+}
+
+.tl-header {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin-bottom: 8px;
+}
+
+.tl-header-action {
+        flex-shrink: 0;
+        width: 200px;
 }

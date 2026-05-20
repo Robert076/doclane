@@ -89,8 +89,7 @@ func SyncUserHandler(w http.ResponseWriter, r *http.Request) {
 			utils.WriteError(w, err)
 			return
 		}
-
-		_ = config.InvitationCodeService.InvalidateCode(r.Context(), invCode.ID)
+		_ = config.InvitationCodeService.InvalidateCode(r.Context(), invCode.ID, id)
 
 		utils.WriteJSONSafe(w, http.StatusCreated, types.APIResponse{
 			Success: true,

@@ -128,6 +128,57 @@ func (r *InvitationCodeRepo) GetInvitationCodesByDepartment(ctx context.Context,
 	return codes, rows.Err()
 }
 
+func (r *InvitationCodeRepo) GetAllCodesByCreator(ctx context.Context, createdBy int) ([]models.InvitationCodeReadDTO, error) {
+	query := `
+		SELECT ic.id, ic.code, ic.created_by, ic.department_id, ic.used_at, ic.expires_at, ic.created_at,
+		       d.name AS department_name,
+		       u.first_name AS used_by_first_name, u.last_name AS used_by_last_name, u.email AS used_by_email
+		FROM invitation_codes ic
+		JOIN departments d ON d.id = ic.department_id
+		LEFT JOIN users u ON u.id = ic.used_by
+		WHERE ic.created_by = $1
+		ORDER BY ic.created_at DESC
+	`
+
+	rows, err := r.db.QueryContext(ctx, query, createdBy)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var result []models.InvitationCodeReadDTO
+	for rows.Next() {
+		var dto models.InvitationCodeReadDTO
+		var usedByFirstName *string
+		var usedByLastName *string
+		var usedByEmail *string
+
+		if err := rows.Scan(
+			&dto.ID,
+			&dto.Code,
+			&dto.CreatedBy,
+			&dto.DepartmentID,
+			&dto.UsedAt,
+			&dto.ExpiresAt,
+			&dto.CreatedAt,
+			&dto.DepartmentName,
+			&usedByFirstName,
+			&usedByLastName,
+			&usedByEmail,
+		); err != nil {
+			return nil, err
+		}
+
+		dto.UsedByFirstName = usedByFirstName
+		dto.UsedByLastName = usedByLastName
+		dto.UsedByEmail = usedByEmail
+
+		result = append(result, dto)
+	}
+
+	return result, rows.Err()
+}
+
 func (r *InvitationCodeRepo) CreateInvitationCode(ctx context.Context, departmentID int, code string, createdBy int, expiresAt *time.Time) error {
 	query := `
 		INSERT INTO invitation_codes (department_id, code, created_by, expires_at)
@@ -137,9 +188,9 @@ func (r *InvitationCodeRepo) CreateInvitationCode(ctx context.Context, departmen
 	return err
 }
 
-func (r *InvitationCodeRepo) InvalidateCode(ctx context.Context, id int) error {
-	query := `UPDATE invitation_codes SET used_at = NOW() WHERE id = $1 AND used_at IS NULL`
-	result, err := r.db.ExecContext(ctx, query, id)
+func (r *InvitationCodeRepo) InvalidateCode(ctx context.Context, id int, usedBy int) error {
+	query := `UPDATE invitation_codes SET used_at = NOW(), used_by = $2 WHERE id = $1 AND used_at IS NULL`
+	result, err := r.db.ExecContext(ctx, query, id, usedBy)
 	if err != nil {
 		return err
 	}

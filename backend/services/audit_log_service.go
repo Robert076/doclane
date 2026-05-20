@@ -6,6 +6,7 @@ import (
 
 	"github.com/Robert076/doclane/backend/events"
 	"github.com/Robert076/doclane/backend/repositories"
+	"github.com/Robert076/doclane/backend/types"
 )
 
 type AuditLogService struct {
@@ -17,10 +18,6 @@ func NewAuditLogService(repo repositories.IAuditLogRepo, logger *slog.Logger) *A
 	return &AuditLogService{repo: repo, logger: logger}
 }
 
-// OnEvent implements events.IObserver.
-// It writes every event to the audit_log table.
-// Errors are logged but never returned — audit logging must never
-// block or fail the main request flow.
 func (s *AuditLogService) OnEvent(ctx context.Context, event events.Event) error {
 	if err := s.repo.LogEvent(ctx, event); err != nil {
 		s.logger.Error("failed to write audit log entry",
@@ -33,6 +30,24 @@ func (s *AuditLogService) OnEvent(ctx context.Context, event events.Event) error
 	return nil
 }
 
+func (s *AuditLogService) GetNotifications(ctx context.Context, caller types.CallerContext, limit int) ([]events.Event, error) {
+	notifications, err := s.repo.GetNotificationsForUser(
+		ctx,
+		caller.UserID,
+		caller.DepartmentID,
+		caller.IsAdmin(),
+		limit,
+	)
+	if err != nil {
+		s.logger.Error("failed to fetch notifications",
+			slog.Int("caller_id", caller.UserID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+	return notifications, nil
+}
+
 func (s *AuditLogService) GetByResource(ctx context.Context, resourceType string, resourceID int) ([]events.Event, error) {
 	entries, err := s.repo.GetByResource(ctx, resourceType, resourceID)
 	if err != nil {
@@ -43,5 +58,6 @@ func (s *AuditLogService) GetByResource(ctx context.Context, resourceType string
 		)
 		return nil, err
 	}
+
 	return entries, nil
 }

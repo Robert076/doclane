@@ -19,9 +19,6 @@ func NewUserRepo(db *sql.DB) *UserRepo {
 	return &UserRepo{db: db}
 }
 
-// scanUser scans a row into a User struct.
-// All queries select the same columns in the same order, so this keeps
-// the scan list in one place instead of duplicated across every method.
 func scanUser(row interface {
 	Scan(dest ...interface{}) error
 }) (models.User, error) {
@@ -41,11 +38,12 @@ func scanUser(row interface {
 		&user.Phone,
 		&user.Street,
 		&user.Locality,
+		&user.NotificationsSeenAt,
 	)
 	return user, err
 }
 
-const userColumns = `id, cognito_sub, email, first_name, last_name, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality`
+const userColumns = `id, cognito_sub, email, first_name, last_name, role, department_id, is_active, last_notified, created_at, updated_at, phone, street, locality, notifications_seen_at`
 
 func (repo *UserRepo) GetUsers(
 	ctx context.Context,
@@ -137,9 +135,6 @@ func (repo *UserRepo) GetUserByEmail(ctx context.Context, email string) (models.
 	return user, err
 }
 
-// GetUserByCognitoSub looks up a user by their Cognito sub claim.
-// This is called by the auth middleware on every authenticated request
-// to resolve the Cognito identity to an application user.
 func (repo *UserRepo) GetUserByCognitoSub(ctx context.Context, cognitoSub string) (models.User, error) {
 	query := `SELECT ` + userColumns + ` FROM users WHERE cognito_sub = $1`
 	user, err := scanUser(repo.db.QueryRowContext(ctx, query, cognitoSub))
@@ -211,5 +206,11 @@ func (repo *UserRepo) DeactivateUser(ctx context.Context, userId int) error {
 func (repo *UserRepo) NotifyUser(ctx context.Context, userId int, time time.Time) error {
 	query := `UPDATE users SET last_notified = $1 WHERE id = $2`
 	_, err := repo.db.ExecContext(ctx, query, time, userId)
+	return err
+}
+
+func (r *UserRepo) UpdateNotificationsSeenAt(ctx context.Context, userID int) error {
+	query := `UPDATE users SET notifications_seen_at = NOW() WHERE id = $1`
+	_, err := r.db.ExecContext(ctx, query, userID)
 	return err
 }

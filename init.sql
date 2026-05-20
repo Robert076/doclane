@@ -183,3 +183,5 @@ CREATE INDEX idx_template_tags_tag ON template_tags(tag_id);
 CREATE INDEX idx_audit_log_resource ON audit_log(resource_type, resource_id);
 CREATE INDEX idx_audit_log_actor    ON audit_log(actor_id);
 CREATE INDEX idx_audit_log_occurred ON audit_log(occurred_at);
+
+ALTER TABLE invitation_codes ADD COLUMN used_by INTEGER REFERENCES users(id) ON DELETE SET NULL;

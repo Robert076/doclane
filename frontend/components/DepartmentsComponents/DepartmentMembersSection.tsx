@@ -17,6 +17,7 @@ import "./DepartmentMembersSection.css";
 import GenerateInvitationCodeModal from "./GenerateInvitationCodeModal";
 import MoveDepartmentModal from "./MoveDepartmentModal";
 import { MdContentCopy } from "react-icons/md";
+import InvitationCodesModal from "./InvitationCodesModal";
 
 interface Props {
         members: User[];
@@ -43,30 +44,6 @@ export default function DepartmentMembersSection({
                 if (response.success) {
                         toast.success(`${name} a fost dezactivat.`);
                         router.refresh();
-                } else {
-                        toast.error(response.message);
-                }
-        };
-
-        const handleOpenCodes = async () => {
-                setIsLoadingCodes(true);
-                const response = await getInvitationCodesByDepartment(departmentId);
-                setIsLoadingCodes(false);
-                if (response.success) {
-                        setCodes(response.data ?? []);
-                        setIsCodesModalOpen(true);
-                } else {
-                        toast.error(response.message ?? "Eroare la încărcarea codurilor.");
-                }
-        };
-
-        const handleDeleteCode = async (codeId: number) => {
-                const id = toast.loading("Se șterge...");
-                const response = await deleteInvitationCode(codeId);
-                toast.dismiss(id);
-                if (response.success) {
-                        toast.success("Cod șters.");
-                        setCodes((prev) => prev.filter((c) => c.id !== codeId));
                 } else {
                         toast.error(response.message);
                 }
@@ -100,7 +77,7 @@ export default function DepartmentMembersSection({
                                                         text="Coduri invitație"
                                                         fullWidth
                                                         variant="ghost"
-                                                        onClick={handleOpenCodes}
+                                                        onClick={() => {setIsCodesModalOpen(true)}}
                                                         disabled={isLoadingCodes}
                                                 />
                                         </div>
@@ -166,63 +143,10 @@ export default function DepartmentMembersSection({
                                 />
                         )}
 
-                        <Modal
+                        <InvitationCodesModal
                                 isOpen={isCodesModalOpen}
                                 onClose={() => setIsCodesModalOpen(false)}
-                                title="Coduri de invitație"
-                                hideFooter
-                        >
-                                {codes.length === 0 ? (
-                                        <p className="codes-empty">
-                                                Niciun cod activ pentru acest departament.
-                                        </p>
-                                ) : (
-                                        <div className="codes-list">
-                                                {codes.map((code) => {
-                                                        const inviteLink = `${window.location.origin}/register/invite?code=${code.code}`;
-                                                        return (
-                                                                <div
-                                                                        key={code.id}
-                                                                        className="code-item"
-                                                                >
-                                                                        <div>
-                                                                                <span className="code-item-text">
-                                                                                        {
-                                                                                                code.code
-                                                                                        }
-                                                                                </span>
-                                                                                {code.expires_at && (
-                                                                                        <p className="code-item-meta">
-                                                                                                Expiră:{" "}
-                                                                                                {formatDate(
-                                                                                                        code.expires_at,
-                                                                                                )}
-                                                                                        </p>
-                                                                                )}
-                                                                        </div>
-                                                                        <button
-                                                                                className="code-copy-btn"
-                                                                                onClick={() => {
-                                                                                        navigator.clipboard.writeText(
-                                                                                                inviteLink,
-                                                                                        );
-                                                                                        toast.success(
-                                                                                                "Link copiat!",
-                                                                                        );
-                                                                                }}
-                                                                        >
-                                                                                <MdContentCopy
-                                                                                        size={
-                                                                                                18
-                                                                                        }
-                                                                                />
-                                                                        </button>
-                                                                </div>
-                                                        );
-                                                })}
-                                        </div>
-                                )}
-                        </Modal>
+                        />
                 </div>
         );
 }

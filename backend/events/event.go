@@ -10,8 +10,8 @@ type Event struct {
 	ResourceType   string         `json:"resource_type"`
 	Metadata       map[string]any `json:"metadata"`
 	OccurredAt     time.Time      `json:"occurred_at"`
-	ActorFirstName string         `json:"actor_first_name"`
-	ActorLastName  string         `json:"actor_last_name"`
+	ActorFirstName *string        `json:"actor_first_name"`
+	ActorLastName  *string        `json:"actor_last_name"`
 }
 
 const (

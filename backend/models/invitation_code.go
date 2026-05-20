@@ -14,7 +14,10 @@ type InvitationCode struct {
 
 type InvitationCodeReadDTO struct {
 	InvitationCode
-	DepartmentName string `json:"department_name"`
+	DepartmentName  string  `json:"department_name"`
+	UsedByFirstName *string `json:"used_by_first_name"`
+	UsedByLastName  *string `json:"used_by_last_name"`
+	UsedByEmail     *string `json:"used_by_email"`
 }
 
 type InvitationCodeCreateDTO struct {

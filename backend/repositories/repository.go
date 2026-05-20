@@ -20,6 +20,7 @@ type IUserRepo interface {
 	DeactivateUser(ctx context.Context, userId int) error
 	UpdateUserProfile(ctx context.Context, userID int, dto models.UserProfilePatchDTO) error
 	UpdateUserDepartment(ctx context.Context, userID int, departmentID int) error
+	UpdateNotificationsSeenAt(ctx context.Context, userID int) error
 }
 
 type IRequestRepo interface {
@@ -80,8 +81,9 @@ type IInvitationCodeRepo interface {
 	GetInvitationCodeByCode(ctx context.Context, code string) (models.InvitationCodeReadDTO, error)
 	GetInvitationCodesByCreator(ctx context.Context, createdBy int) ([]models.InvitationCode, error)
 	GetInvitationCodeByID(ctx context.Context, id int) (models.InvitationCode, error)
+	GetAllCodesByCreator(ctx context.Context, createdBy int) ([]models.InvitationCodeReadDTO, error)
 	CreateInvitationCode(ctx context.Context, departmentID int, code string, createdBy int, expiresAt *time.Time) error
-	InvalidateCode(ctx context.Context, id int) error
+	InvalidateCode(ctx context.Context, id int, usedBy int) error
 	DeleteCode(ctx context.Context, id int) error
 }
 
@@ -118,6 +120,7 @@ type IStatsRepo interface {
 type IAuditLogRepo interface {
 	LogEvent(ctx context.Context, event events.Event) error
 	GetByResource(ctx context.Context, resourceType string, resourceID int) ([]events.Event, error)
+	GetNotificationsForUser(ctx context.Context, userID int, departmentID *int, isAdmin bool, limit int) ([]events.Event, error)
 }
 
 type ITxManager interface {

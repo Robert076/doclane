@@ -37,3 +37,9 @@ export async function deleteInvitationCode(id: number): Promise<APIResponse> {
                 revalidate: "/dashboard/departments",
         });
 }
+
+export async function getAllInvitationCodes(): Promise<APIResponse<InvitationCode[]>> {
+  return doclaneHTTPHelper("/invitations/all", {
+    method: "GET",
+  });
+}

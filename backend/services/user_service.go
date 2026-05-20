@@ -374,3 +374,7 @@ func (service *UserService) GetUserByCognitoSub(ctx context.Context, cognitoSub 
 	}
 	return &user, nil
 }
+
+func (service *UserService) MarkNotificationsSeen(ctx context.Context, caller types.CallerContext) error {
+	return service.repo.UpdateNotificationsSeenAt(ctx, caller.UserID)
+}
