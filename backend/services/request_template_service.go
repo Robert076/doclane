@@ -61,6 +61,22 @@ func (s *RequestTemplateService) GetRequestTemplateByID(ctx context.Context, cla
 	return s.checkUserCanAccessTemplate(ctx, claims, requestTemplateID)
 }
 
+func (s *RequestTemplateService) GetExpectedDocumentPreview(ctx context.Context, templateID int) ([]models.ExpectedDocumentTemplate, error) {
+	template, err := s.templateRepo.GetRequestTemplateByID(ctx, templateID)
+	if err != nil {
+		return nil, errors.ErrNotFound{Msg: "Template not found."}
+	}
+	if template.IsClosed {
+		return nil, errors.ErrBadRequest{Msg: "This template is archived."}
+	}
+
+	docs, err := s.expectedDocTmplRepo.GetByRequestTemplateID(ctx, templateID)
+	if err != nil {
+		return nil, err
+	}
+	return docs, nil
+}
+
 func (s *RequestTemplateService) AddRequestTemplateWithDocuments(
 	ctx context.Context,
 	claims types.CallerContext,

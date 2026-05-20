@@ -131,6 +131,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Get("/", template_handler.GetRequestTemplatesHandler)
 			r.Route("/{id}", func(r chi.Router) {
 				r.Get("/", template_handler.GetRequestTemplateByIDHandler)
+				r.Get("/preview", template_handler.PreviewExpectedDocumentsHandler)
 				r.Patch("/", template_handler.PatchRequestTemplateHandler)
 				r.Delete("/", template_handler.DeleteRequestTemplateHandler)
 				r.Route("/expected-documents", func(r chi.Router) {

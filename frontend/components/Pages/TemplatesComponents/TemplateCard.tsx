@@ -13,6 +13,7 @@ import { archiveTemplate, deleteTemplate, unarchiveTemplate } from "@/lib/api/te
 import { createRequest } from "@/lib/api/requests";
 import DeleteTemplateModal from "./DeleteTemplateModal";
 import Modal from "@/components/Modals/Modal";
+import TemplatePreviewModal from "./TemplatePreviewModal";
 import { useUser } from "@/context/UserContext";
 
 interface TemplateCardProps {
@@ -29,6 +30,7 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
         const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
         const [isArchiveModalOpen, setIsArchiveModalOpen] = useState(false);
         const [isSubmitting, setIsSubmitting] = useState(false);
+        const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
         const handleView = () => router.push(`/dashboard/templates/${template.id}`);
 
@@ -89,18 +91,13 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                         />
                                 )}
                                 {!canManage && (
-                                        <ButtonPrimary
-                                                text={
-                                                        isSubmitting
-                                                                ? "Se trimite..."
-                                                                : "Depune cerere"
-                                                }
-                                                variant="ghost"
-                                                fullWidth
-                                                disabled={isSubmitting}
-                                                onClick={handleSubmitRequest}
-                                        />
-                                )}
+  <ButtonPrimary
+    text="Depune cerere"
+    variant="ghost"
+    fullWidth
+    onClick={() => setIsPreviewOpen(true)}
+  />
+)}
                                 {canManage && (
                                         <ButtonPrimary
                                                 text="Arhivează șablon"
@@ -200,6 +197,16 @@ const TemplateCard: React.FC<TemplateCardProps> = ({ template, searchTerm, archi
                                         restaura ulterior din secțiunea de arhivă.
                                 </p>
                         </Modal>
+
+                        <TemplatePreviewModal
+                        isOpen={isPreviewOpen}
+                        onClose={() => setIsPreviewOpen(false)}
+                        onConfirm={handleSubmitRequest}
+                        templateTitle={template.title}
+                        templateDescription={template.description}
+                        templateId={template.id}
+                        isSubmitting={isSubmitting}
+                        />
 
                         <DeleteTemplateModal
                                 isOpen={isDeleteModalOpen}

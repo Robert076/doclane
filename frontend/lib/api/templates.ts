@@ -92,6 +92,14 @@ export async function getExpectedDocumentTemplatesByTemplate(
         });
 }
 
+export async function getTemplatePreview(
+  templateId: number,
+): Promise<APIResponse<ExpectedDocumentTemplate[]>> {
+  return doclaneHTTPHelper(`/templates/${templateId}/preview`, {
+    method: "GET",
+  });
+}
+
 export async function deleteExpectedDocumentTemplate(
         templateID: number,
         expectedDocTemplateID: number,
