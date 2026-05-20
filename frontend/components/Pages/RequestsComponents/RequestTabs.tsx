@@ -26,6 +26,13 @@ export default function RequestTabs({
 }: RequestTabsProps) {
   const [active, setActive] = useState<Tab>("details");
 
+  const approved = (data.expected_documents ?? []).filter(
+  (d) => d.status === "accepted"
+).length;
+const total = (data.expected_documents ?? []).length;
+const percent = total > 0 ? Math.round((approved / total) * 100) : 0;
+
+
   return (
     <div className="request-tabs">
       <div className="tab-bar">
@@ -54,6 +61,16 @@ export default function RequestTabs({
           Istoric
         </button>
       </div>
+      {total > 0 && (
+  <div className="progress-section">
+    <div className="progress-bar">
+      <div className="progress-fill" style={{ width: `${percent}%` }} />
+    </div>
+    <span className="progress-label">
+      {approved}/{total} documente aprobate
+    </span>
+  </div>
+)}
       <div className="tab-content">
         {active === "details" && <DetailsCard data={data} />}
         {active === "files" && (
@@ -63,6 +80,7 @@ export default function RequestTabs({
             requestId={requestId}
           />
         )}
+        
         {active === "comments" && (
           <RequestComments comments={comments} requestId={requestId} />
         )}

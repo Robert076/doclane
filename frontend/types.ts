@@ -140,16 +140,18 @@ export interface RequestComment {
 }
 
 export interface InvitationCode {
-        id: number;
-        code: string;
-        created_by: number;
-        department_id: number;
-        department_name: string;
-        used_at?: string | null;
-        expires_at?: string | null;
-        created_at: string;
+  id: number;
+  code: string;
+  created_by: number;
+  department_id: number;
+  department_name: string;
+  used_at?: string | null;
+  expires_at?: string | null;
+  created_at: string;
+  used_by_first_name?: string | null;
+  used_by_last_name?: string | null;
+  used_by_email?: string | null;
 }
-
 export type RequestStatus = "pending" | "uploaded" | "overdue";
 export type UserRole = "admin" | "member";
 export type ExpectedDocumentStatus = "accepted" | "rejected" | "uploaded" | "pending";
