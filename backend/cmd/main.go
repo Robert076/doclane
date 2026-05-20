@@ -149,6 +149,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 			r.Post("/generate", invitation_handler.GenerateInvitationCodeHandler)
 			r.Get("/my-codes", invitation_handler.GetMyInvitationCodesHandler)
 			r.Get("/by-department", invitation_handler.GetInvitationCodesByDepartmentHandler)
+			r.Get("/all", invitation_handler.GetAllInvitationCodesHandler)
 			r.Delete("/{id}", invitation_handler.DeleteInvitationCodeHandler)
 		})
 

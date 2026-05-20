@@ -181,45 +181,6 @@ func (s *InvitationCodeService) GetInvitationCodesByDepartment(
 	return validCodes, nil
 }
 
-func (s *InvitationCodeService) ValidateAndUseInvitationCode(
-	ctx context.Context,
-	code string,
-) (*models.InvitationCodeReadDTO, error) {
-	invCode, err := s.invitationRepo.GetInvitationCodeByCode(ctx, code)
-	if err != nil {
-		s.logger.Warn("invitation code not found",
-			slog.String("code", code),
-			slog.Any("error", err),
-		)
-		return nil, errors.ErrNotFound{Msg: "Invalid invitation code."}
-	}
-	if invCode.UsedAt != nil {
-		s.logger.Warn("attempted to use already-used invitation code",
-			slog.String("code", code),
-		)
-		return nil, errors.ErrBadRequest{Msg: "This invitation code has already been used."}
-	}
-	if invCode.ExpiresAt != nil && time.Now().After(*invCode.ExpiresAt) {
-		s.logger.Warn("attempted to use expired invitation code",
-			slog.String("code", code),
-			slog.Time("expired_at", *invCode.ExpiresAt),
-		)
-		return nil, errors.ErrBadRequest{Msg: "This invitation code has expired."}
-	}
-	if err = s.invitationRepo.InvalidateCode(ctx, invCode.ID); err != nil {
-		s.logger.Error("failed to invalidate invitation code",
-			slog.Int("code_id", invCode.ID),
-			slog.Any("error", err),
-		)
-		return nil, errors.ErrInternalServerError{Msg: "Failed to process invitation code."}
-	}
-	s.logger.Info("invitation code used successfully",
-		slog.String("code", code),
-		slog.Int("created_by", invCode.CreatedBy),
-	)
-	return &invCode, nil
-}
-
 func (s *InvitationCodeService) GetInvitationCodeInfo(
 	ctx context.Context,
 	code string,
@@ -277,6 +238,26 @@ func (s *InvitationCodeService) DeleteInvitationCode(
 	return nil
 }
 
-func (s *InvitationCodeService) InvalidateCode(ctx context.Context, id int) error {
-	return s.invitationRepo.InvalidateCode(ctx, id)
+func (s *InvitationCodeService) GetAllInvitationCodes(
+	ctx context.Context,
+	claims types.CallerContext,
+) ([]models.InvitationCodeReadDTO, error) {
+	if !claims.IsAdmin() {
+		return nil, errors.ErrForbidden{Msg: "Only admins can view invitation codes."}
+	}
+
+	codes, err := s.invitationRepo.GetAllCodesByCreator(ctx, claims.UserID)
+	if err != nil {
+		s.logger.Error("failed to fetch all invitation codes",
+			slog.Int("caller_id", claims.UserID),
+			slog.Any("error", err),
+		)
+		return nil, err
+	}
+
+	return codes, nil
+}
+
+func (s *InvitationCodeService) InvalidateCode(ctx context.Context, id int, usedBy int) error {
+	return s.invitationRepo.InvalidateCode(ctx, id, usedBy)
 }

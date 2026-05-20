@@ -80,8 +80,9 @@ type IInvitationCodeRepo interface {
 	GetInvitationCodeByCode(ctx context.Context, code string) (models.InvitationCodeReadDTO, error)
 	GetInvitationCodesByCreator(ctx context.Context, createdBy int) ([]models.InvitationCode, error)
 	GetInvitationCodeByID(ctx context.Context, id int) (models.InvitationCode, error)
+	GetAllCodesByCreator(ctx context.Context, createdBy int) ([]models.InvitationCodeReadDTO, error)
 	CreateInvitationCode(ctx context.Context, departmentID int, code string, createdBy int, expiresAt *time.Time) error
-	InvalidateCode(ctx context.Context, id int) error
+	InvalidateCode(ctx context.Context, id int, usedBy int) error
 	DeleteCode(ctx context.Context, id int) error
 }
 

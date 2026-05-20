@@ -1,0 +1,133 @@
+.inv-tabs {
+        display: flex;
+        gap: 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+        margin-bottom: 1rem;
+}
+
+.inv-tab {
+        flex: 1;
+        padding: 0.6rem 0;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        font-size: var(--font-size-s);
+        font-weight: 500;
+        font-family: inherit;
+        color: var(--text-color-secondary);
+        cursor: pointer;
+        transition: all 0.15s ease;
+}
+
+.inv-tab:hover {
+        color: #1a202c;
+}
+
+.inv-tab--active {
+        color: var(--color-primary);
+        border-bottom-color: var(--color-primary);
+        font-weight: 600;
+}
+
+.inv-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        max-height: 360px;
+        overflow-y: auto;
+}
+
+.inv-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        padding: 0.75rem 1rem;
+        border: var(--border-default);
+        border-radius: var(--border-radius-default);
+        background: #f8fafc;
+        transition: background 0.15s ease;
+}
+
+.inv-item:hover {
+        background: #f1f5f9;
+}
+
+.inv-item-left {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+}
+
+.inv-code {
+        font-size: var(--font-size-m);
+        font-weight: 600;
+        color: #1a202c;
+        letter-spacing: 0.05em;
+}
+
+.inv-dept {
+        font-size: 12.5px;
+        color: var(--color-primary);
+        font-weight: 500;
+}
+
+.inv-meta {
+        font-size: 12px;
+        color: var(--text-color-secondary);
+}
+
+.inv-used-by {
+        font-size: 13px;
+        font-weight: 500;
+        color: #1a202c;
+        margin-top: 2px;
+}
+
+.inv-copy-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--text-color-secondary);
+        display: flex;
+        align-items: center;
+        padding: 4px;
+        border-radius: 6px;
+        transition: color 0.2s, background 0.2s;
+}
+
+.inv-copy-btn:hover {
+        color: var(--color-primary);
+        background: #f1f5f9;
+}
+
+.inv-used-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        background: #f0fdf4;
+        color: #15803d;
+        border: 1px solid #bbf7d0;
+        white-space: nowrap;
+}
+
+.inv-loading {
+        color: var(--text-color-secondary);
+        font-size: var(--font-size-s);
+        text-align: center;
+        padding: 1rem 0;
+}
+
+.inv-expired-note {
+        font-size: 12px;
+        color: var(--text-color-secondary);
+        text-align: center;
+        margin-top: 0.75rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
