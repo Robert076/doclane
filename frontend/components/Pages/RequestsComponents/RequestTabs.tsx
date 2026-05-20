@@ -84,7 +84,9 @@ const percent = total > 0 ? Math.round((approved / total) * 100) : 0;
         {active === "comments" && (
           <RequestComments comments={comments} requestId={requestId} />
         )}
-        {active === "timeline" && <RequestTimeline events={auditEvents} />}
+        {active === "timeline" && (
+  <RequestTimeline events={auditEvents} requestTitle={data.title} />
+)}
       </div>
     </div>
   );

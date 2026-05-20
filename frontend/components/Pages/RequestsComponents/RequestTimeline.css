@@ -271,3 +271,15 @@
         color: #b91c1c;
         border: 1px solid #fecaca;
 }
+
+.tl-header {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        margin-bottom: 8px;
+}
+
+.tl-header-action {
+        flex-shrink: 0;
+        width: 200px;
+}

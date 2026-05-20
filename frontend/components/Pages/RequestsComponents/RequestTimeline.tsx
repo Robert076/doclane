@@ -1,15 +1,19 @@
+"use client";
 import { useState } from "react";
 import { AuditEvent } from "@/types";
 import { formatDate } from "@/lib/client/formatDate";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
+import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPrimary";
 import PaginationFooter from "@/components/FileSectionComponents/FileSection/_components/PaginationFooter";
+import { exportAuditLogToPDF } from "@/lib/client/exportAuditPDF";
 import "./RequestTimeline.css";
 
 const EVENTS_PER_PAGE = 5;
 
 interface RequestTimelineProps {
   events: AuditEvent[];
+  requestTitle?: string;
 }
 
 interface EventConfig {
@@ -120,7 +124,14 @@ function getConfig(eventType: string): EventConfig {
   );
 }
 
-export default function RequestTimeline({ events }: RequestTimelineProps) {
+export function getEventLabel(eventType: string): string {
+  return getConfig(eventType).label;
+}
+
+export default function RequestTimeline({
+  events,
+  requestTitle,
+}: RequestTimelineProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   const sorted = [...(events ?? [])].sort(
@@ -134,7 +145,18 @@ export default function RequestTimeline({ events }: RequestTimelineProps) {
 
   return (
     <div className="timeline-section">
-      <SectionTitle text="Istoric dosar" />
+      <div className="tl-header">
+  <SectionTitle text="Istoric dosar" />
+  {sorted.length > 0 && (
+    <div className="tl-header-action">
+      <ButtonPrimary
+        text="Descarcă PDF"
+        variant="ghost"
+        onClick={() => exportAuditLogToPDF(sorted, requestTitle)}
+      />
+    </div>
+  )}
+</div>
       {sorted.length === 0 ? (
         <NotFound
           text="Nu există activitate înregistrată"
