@@ -32,7 +32,6 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
-  /* Matches CloseRequestModal — no special color on the title */
 }
 
 .reject-document-modal-close {
@@ -53,13 +52,15 @@
   background-color: #f3f4f6;
 }
 
-
 .reject-document-modal-body {
   padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .reject-document-warning {
-  margin: 0 0 16px 0;
+  margin: 0;
   font-size: 1rem;
   color: #374151;
   line-height: 1.5;
@@ -70,10 +71,43 @@
   font-weight: 600;
 }
 
-.reject-document-input-group {
+/* Predefined reason chips */
+.reject-reasons-grid {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
   gap: 8px;
+}
+
+.reject-reason-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  color: #374151;
+  transition: all 0.15s ease;
+  font-family: 'Roboto', sans-serif;
+}
+
+.reject-reason-chip:hover {
+  border-color: #b91c1c;
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.reject-reason-chip--active {
+  border-color: #b91c1c;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-weight: 600;
+}
+
+.reject-custom-input {
+  margin-top: 4px;
 }
 
 .reject-error {
@@ -86,8 +120,9 @@
   flex-direction: column;
   padding: 16px 24px;
   border-top: 1px solid #e5e7eb;
+  gap: 8px;
 }
 
-.reject-document-modal-footer > * {
+.reject-document-modal-footer>* {
   width: 100%;
 }
