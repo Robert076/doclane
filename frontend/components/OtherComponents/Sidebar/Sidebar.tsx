@@ -10,6 +10,7 @@ import Logo from "@/components/OtherComponents/Logo/Logo";
 import { UI_TEXT } from "@/locales/ro";
 import { logout } from "@/lib/api/auth";
 import "./Sidebar.css";
+import NotificationBell from "@/components/NotificationBell/NotificationBell";
 
 export default function Sidebar() {
         const pathname = usePathname();
@@ -76,7 +77,9 @@ export default function Sidebar() {
                                                 );
                                         })}
                                 </nav>
-
+                                <div className="sidebar-notifications">
+  <NotificationBell />
+</div>        
                                 <div className="sidebar-footer">
                                         <div className="sidebar-user-info">
                                                 <p className="sidebar-user-email">

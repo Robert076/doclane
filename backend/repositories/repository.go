@@ -20,6 +20,7 @@ type IUserRepo interface {
 	DeactivateUser(ctx context.Context, userId int) error
 	UpdateUserProfile(ctx context.Context, userID int, dto models.UserProfilePatchDTO) error
 	UpdateUserDepartment(ctx context.Context, userID int, departmentID int) error
+	UpdateNotificationsSeenAt(ctx context.Context, userID int) error
 }
 
 type IRequestRepo interface {
@@ -119,6 +120,7 @@ type IStatsRepo interface {
 type IAuditLogRepo interface {
 	LogEvent(ctx context.Context, event events.Event) error
 	GetByResource(ctx context.Context, resourceType string, resourceID int) ([]events.Event, error)
+	GetNotificationsForUser(ctx context.Context, userID int, departmentID *int, isAdmin bool, limit int) ([]events.Event, error)
 }
 
 type ITxManager interface {
