@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { AuditEvent } from "@/types";
 import { formatDate } from "@/lib/client/formatDate";
 import SectionTitle from "@/components/Pages/RequestsComponents/SectionTitle";
 import NotFound from "@/components/OtherComponents/NotFound/NotFound";
+import PaginationFooter from "@/components/FileSectionComponents/FileSection/_components/PaginationFooter";
 import "./RequestTimeline.css";
+
+const EVENTS_PER_PAGE = 5;
 
 interface RequestTimelineProps {
   events: AuditEvent[];
@@ -21,14 +25,22 @@ const EVENT_CONFIG: Record<string, EventConfig> = {
     badgeClass: "tl-badge--created",
     dotClass: "tl-dot--created",
     renderMeta: (m) =>
-      m?.title ? <span>Titlu: <strong>{String(m.title)}</strong></span> : null,
+      m?.title ? (
+        <span>
+          Titlu: <strong>{String(m.title)}</strong>
+        </span>
+      ) : null,
   },
   "request.updated": {
     label: "Dosar actualizat",
     badgeClass: "tl-badge--updated",
     dotClass: "tl-dot--updated",
     renderMeta: (m) =>
-      m?.title ? <span>Titlu nou: <strong>{String(m.title)}</strong></span> : null,
+      m?.title ? (
+        <span>
+          Titlu nou: <strong>{String(m.title)}</strong>
+        </span>
+      ) : null,
   },
   "request.claimed": {
     label: "Dosar revendicat",
@@ -72,7 +84,7 @@ const EVENT_CONFIG: Record<string, EventConfig> = {
     badgeClass: "tl-badge--approved",
     dotClass: "tl-dot--approved",
     renderMeta: (m) =>
-      m?.file_name ? <span>{String(m.file_name)}</span> : null,
+      m?.title ? <span>{String(m.title)}</span> : null,
   },
   "document.rejected": {
     label: "Document respins",
@@ -109,10 +121,16 @@ function getConfig(eventType: string): EventConfig {
 }
 
 export default function RequestTimeline({ events }: RequestTimelineProps) {
-  const sorted = [...events ?? []].sort(
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const sorted = [...(events ?? [])].sort(
     (a, b) =>
-      new Date(a.occurred_at).getTime() - new Date(b.occurred_at).getTime(),
+      new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime(),
   );
+
+  const totalPages = Math.ceil(sorted.length / EVENTS_PER_PAGE);
+  const startIndex = (currentPage - 1) * EVENTS_PER_PAGE;
+  const currentEvents = sorted.slice(startIndex, startIndex + EVENTS_PER_PAGE);
 
   return (
     <div className="timeline-section">
@@ -124,39 +142,48 @@ export default function RequestTimeline({ events }: RequestTimelineProps) {
           background="#fff"
         />
       ) : (
-        <ol className="tl-list">
-          {sorted.map((event, index) => {
-            const config = getConfig(event.event_type);
-            const meta = config.renderMeta?.(event.metadata);
-            const isLast = index === sorted.length - 1;
+        <>
+          <ol className="tl-list">
+            {currentEvents.map((event, index) => {
+              const config = getConfig(event.event_type);
+              const meta = config.renderMeta?.(event.metadata);
+              const isLast = index === currentEvents.length - 1;
 
-            return (
-              <li key={event.id} className="tl-item">
-                <div className="tl-indicator">
-                  <div className={`tl-dot ${config.dotClass}`} />
-                  {!isLast && <div className="tl-line" />}
-                </div>
-                <div className="tl-body">
-                  <div className="tl-row">
-                    <span className="tl-label">{config.label}</span>
-                    <span className="tl-time">
-                      {formatDate(event.occurred_at)}
+              return (
+                <li key={event.id} className="tl-item">
+                  <div className="tl-indicator">
+                    <div className={`tl-dot ${config.dotClass}`} />
+                    {!isLast && <div className="tl-line" />}
+                  </div>
+                  <div className="tl-body">
+                    <div className="tl-row">
+                      <span className="tl-label">{config.label}</span>
+                      <span className="tl-time">
+                        {formatDate(event.occurred_at)}
+                      </span>
+                    </div>
+                    {meta && <div className="tl-meta">{meta}</div>}
+                    {(event.actor_first_name || event.actor_last_name) && (
+                      <div className="tl-actor">
+                        {event.actor_first_name} {event.actor_last_name}
+                      </div>
+                    )}
+                    <span className={`tl-badge ${config.badgeClass}`}>
+                      {config.label}
                     </span>
                   </div>
-                  {meta && <div className="tl-meta">{meta}</div>}
-                  {(event.actor_first_name || event.actor_last_name) && (
-                        <div className="tl-actor">
-                        {event.actor_first_name} {event.actor_last_name}
-                        </div>
-                        )}
-                  <span className={`tl-badge ${config.badgeClass}`}>
-                    {config.label}
-                  </span>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+                </li>
+              );
+            })}
+          </ol>
+          {totalPages > 1 && (
+            <PaginationFooter
+              currentPage={currentPage}
+              totalPages={totalPages}
+              setCurrentPage={setCurrentPage}
+            />
+          )}
+        </>
       )}
     </div>
   );

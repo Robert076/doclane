@@ -3,7 +3,9 @@ package services
 import (
 	"context"
 	"log/slog"
+	"time"
 
+	"github.com/Robert076/doclane/backend/events"
 	"github.com/Robert076/doclane/backend/models"
 	"github.com/Robert076/doclane/backend/repositories"
 	"github.com/Robert076/doclane/backend/types"
@@ -14,13 +16,20 @@ type ExpectedDocumentService struct {
 	expectedDocRepo repositories.IExpectedDocumentRepo
 	requestRepo     repositories.IRequestRepo
 	logger          *slog.Logger
+	bus             *events.EventBus
 }
 
-func NewExpectedDocumentService(expectedDocRepo repositories.IExpectedDocumentRepo, requestRepo repositories.IRequestRepo, logger *slog.Logger) *ExpectedDocumentService {
+func NewExpectedDocumentService(
+	expectedDocRepo repositories.IExpectedDocumentRepo,
+	requestRepo repositories.IRequestRepo,
+	logger *slog.Logger,
+	bus *events.EventBus,
+) *ExpectedDocumentService {
 	return &ExpectedDocumentService{
 		expectedDocRepo: expectedDocRepo,
 		requestRepo:     requestRepo,
 		logger:          logger,
+		bus:             bus,
 	}
 }
 
@@ -91,5 +100,28 @@ func (service *ExpectedDocumentService) UpdateExpectedDocumentStatus(
 		slog.Int("caller_id", claims.UserID),
 		slog.String("status", status),
 	)
+
+	eventType := events.EventDocumentApproved
+	if status == "rejected" {
+		eventType = events.EventDocumentRejected
+	}
+
+	metadata := map[string]any{
+		"title":      expectedDoc.Title,
+		"request_id": expectedDoc.RequestID,
+	}
+	if rejectionReason != nil {
+		metadata["rejection_reason"] = *rejectionReason
+	}
+
+	service.bus.Publish(ctx, events.Event{
+		Type:         eventType,
+		ActorID:      claims.UserID,
+		ResourceID:   expectedDocID,
+		ResourceType: events.ResourceTypeDocument,
+		Metadata:     metadata,
+		OccurredAt:   time.Now().UTC(),
+	})
+
 	return &updated, nil
 }
