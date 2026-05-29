@@ -247,4 +247,4 @@ override.tf.json
 .terraformrc
 terraform.rc
 
-*.terraform.lock.hcl
+*.terraform.lock.hclterraform/platform-compute/tfplan

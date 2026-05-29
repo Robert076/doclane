@@ -168,6 +168,9 @@ func initDB(cfg aws.Config) *sql.DB {
 		user = utils.RequireEnv("DB_USER")
 		name = utils.RequireEnv("DB_NAME")
 		password = utils.RequireEnv("DB_PASSWORD")
+		if s := os.Getenv("DB_SSLMODE"); s != "" {
+			sslMode = s
+		}
 	}
 
 	psqlInfo := fmt.Sprintf(

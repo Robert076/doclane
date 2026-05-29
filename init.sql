@@ -23,6 +23,7 @@ CREATE TABLE users (
     street        TEXT,
     locality      TEXT,
     last_notified TIMESTAMPTZ,
+    notifications_seen_at TIMESTAMPTZ,
     created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );

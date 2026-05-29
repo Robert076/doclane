@@ -53,6 +53,7 @@ jobs:
         with:
           context: ./backend
           push: true
+          platforms: linux/amd64
           tags: |
             ${{ env.ECR_REGISTRY }}/doclane-backend:${{ github.sha }}
             ${{ env.ECR_REGISTRY }}/doclane-backend:latest
@@ -92,6 +93,7 @@ jobs:
         with:
           context: ./frontend
           push: true
+          platforms: linux/amd64
           tags: |
             ${{ env.ECR_REGISTRY }}/doclane-frontend:${{ github.sha }}
             ${{ env.ECR_REGISTRY }}/doclane-frontend:latest
