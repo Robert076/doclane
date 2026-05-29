@@ -1,7 +1,17 @@
 import "@/lib/amplify";
 import { signIn, signUp, confirmSignUp, signOut, fetchAuthSession } from "@aws-amplify/auth";
-import { setAuthCookie, logout as serverLogout } from "@/lib/api/auth";
+import { logout as serverLogout } from "@/lib/api/auth";
 import { syncUser } from "@/lib/api/auth";
+
+async function setAuthCookieViaAPI(idToken: string, accessToken: string) {
+  const res = await fetch("/api/auth/set-cookie", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken, accessToken }),
+    credentials: "same-origin",
+  });
+  if (!res.ok) throw new Error("Failed to set auth cookie");
+}
 
 export async function login(email: string, password: string) {
   // Defensive: ensure no lingering Amplify session, otherwise signIn throws
@@ -16,7 +26,7 @@ export async function login(email: string, password: string) {
   const accessToken = session.tokens?.accessToken?.toString();
   if (!idToken || !accessToken) throw new Error("Could not retrieve session token.");
 
-  await setAuthCookie(idToken, accessToken);
+  await setAuthCookieViaAPI(idToken, accessToken);
 }
 
 export async function register(
@@ -63,7 +73,7 @@ export async function confirmRegistration(
   const accessToken = session.tokens?.accessToken?.toString();
   if (!idToken || !accessToken) throw new Error("Could not retrieve session token.");
 
-  await setAuthCookie(idToken, accessToken);
+  await setAuthCookieViaAPI(idToken, accessToken);
   return { email, firstName, lastName, invitationCode, idToken };
 }
 

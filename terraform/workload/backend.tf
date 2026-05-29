@@ -25,7 +25,7 @@ resource "kubernetes_config_map" "backend" {
     S3_BUCKET_NAME       = local.s3_bucket
     COGNITO_USER_POOL_ID = local.cognito_pool_id
     COGNITO_CLIENT_ID    = local.cognito_client_id
-    ALLOWED_ORIGIN       = "*"
+    ALLOWED_ORIGIN       = "https://thesis.robert-beres.com"
   }
 }
 

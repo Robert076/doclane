@@ -20,6 +20,20 @@ resource "kubernetes_ingress_v1" "main" {
     rule {
       http {
         path {
+          path      = "/api/auth/set-cookie"
+          path_type = "Exact"
+
+          backend {
+            service {
+              name = kubernetes_service.frontend.metadata[0].name
+              port {
+                number = 3000
+              }
+            }
+          }
+        }
+
+        path {
           path      = "/api"
           path_type = "Prefix"
 
