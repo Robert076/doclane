@@ -1,7 +1,6 @@
 package config
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -13,11 +12,9 @@ import (
 	"github.com/Robert076/doclane/backend/services"
 	"github.com/Robert076/doclane/backend/utils"
 	"github.com/Robert076/doclane/backend/utils/awscfg"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/aws/aws-sdk-go-v2/service/polly"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/aws/aws-sdk-go-v2/service/ssm"
 	"github.com/aws/aws-sdk-go-v2/service/textract"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
@@ -55,7 +52,7 @@ func init() {
 	Logger = slog.New(slog.NewJSONHandler(os.Stdout, nil))
 
 	awsCfg := awscfg.InitAWSConfig()
-	db := initDB(awsCfg)
+	db := initDB()
 
 	// Repositories
 	auditLogRepo := repositories.NewAuditLogRepo(db)
@@ -126,7 +123,7 @@ func init() {
 	TagService = services.NewTagService(tagRepo, Logger)
 }
 
-func initDB(cfg aws.Config) *sql.DB {
+func initDB() *sql.DB {
 	var host string
 	var user string
 	var name string
@@ -134,43 +131,13 @@ func initDB(cfg aws.Config) *sql.DB {
 	var port string
 	sslMode := "disable"
 
-	if os.Getenv("AWS_LAMBDA_FUNCTION_NAME") != "" {
-		ssmClient := ssm.NewFromConfig(cfg)
-
-		host = utils.RequireEnv("DB_HOST")
-		port = utils.RequireEnv("DB_PORT")
-		name = utils.RequireEnv("DB_NAME")
-		sslMode = "require"
-
-		usernamePath := utils.RequireEnv("SSM_USERNAME_PATH")
-		passwordPath := utils.RequireEnv("SSM_PASSWORD_PATH")
-
-		userParam, err := ssmClient.GetParameter(context.Background(), &ssm.GetParameterInput{
-			Name:           aws.String(usernamePath),
-			WithDecryption: aws.Bool(true),
-		})
-		if err != nil {
-			log.Fatalf("failed to get SSM username param: %v", err)
-		}
-		user = aws.ToString(userParam.Parameter.Value)
-
-		passParam, err := ssmClient.GetParameter(context.Background(), &ssm.GetParameterInput{
-			Name:           aws.String(passwordPath),
-			WithDecryption: aws.Bool(true),
-		})
-		if err != nil {
-			log.Fatalf("failed to get SSM password param: %v", err)
-		}
-		password = aws.ToString(passParam.Parameter.Value)
-	} else {
-		host = utils.RequireEnv("DB_HOST")
-		port = utils.RequireEnv("DB_PORT")
-		user = utils.RequireEnv("DB_USER")
-		name = utils.RequireEnv("DB_NAME")
-		password = utils.RequireEnv("DB_PASSWORD")
-		if s := os.Getenv("DB_SSLMODE"); s != "" {
-			sslMode = s
-		}
+	host = utils.RequireEnv("DB_HOST")
+	port = utils.RequireEnv("DB_PORT")
+	user = utils.RequireEnv("DB_USER")
+	name = utils.RequireEnv("DB_NAME")
+	password = utils.RequireEnv("DB_PASSWORD")
+	if s := os.Getenv("DB_SSLMODE"); s != "" {
+		sslMode = s
 	}
 
 	psqlInfo := fmt.Sprintf(
