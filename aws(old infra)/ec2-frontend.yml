@@ -7,8 +7,6 @@ Parameters:
                 Type: String
         AMI:
                 Type: String
-        ApiEndpoint:
-                Type: String
 
 Resources:
         ALBListener:
@@ -67,7 +65,6 @@ Resources:
                                                 sudo ln -s /home/ec2-user/.nvm/versions/node/v24.15.0/bin/npm /usr/local/bin/npm
                                                 sudo ln -s /home/ec2-user/.nvm/versions/node/v24.15.0/bin/node /usr/local/bin/node
                                                 cd /home/ec2-user/doclane/frontend
-                                                echo "BACKEND_URL=${ApiEndpoint}/api" > .env.local
                                                 /home/ec2-user/.nvm/versions/node/v24.15.0/bin/npm start
 
         CloudFrontVpcOrigin:

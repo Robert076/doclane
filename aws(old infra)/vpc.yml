@@ -236,83 +236,11 @@ Resources:
                                   Value: doclane-interface-endpoint-apigateway
                                 - Key: Description
                                   Value: Needed for front-end web servers to invoke the private API Gateway.
-        
-        InterfaceEndpointTextract:
-                Type: AWS::EC2::VPCEndpoint
-                Properties:
-                        ServiceName: !Sub com.amazonaws.${AWS::Region}.textract
-                        VpcEndpointType: Interface
-                        SubnetIds:
-                                - !Ref PrivateSubnet1
-                                - !Ref PrivateSubnet2
-                        PrivateDnsEnabled: true
-                        VpcId: !Ref VPC
-                        SecurityGroupIds:
-                                - !Ref EndpointSG
-                        Tags:
-                                - Key: Name
-                                  Value: doclane-interface-endpoint-textract
-                                - Key: Description
-                                  Value: Needed for backend to make calls to Textract
-
-        InterfaceEndpointPolly:
-                Type: AWS::EC2::VPCEndpoint
-                Properties:
-                        ServiceName: !Sub com.amazonaws.${AWS::Region}.polly
-                        VpcEndpointType: Interface
-                        SubnetIds:
-                                - !Ref PrivateSubnet1
-                                - !Ref PrivateSubnet2
-                        PrivateDnsEnabled: true
-                        VpcId: !Ref VPC
-                        SecurityGroupIds:
-                                - !Ref EndpointSG
-                        Tags:
-                                - Key: Name
-                                  Value: doclane-interface-endpoint-polly
-                                - Key: Description
-                                  Value: Needed for backend to make calls to Polly
-        
-        InterfaceEndpointBedrock:
-                Type: AWS::EC2::VPCEndpoint
-                Properties:
-                        ServiceName: !Sub com.amazonaws.${AWS::Region}.bedrock-runtime
-                        VpcEndpointType: Interface
-                        SubnetIds:
-                                - !Ref PrivateSubnet1
-                                - !Ref PrivateSubnet2
-                        PrivateDnsEnabled: true
-                        VpcId: !Ref VPC
-                        SecurityGroupIds:
-                                - !Ref EndpointSG
-                        Tags:
-                                - Key: Name
-                                  Value: doclane-interface-endpoint-bedrock
-                                - Key: Description
-                                  Value: Needed for backend to make calls to Bedrock
-
-        InterfaceEndpointCognito:
-                Type: AWS::EC2::VPCEndpoint
-                Properties:
-                        ServiceName: !Sub com.amazonaws.${AWS::Region}.cognito-idp
-                        VpcEndpointType: Interface
-                        SubnetIds:
-                                - !Ref PrivateSubnet1
-                                - !Ref PrivateSubnet2
-                        PrivateDnsEnabled: true
-                        VpcId: !Ref VPC
-                        SecurityGroupIds:
-                                - !Ref EndpointSG
-                        Tags:
-                        - Key: Name
-                          Value: doclane-interface-endpoint-cognito
-                        - Key: Description
-                          Value: Needed for Lambda to fetch Cognito JWKS and verify tokens without internet access.
 
         EndpointSG:
                 Type: AWS::EC2::SecurityGroup
                 Properties:
-                        GroupDescription: Allow Lambda and EC2 to access VPC endpoints
+                        GroupDescription: Allow Lambda to access VPC endpoints
                         VpcId: !Ref VPC
                         Tags:
                                 - Key: Name
@@ -432,10 +360,6 @@ Resources:
                                   FromPort: 80
                                   ToPort: 80
                                   SourceSecurityGroupId: !Ref ELBSecurityGroup
-                                - IpProtocol: tcp
-                                  FromPort: 3000
-                                  ToPort: 3000
-                                  SourceSecurityGroupId: !Ref ELBSecurityGroup
 
         ELBSecurityGroup:
                 Type: AWS::EC2::SecurityGroup
@@ -447,24 +371,6 @@ Resources:
                                   FromPort: 443
                                   ToPort: 443
                                   CidrIp: 0.0.0.0/0
-
-        ALBSecurityGroupIngress:
-                Type: AWS::EC2::SecurityGroupIngress
-                Properties:
-                        GroupId: !Ref ELBSecurityGroup
-                        IpProtocol: tcp
-                        FromPort: 80
-                        ToPort: 80
-                        SourcePrefixListId: pl-4fa04526
-        
-        LambdaEgressToS3:
-                Type: AWS::EC2::SecurityGroupEgress
-                Properties:
-                        GroupId: !Ref LambdaBackendSG
-                        IpProtocol: tcp
-                        FromPort: 443
-                        ToPort: 443
-                        DestinationPrefixListId: pl-6da54004
 
 Outputs:
         VpcId:

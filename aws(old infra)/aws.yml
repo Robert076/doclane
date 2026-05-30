@@ -17,7 +17,7 @@ Parameters:
 Mappings:
   Images:
     FrontendAMI: 
-      Image: ami-086f2e3ecadce954c
+      Image: ami-0dd5be04513e44ab0
   RegionToAvailabilityZones:
     eu-west-1:
       AZ1: eu-west-1a
@@ -75,4 +75,3 @@ Resources:
       Parameters:
         InstanceType: !FindInMap [ WebServerInstanceType, !Ref Environment, InstanceType ]
         AMI: !FindInMap [ Images, FrontendAMI, Image]
-        ApiEndpoint: !GetAtt ApiGateway.Outputs.ApiEndpoint
