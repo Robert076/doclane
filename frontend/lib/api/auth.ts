@@ -11,14 +11,12 @@ export async function setAuthCookie(idToken: string, accessToken: string): Promi
   const cookieStore = await cookies();
   cookieStore.set("auth_cookie", idToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     expires: new Date(Date.now() + 1000 * 60 * 60),
   });
   cookieStore.set("access_token", accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     path: "/",
     expires: new Date(Date.now() + 1000 * 60 * 60),

@@ -21,7 +21,7 @@ const LoginPage = () => {
     });
 
     await loginPromise;
-    router.push("/dashboard/requests");
+    window.location.href = "/dashboard/requests";
 };
 
         return (

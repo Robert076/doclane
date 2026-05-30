@@ -1,0 +1,32 @@
+# Files we never want shipped into the build context.
+
+# VCS
+.git
+.gitignore
+
+# Build outputs (the build stage creates these inside the image)
+.next
+out
+node_modules
+build
+
+# Local env / secrets (the build args provide what we need at build time)
+.env
+.env.*
+
+# Editor / OS junk
+.DS_Store
+.idea
+.vscode
+
+# Logs sitting in the frontend dir
+*.log
+combined.log
+error.log
+
+# TypeScript incremental cache
+*.tsbuildinfo
+
+# Docker itself
+Dockerfile
+.dockerignore

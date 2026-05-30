@@ -32,11 +32,12 @@ func buildRouter() (http.Handler, *chi.Mux) {
 	if origin := os.Getenv("ALLOWED_ORIGIN"); origin != "" {
 		allowedOrigins = append(allowedOrigins, origin)
 	}
+	log.Printf("CORS allowed origins: %v", allowedOrigins)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
-		AllowedHeaders:   []string{"Content-Type", "Authorization"},
+		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,
 	})
 

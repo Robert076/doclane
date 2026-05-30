@@ -1,0 +1,93 @@
+# Local end-to-end stack for verifying the production images.
+#
+# Usage:
+#   1. Copy .env.example to .env at the repo root and fill in the Cognito values.
+#   2. docker compose up --build
+#   3. Open http://localhost:3000
+#
+# This file is the contract that proves: "these images, with these env vars,
+# run the app." If it works here, it will work in EKS with the same image tags
+# and the same env vars sourced from ConfigMaps + Secrets.
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: doclane-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME:-doclane}
+      POSTGRES_USER: ${DB_USER:-robert}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-test}
+    ports:
+      # Exposed so you can psql from the host while debugging.
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # init.sql runs only on first boot of an empty data volume.
+      # Delete the volume (`docker compose down -v`) to re-run it.
+      - ./init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-robert} -d ${DB_NAME:-doclane}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: doclane-backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # DB
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-doclane}
+      DB_USER: ${DB_USER:-robert}
+      DB_PASSWORD: ${DB_PASSWORD:-test}
+      # AWS — the backend uses real AWS for S3 / Cognito / etc. even locally,
+      # because there is no good local emulation for Cognito JWT verification.
+      AWS_REGION: ${AWS_REGION:-eu-west-1}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID}
+      S3_BUCKET_NAME: ${S3_BUCKET_NAME:-doclane-documents}
+      SEED_SECRET: ${SEED_SECRET}
+      ALLOWED_ORIGIN: http://localhost:3000
+      # Tell the AWS SDK where to find creds. distroless has no $HOME for the
+      # nonroot user, so we set the path explicitly instead of relying on
+      # ~/.aws auto-discovery.
+      AWS_SHARED_CREDENTIALS_FILE: /aws/credentials
+      AWS_CONFIG_FILE: /aws/config
+      AWS_PROFILE: ${AWS_PROFILE:-default}
+    # AWS credentials come from your host (~/.aws/), bind-mounted read-only.
+    # They never enter the image — only the running container — so nothing leaks to ECR.
+    # Required so the container can call S3 / Textract / Bedrock / Polly / Cognito.
+    volumes:
+      - ${HOME}/.aws:/aws:ro
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        # NEXT_PUBLIC_* are baked into the bundle at build time.
+        # NEXT_PUBLIC_BACKEND_URL is what the *browser* hits, so it must be
+        # the host-published port, not the compose service name.
+        NEXT_PUBLIC_COGNITO_USER_POOL_ID: ${NEXT_PUBLIC_COGNITO_USER_POOL_ID}
+        NEXT_PUBLIC_COGNITO_CLIENT_ID: ${NEXT_PUBLIC_COGNITO_CLIENT_ID}
+        NEXT_PUBLIC_BACKEND_URL: http://localhost:8080
+    container_name: doclane-frontend
+    depends_on:
+      - backend
+    environment:
+      # Server-side fetches (Next.js SSR) go through the docker network.
+      BACKEND_URL: http://backend:8080/api
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+    ports:
+      - "3000:3000"
+
+volumes:
+  postgres-data:

@@ -1,0 +1,27 @@
+# Files we never want shipped into the build context.
+# This makes builds faster and avoids leaking secrets or local artifacts.
+
+# VCS
+.git
+.gitignore
+
+# Local env / secrets (the backend reads ../../.env locally; never bake it into images)
+.env
+.env.*
+
+# Editor / OS junk
+.DS_Store
+.idea
+.vscode
+
+# Build outputs that should never be in the context
+*.test
+*.out
+coverage.*
+
+# Docker itself
+Dockerfile
+.dockerignore
+
+# Anything thesis-related that lives near the backend tree
+*.md
