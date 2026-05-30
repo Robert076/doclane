@@ -101,7 +101,7 @@ export default function TemplatesSection({
                 { label: "Toate", value: "all", count: openTemplates.length },
                 ...departments.map((d) => ({
                         label: d.name,
-                        value: String(d.id),
+                        value: String(d.id).toUpperCase(),
                         count: openTemplates.filter((t) => t.department_id === d.id).length,
                 })),
         ];
