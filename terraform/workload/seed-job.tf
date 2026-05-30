@@ -1,6 +1,3 @@
-# DB seed job — runs psql with init.sql on every fresh apply.
-# Uses a ConfigMap to hold the SQL, and a postgres client image to execute it.
-
 resource "kubernetes_config_map" "init_sql" {
   metadata {
     name      = "init-sql"

@@ -1,7 +1,3 @@
-# ACM certificate for thesis.robert-beres.com + DNS validation.
-# Lives in platform-data so it persists across compute teardowns
-# (avoids re-validating DNS every morning).
-
 data "aws_route53_zone" "main" {
   name = "robert-beres.com."
 }

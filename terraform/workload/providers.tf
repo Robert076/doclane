@@ -29,7 +29,7 @@ provider "aws" {
   region = "eu-west-1"
 }
 
-# Read outputs from platform-compute state.
+
 data "terraform_remote_state" "compute" {
   backend = "s3"
   config = {
@@ -39,7 +39,7 @@ data "terraform_remote_state" "compute" {
   }
 }
 
-# Read outputs from platform-data state.
+
 data "terraform_remote_state" "data" {
   backend = "s3"
   config = {
@@ -49,7 +49,7 @@ data "terraform_remote_state" "data" {
   }
 }
 
-# Authenticate to EKS for kubernetes + helm providers.
+
 data "aws_eks_cluster_auth" "main" {
   name = data.terraform_remote_state.compute.outputs.eks_cluster_name
 }

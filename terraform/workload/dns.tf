@@ -1,5 +1,3 @@
-# Route53 A record pointing thesis.robert-beres.com at the ALB.
-
 data "aws_lb" "ingress" {
   tags = {
     "elbv2.k8s.aws/cluster"    = local.cluster_name

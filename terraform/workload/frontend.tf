@@ -1,5 +1,3 @@
-# Frontend: Deployment, Service, HPA.
-
 resource "kubernetes_deployment" "frontend" {
   metadata {
     name      = "frontend"

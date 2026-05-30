@@ -1,5 +1,3 @@
-# RDS PostgreSQL — ephemeral, destroyed with the stack.
-
 resource "aws_db_subnet_group" "main" {
   name       = "doclane-db-subnets"
   subnet_ids = [aws_subnet.private_1.id, aws_subnet.private_2.id]

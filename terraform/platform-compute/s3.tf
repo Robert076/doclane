@@ -1,5 +1,3 @@
-# S3 documents bucket — ephemeral, destroyed with the stack.
-
 resource "aws_s3_bucket" "documents" {
   bucket        = "doclane-documents"
   force_destroy = true

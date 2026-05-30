@@ -1,6 +1,3 @@
-# Bootstrap job: authenticates with Cognito as admin, then calls
-# POST /api/auth/insert-admin to create the admin user in the database.
-
 resource "kubernetes_job" "insert_admin" {
   metadata {
     name      = "insert-admin"

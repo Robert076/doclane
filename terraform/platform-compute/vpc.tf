@@ -1,5 +1,3 @@
-# VPC with 2 public subnets (NAT, ALB) and 2 private subnets (EKS nodes, RDS).
-
 resource "aws_vpc" "main" {
   cidr_block           = "10.0.0.0/16"
   enable_dns_hostnames = true
@@ -9,8 +7,6 @@ resource "aws_vpc" "main" {
     Name = "doclane-vpc"
   }
 }
-
-# --- Public subnets ---
 
 resource "aws_subnet" "public_1" {
   vpc_id                  = aws_vpc.main.id
@@ -38,8 +34,6 @@ resource "aws_subnet" "public_2" {
   }
 }
 
-# --- Private subnets ---
-
 resource "aws_subnet" "private_1" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.0.0/24"
@@ -64,14 +58,10 @@ resource "aws_subnet" "private_2" {
   }
 }
 
-# --- Internet Gateway ---
-
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
   tags   = { Name = "doclane-igw" }
 }
-
-# --- NAT Gateway (single AZ to save cost) ---
 
 resource "aws_eip" "nat" {
   domain = "vpc"
@@ -85,8 +75,6 @@ resource "aws_nat_gateway" "main" {
 
   depends_on = [aws_internet_gateway.main]
 }
-
-# --- Route tables ---
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id

@@ -1,5 +1,3 @@
-# AWS Load Balancer Controller — watches Ingress objects and creates real ALBs.
-
 resource "helm_release" "alb_controller" {
   name       = "aws-load-balancer-controller"
   repository = "https://aws.github.io/eks-charts"

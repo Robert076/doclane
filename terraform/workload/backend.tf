@@ -1,5 +1,3 @@
-# Backend: ServiceAccount (IRSA), ConfigMap, Secret, Deployment, Service, HPA.
-
 resource "kubernetes_service_account" "backend" {
   metadata {
     name      = "doclane-backend"

@@ -1,5 +1,3 @@
-# EKS Cluster + Managed Node Group
-
 resource "aws_iam_role" "eks_cluster" {
   name = "doclane-eks-cluster-role"
 
@@ -36,7 +34,6 @@ resource "aws_eks_cluster" "main" {
   depends_on = [aws_iam_role_policy_attachment.eks_cluster_policy]
 }
 
-# Grant the caller (you) cluster admin access via EKS access entries.
 data "aws_caller_identity" "current" {}
 
 resource "aws_eks_access_entry" "admin" {
@@ -54,8 +51,6 @@ resource "aws_eks_access_policy_association" "admin" {
     type = "cluster"
   }
 }
-
-# --- Node Group ---
 
 resource "aws_iam_role" "eks_nodes" {
   name = "doclane-eks-node-role"
@@ -105,8 +100,6 @@ resource "aws_eks_node_group" "main" {
     aws_iam_role_policy_attachment.node_ecr,
   ]
 }
-
-# --- EKS Addons ---
 
 resource "aws_eks_addon" "vpc_cni" {
   cluster_name = aws_eks_cluster.main.name

@@ -1,7 +1,3 @@
-# IRSA (IAM Roles for Service Accounts) — lets pods assume IAM roles
-# without static credentials. The EKS OIDC provider is the trust anchor.
-
-# EKS OIDC provider for IRSA
 data "aws_eks_cluster" "main" {
   name       = aws_eks_cluster.main.name
   depends_on = [aws_eks_cluster.main]
@@ -16,8 +12,6 @@ resource "aws_iam_openid_connect_provider" "eks" {
   client_id_list  = ["sts.amazonaws.com"]
   thumbprint_list = ["9e99a48a9960b14926bb7f3b02e22da2b0ab7280"]
 }
-
-# --- Backend pod role ---
 
 resource "aws_iam_role" "backend_pod" {
   name = "doclane-backend-pod-role"
@@ -80,8 +74,6 @@ resource "aws_iam_role_policy" "backend_pod" {
     ]
   })
 }
-
-# --- ALB Controller role ---
 
 resource "aws_iam_role" "alb_controller" {
   name = "doclane-alb-controller-role"

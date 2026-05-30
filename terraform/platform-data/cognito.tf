@@ -1,5 +1,3 @@
-# Cognito User Pool — persists across compute teardowns so users survive.
-
 resource "aws_cognito_user_pool" "main" {
   name = "doclane-user-pool"
 
@@ -22,7 +20,6 @@ resource "aws_cognito_user_pool" "main" {
   }
 }
 
-# Production client — used by the deployed app.
 resource "aws_cognito_user_pool_client" "prod" {
   name         = "doclane-web-client"
   user_pool_id = aws_cognito_user_pool.main.id
@@ -48,8 +45,6 @@ resource "aws_cognito_user_pool_client" "prod" {
   prevent_user_existence_errors = "ENABLED"
 }
 
-# Dev client — used for local development. Tokens from this client are
-# rejected by the prod backend (different audience).
 resource "aws_cognito_user_pool_client" "dev" {
   name         = "doclane-dev-client"
   user_pool_id = aws_cognito_user_pool.main.id
@@ -75,7 +70,6 @@ resource "aws_cognito_user_pool_client" "dev" {
   prevent_user_existence_errors = "ENABLED"
 }
 
-# Seed admin user for bootstrapping.
 resource "aws_cognito_user" "admin" {
   user_pool_id = aws_cognito_user_pool.main.id
   username     = "admin@admin.com"

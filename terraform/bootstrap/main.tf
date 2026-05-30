@@ -1,7 +1,3 @@
-# Bootstrap: creates the S3 bucket and DynamoDB table that all other
-# Terraform stacks use as their remote backend. This stack itself uses
-# local state (chicken-and-egg). Run once, ever.
-
 terraform {
   required_version = ">= 1.5"
   required_providers {

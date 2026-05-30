@@ -1,12 +1,7 @@
-# GitHub Actions OIDC — reuse the existing account-wide OIDC provider
-# (managed by the apexinfra-github-oidc CloudFormation stack).
-# We reference it via data lookup so Terraform doesn't try to create/destroy it.
-
 data "aws_iam_openid_connect_provider" "github" {
   url = "https://token.actions.githubusercontent.com"
 }
 
-# IAM role that GitHub Actions assumes to push images to ECR.
 resource "aws_iam_role" "gha_ecr_push" {
   name = "doclane-gha-ecr-push"
 
@@ -30,7 +25,6 @@ resource "aws_iam_role" "gha_ecr_push" {
   })
 }
 
-# Policy: push/pull images to the two doclane ECR repos only.
 resource "aws_iam_role_policy" "gha_ecr_push" {
   name = "ecr-push"
   role = aws_iam_role.gha_ecr_push.id
