@@ -59,7 +59,7 @@
 
 \subsection{Backend layer}
 
-\par The backend runs as a Deployment in Kubernetes with 2 replicas by default. Each replica is a container running the Go binary that serves the chi HTTP router on port 8080. The same code that previously ran on Lambda now runs as a regular HTTP server in a container, with no code changes needed for the migration.
+\par The backend runs as a Deployment in Kubernetes with 2 replicas by default. Each replica is a container running the Go binary that serves the chi HTTP router on port 8080. 
 
 \par A HorizontalPodAutoscaler is configured to scale the backend from 2 to 6 replicas based on CPU utilization. If average CPU goes above 70\%, Kubernetes automatically adds more pods to handle the load.
 
@@ -99,7 +99,7 @@
 
 \par S3 (Simple Storage Service) is used for storing uploaded documents. The bucket has versioning enabled so previous versions of files are preserved, and server-side encryption is applied to all objects.
 
-\par The backend generates presigned URLs for uploads and downloads. This means clients upload directly to S3 using a temporary URL that expires after a set time, without the file passing through the backend. This reduces load on the backend and leverages S3's scalability.
+\par The backend generates presigned URLs for downloads. This means clients download directly from S3 using a temporary URL that expires after a set time, without any permanent credentials ever existing. This makes the process so much more secure since if somehow credentials get leaked the attack surface is very small due to the scoped permissions, and the attack surface is also ephemeral.
 
 \subsection{Authentication}
 
@@ -151,7 +151,7 @@
 
 \par \textbf{workload} - Contains everything inside the Kubernetes cluster: Helm charts, deployments, services, ingress, database seeding jobs. Destroyed together with platform-compute.
 
-\par This split allows tearing down the expensive compute resources overnight while keeping the cheap persistent resources alive. A full environment can be recreated from scratch with a single command.
+\par This split allows tearing down the expensive compute resources while not using the app, since in development you do not need the app running 24 hours a day, while keeping the cheap persistent resources alive. A full environment can be recreated from scratch with a single command.
 
 \subsection{Ephemeral environments}
 

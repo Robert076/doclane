@@ -42,20 +42,17 @@ ABSTRACT
 \vspace{0.5cm}	
 %\cleardoublepage
 
+Doclane is a web application that helps citizens interact with public institutions without needing to visit in person multiple times. In many countries, including Romania, people still need to go to offices, wait in lines, and bring printed documents. This takes a lot of time and effort.
 
-This thesis presents Doclane, a web-based system designed to improve document-based workflows in public institutions. In many countries, including Romania, public services still depend on paper documents and physical visits. Citizens often need to go to institutions in person, wait in queues, and submit printed forms. This process takes a lot of time and can be inconvenient.
+The problem is that most current systems are not fully digital, or they only cover part of the process. Some systems allow document submission but not tracking or feedback. Others work only for one institution.
 
-The main problem is that current systems are slow and not fully digital. Even when some digital services exist, they are often limited to one institution or only cover part of the process. For example, some systems only allow document submission or signing, but not the full workflow from submission to approval and feedback.
+Doclane tries to fix this by letting users submit requests online, upload documents, and see the status of their application. Employees at the institution can review the documents and send feedback if something is wrong or missing. This way, users do not need to visit in person just to find out that a document they provided is missing something.
 
-Doclane is designed to solve this problem by creating a simple digital workflow between citizens and public institutions. Users can submit requests online, upload required documents, and track the status of their application. Institution employees can review submissions, validate documents, and give feedback when something is missing or incorrect.
+The system is built as a web application using Go for the backend and Next.js for the frontend. It is fully cloud-native and scalable, adhering to modern best practices.
 
-The system is built as a web application. The backend is written in Go, and the frontend uses Next.js. Authentication is handled using JWT tokens, and files are stored using cloud storage. The system is structured in layers to keep the code clean and easy to maintain.
+The thesis also looks at existing systems like GOV.UK, Enter Finland, and DocuSign. These systems solve parts of the problem but not all of it. Doclane tries to bring these ideas together in one system that can work across different institutions.
 
-The goal of Doclane is to reduce the need for physical visits and paper documents. It also aims to make the process clearer for users by showing each step of the workflow. Instead of repeating visits and waiting for long periods, users can handle most of the process online.
-
-This thesis also looks at existing systems such as GOV.UK, Enter Finland, and DocuSign. These systems solve parts of the problem, but they are either limited to one type of service or do not cover the full workflow. Doclane tries to combine these ideas into one simple system that can be used across different public institutions.
-
-In conclusion, Doclane shows how digital tools can improve public administration by making document handling faster, more organized, and easier for citizens.
+Doclane does not replace the physical pickup of final documents, since some documents require this by law. But it removes most of the unnecessary visits that happen before that step, which is where most of the time and frustration comes from.
 \tableofcontents
 
 
