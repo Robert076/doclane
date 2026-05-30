@@ -27,7 +27,7 @@ import (
 
 func buildRouter() (http.Handler, *chi.Mux) {
 	r := chi.NewRouter()
-	// Hello world from K8s
+
 	allowedOrigins := []string{"http://localhost:3000"}
 	if origin := os.Getenv("ALLOWED_ORIGIN"); origin != "" {
 		allowedOrigins = append(allowedOrigins, origin)
