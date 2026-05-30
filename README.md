@@ -1,4 +1,5 @@
 # Doclane
+<img width="1800" height="1017" alt="Screenshot 2026-05-30 at 12 21 37" src="https://github.com/user-attachments/assets/39ce1ae2-8d17-4b74-9a4c-c8e3f0cb1890" />
 
 Doclane is a web-based system for handling document workflows between citizens and public institutions.  
 It is designed to replace manual paper-based processes with a structured digital workflow.
