@@ -1,6 +1,5 @@
 import "@/lib/amplify";
 import { signIn, signUp, confirmSignUp, signOut, fetchAuthSession } from "@aws-amplify/auth";
-import { logout as serverLogout } from "@/lib/api/auth";
 import { syncUser } from "@/lib/api/auth";
 
 async function setAuthCookieViaAPI(idToken: string, accessToken: string) {
@@ -79,5 +78,5 @@ export async function confirmRegistration(
 
 export async function logout() {
   try { await signOut(); } catch (_) {}
-  await serverLogout();
+  await fetch("/api/auth/logout", { method: "POST", credentials: "same-origin" });
 }

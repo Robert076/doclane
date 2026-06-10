@@ -1,47 +1,25 @@
 \chapter{Implementation}
 \label{chap:ch3}
 
-\par The backend of Doclane is written in Go, and the frontend is built with Next.js. Go was chosen because it is fast, has a large standard library, and handles errors in a way that makes bugs easier to track. Next.js was chosen because Doclane is a dynamic application that makes many requests to the backend, and server-side rendering helps keep loading times short.
-
-\begin{center}
-    \includegraphics[width=0.8\textwidth]{figures/folder-structure.png}
-    \captionsetup{type=figure}
-    \captionof{figure}{Overview of Doclane's folder structure.}
-\end{center}
+\par Doclane's backend is written in Go and the frontend is built with Next.js. Go was chosen primarily for its performance characteristics and its approach to error handling, which makes tracing bugs through a multi-layered application considerably more straightforward than in many dynamically typed alternatives. Next.js was selected because the application is data-heavy by nature, with nearly every page requiring fresh information from the backend, and server-side rendering reduces the time users spend waiting for content to appear.
 
 \section{Backend}
 
-\subsection{Go}
+\subsection{Architecture and layering}
 
-\par Go is a statically typed, compiled programming language. It has a simple syntax and a standard library that covers most common needs. It is also fast to write and produces efficient binaries.
+\par The backend is organized into four distinct layers, each with a clearly defined responsibility. The handler layer sits closest to the HTTP boundary and is responsible for extracting what each request carries, whether that is JWT claims, resource identifiers, or uploaded files. It does not make judgments about whether an operation is permitted; that responsibility belongs to the service layer, which contains the business logic and enforces rules such as whether a user holds the right role to access a particular resource. As a concrete example, a user cannot view files attached to a request unless they are an administrator or belong to the department that manages it.
 
-\subsection{Layers}
-
-\par The backend code is split into four layers:
-
-\begin{itemize}
-    \item Handler layer: handles incoming HTTP requests and extracts the needed information from them, such as JWT claims, resource IDs, or uploaded files.
-    \item Service layer: contains the business logic and validations. For example, it checks whether a user has the right role to perform an action. A user cannot view the files of a request unless they are an admin or they belong to the department that manages that request.
-    \item Repository layer: executes queries on the database. It trusts everything passed to it, since all validation happens in the service layer. Transactions are used when multiple database operations need to succeed together for an action to be considered complete.
-    \item Model layer: holds the data structures used across the application, such as users, requests, templates, invitation codes, and comments. DTOs (Data Transfer Objects) are used in some cases to enrich data from the database. For example, when retrieving a request, the DTO also includes the requester's name and email, not just their ID.
-\end{itemize}
+\par Below the service layer sits the repository layer, which executes database queries and operates on the assumption that everything passed to it has already been validated. When an action involves multiple database operations that must all succeed or all fail together, the repository uses transactions to enforce atomicity. Finally, the model layer defines the data structures shared across the application, including users, requests, templates, invitation codes, and comments. In cases where the raw database records do not contain all the information a caller needs, DTOs (Data Transfer Objects) are used to enrich the response, for instance, attaching a requester's name and email address alongside their identifier when a request is retrieved.
 
 \subsection{Authentication}
 
-\par Authentication is handled using JWTs (JSON Web Tokens) issued by AWS Cognito. A JWT is a stateless token that contains information about the user such as their ID, role, department, and name. The information inside the token is readable by anyone, but it cannot be changed without the signature becoming invalid. The backend rejects any token with an invalid signature.
+\par Authentication is handled through JWTs (JSON Web Tokens) issued by AWS Cognito. A JWT encodes information about the authenticated user, including their identifier, role, department, and display name, in a format that is readable by any party but cannot be tampered with without invalidating the cryptographic signature the token carries. The backend verifies this signature on every protected request and rejects any token that does not pass validation.
 
-\par The token is stored in an HTTP-only cookie. This means JavaScript running in the browser cannot access it, which protects against XSS (Cross-Site Scripting) attacks. More details about Cognito and how it is configured are in chapter 4.
+\par Tokens are stored in HTTP-only cookies, which keeps them inaccessible to JavaScript running in the browser and removes a common vector for XSS (Cross-Site Scripting) attacks. The configuration of Cognito itself is covered in more detail in chapter 4.
 
-\subsection{API Response}
+\subsection{API response structure}
 
-\par Every response from the API follows the same structure. This makes it easier for the frontend to handle responses in a consistent way. Every response contains:
-
-\begin{itemize}
-    \item \textbf{success} - a boolean that says whether the request worked or not.
-    \item \textbf{message} - optional, a short description of what happened.
-    \item \textbf{error} - optional, an error message present when success is false.
-    \item \textbf{data} - optional, contains any data returned by the request.
-\end{itemize}
+\par All responses from the API follow a uniform structure, which simplifies how the frontend handles them. Every response includes a \textbf{success} boolean indicating whether the operation completed without error, an optional \textbf{message} field with a short description of the outcome, an optional \textbf{error} field populated when success is false, and an optional \textbf{data} field carrying any payload the request was meant to return.
 
 \begin{center}
     \includegraphics[width=0.8\textwidth]{figures/api-response.png}
@@ -49,27 +27,13 @@
     \captionof{figure}{API Response struct.}
 \end{center}
 
-\subsection{Custom Errors}
+\par Custom error types are defined across the backend to complement this structure. Rather than passing raw error strings through the call stack, typed errors give each failure a consistent shape, which makes both the code easier to follow and the responses more predictable for the client.
 
-\par Custom error types are defined and used across the backend. This gives a unified way to handle errors and makes the code easier to read.
+\subsection{Configuration, middleware, and routing}
 
-\subsection{Configuration}
+\par Application setup is centralised in a single configuration file where all service and repository instances are created. This means that swapping out a repository implementation, for example to use a different database driver, only requires a change in one place; nothing in the handler or service layers needs to be touched. Most routes are protected by middleware that runs before any handler logic executes. Doclane uses two middleware checks in sequence: the first verifies that the incoming token was signed correctly by Cognito, and the second confirms that the associated user account is currently active. Requests that fail either check are rejected before they can reach application logic.
 
-\par There is a single configuration file that acts as the main setup for the application. It is where all service and repository instances are created and exported. If a repository implementation needs to be changed, only this file needs to be updated. Everything else continues to work without changes.
-
-\subsection{Middleware}
-
-\par Most routes in the application are protected by middleware. The middleware checks that every incoming request has a valid JWT token before it reaches the handler. Requests with missing or invalid tokens are rejected early.
-
-\par There are two middleware checks in Doclane. The first checks that the token is valid and was signed correctly by Cognito. The second checks that the user account is active.
-
-\subsection{File Storage}
-
-\par Uploaded files are stored in S3, which is a file storage service from AWS. The file storage logic is separated from the rest of the application so the app does not depend on it directly. All file access is done through presigned URLs, which are temporary links that give access to a specific file for a limited time. More details about S3 and how it is set up are in chapter 4.
-
-\subsection{Routing}
-
-\par Backend routing is done using the Chi library, which is a third party Go package. Although Go's standard library handles many things well, HTTP routing is an area where external help is useful. Chi makes it easy to organize routes in a clear and readable way.
+\par HTTP routing is handled using the Chi library rather than Go's standard library router. While the standard library covers most needs adequately, routing is one area where a third-party package noticeably improves clarity and organisation.
 
 \begin{center}
     \includegraphics[width=0.8\textwidth]{figures/implementation/backend/chi-routes.png}
@@ -77,9 +41,13 @@
     \captionof{figure}{Routing for the backend.}
 \end{center}
 
+\subsection{File storage}
+
+\par Uploaded files are stored in AWS S3. The file storage logic is deliberately kept behind an abstraction layer so that the rest of the application does not depend on S3 directly; the storage provider could be replaced without touching handler or service code. File access is granted through presigned URLs, which are time-limited links that allow a client to retrieve or upload a specific object without holding permanent credentials. The S3 setup is described in more detail in chapter 4.
+
 \section{Database}
 
-\par PostgreSQL was chosen as the database engine. It is one of the most widely used relational databases and it fits the needs of Doclane well since the data has clear relationships between tables.
+\par PostgreSQL was chosen as the database engine. The data in Doclane has clear, well-defined relationships between entities, requests, documents, users, departments, and templates, which makes a relational model a natural fit. PostgreSQL is also one of the more mature and widely deployed options available, which reduces operational risk.
 
 \begin{center}
     \includegraphics[width=0.8\textwidth]{figures/implementation/backend/database-diagram.png}
@@ -89,8 +57,6 @@
 
 \section{Frontend}
 
-\par The frontend is built with Next.js, which is an open-source web framework built on top of React. It supports server-side rendering, which means pages can be prepared on the server before being sent to the browser.
+\par The frontend is built with Next.js, a React-based framework that supports server-side rendering. The decision to use it rather than a client-side-only approach comes down to the nature of the application: because almost every page in Doclane depends on data fetched from the backend, a purely client-side setup would mean users frequently encounter loading states while data is retrieved after the page has already been painted. By fetching data on the server before the response is sent to the browser, Next.js eliminates most of that latency from the user's perspective.
 
-\par Next.js was chosen because Doclane makes many requests to the backend on almost every page. If a client-side only framework like plain React was used, users would spend a lot of time on loading screens. With Next.js, data is fetched on the server before the page is shown, so the experience is faster.
-
-\par Frontend code is split into small reusable components so that the same piece of UI does not need to be written more than once. This follows the DRY (Don't Repeat Yourself) principle, which is also applied in the backend but is most visible in the frontend.
+\par On the component level, the frontend follows the DRY (Don't Repeat Yourself) principle by breaking the interface into small, reusable pieces. Any UI element that appears in more than one place is defined once and composed where needed, which keeps the codebase consistent and reduces the surface area for visual inconsistencies as the application evolves.

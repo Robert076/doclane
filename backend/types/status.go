@@ -4,9 +4,9 @@ const (
 	StatusPending  = "pending"
 	StatusUploaded = "uploaded"
 	StatusAccepted = "accepted"
-	StatusDenied   = "denied"
+	StatusRejected = "rejected"
 )
 
 func IsValidStatus(status string) bool {
-	return status == StatusPending || status == StatusUploaded || status == StatusAccepted || status == StatusDenied
+	return status == StatusPending || status == StatusUploaded || status == StatusAccepted || status == StatusRejected
 }

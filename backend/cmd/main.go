@@ -51,6 +51,7 @@ func buildRouter() (http.Handler, *chi.Mux) {
 		if _, err := w.Write([]byte("Hello World!")); err != nil {
 			log.Fatal(err)
 		}
+		log.Printf("Context:\n\n%v\n\n", r.Context())
 	})
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {

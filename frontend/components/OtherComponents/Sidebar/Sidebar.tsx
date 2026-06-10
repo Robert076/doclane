@@ -8,7 +8,7 @@ import ButtonPrimary from "@/components/ButtonComponents/ButtonPrimary/ButtonPri
 import Separator from "@/components/OtherComponents/Separators/Separator/Separator";
 import Logo from "@/components/OtherComponents/Logo/Logo";
 import { UI_TEXT } from "@/locales/ro";
-import { logout } from "@/lib/api/auth";
+import { logout } from "@/lib/client/auth";
 import "./Sidebar.css";
 import NotificationBell from "@/components/NotificationBell/NotificationBell";
 

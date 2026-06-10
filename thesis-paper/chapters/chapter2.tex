@@ -1,90 +1,78 @@
 \chapter{Related work}
 \label{chap:ch2}
 
-\par This chapter presents existing systems and research related to digital document handling and public administration workflows. The goal is to show how similar problems have been handled in other systems and what solutions already exist.
-
-\par The systems and studies presented here focus on document submission, electronic workflows, and online public services. Some of them are real systems used by governments, while others are research papers that propose ways to improve administrative processes.
-
-\par After presenting these systems, a short comparison is made to identify their limitations in relation to the problem addressed by this thesis. This helps explain the motivation behind Doclane and how it differs from existing solutions.
+\par Improving how public institutions handle document-based requests is not a new problem, and a range of systems and research efforts have addressed parts of it over the past two decades. This chapter surveys the most relevant work: academic studies on electronic document management in public administration, real government platforms that have gone live at scale, and a widely used commercial tool that operates in adjacent territory. The goal is to establish what already exists, where it falls short in relation to the specific problem this thesis addresses, and how Doclane is positioned relative to these prior efforts.
 
 % -------------------------------------------------
 
-\section{Automated electronic document management systems in municipal units}
+\section{Automated electronic document management in municipal institutions}
 
-Koptyakova et al. \cite{koptyakova2019} present a system for automated electronic document management in municipal institutions. The paper focuses on improving how public institutions handle documents and reducing the time needed for administrative work.
+\par Koptyakova et al. \cite{koptyakova2019} examine the introduction of an automated electronic document management system in a municipal institution, with a focus on the administrative bottlenecks that paper-based document handling creates. Their starting point is a familiar one: in most municipal offices, document registration, tracking, and processing are still performed manually, and the time cost of this scales badly as request volumes grow. The system they propose moves registration and tracking into a digital workflow, reducing the manual steps required at each stage.
 
-The authors explain that traditional document workflows in municipal units are slow and depend on manual work. Documents are usually registered, tracked, and processed by hand, which can cause delays when the number of requests is high.
+\par What makes this paper particularly relevant is its analysis of the cost-benefit relationship. The authors argue that the payback period for such systems can be relatively short because efficiency gains accumulate quickly once manual processing is reduced. This supports the general case for investment in digital workflows even in institutions with limited budgets.
 
-To solve this, the paper proposes an automated system that digitizes document registration, tracking, and processing inside municipal institutions. This reduces manual work and makes the process faster.
-
-The study also looks at the cost and benefits of such systems. It mentions that the payback period can be short because less manual work is needed and efficiency increases.
-
-However, the system is mainly used inside one municipal institution. It focuses on internal document handling and not on the full process between citizens and institutions.
-
-Compared to this, Doclane focuses on the full workflow between citizens and public institutions, including submission, validation, and feedback.
+\par The scope of their work is, however, confined to the internal operations of a single institution. Document exchange with citizens, feedback mechanisms, and multi-step validation workflows fall outside what the system covers. Doclane extends this direction by treating the citizen-facing side of the workflow as equally important to the internal one.
 
 % -------------------------------------------------
 
-\section{Digital document systems in public sector implementation}
+\section{Electronic records management and decision-making in public institutions}
 
-Az Ab Aziz et al. \cite{abaziz2019ddms} study the implementation of a Digital Document Management System (DDMS) in the Malaysian public sector. The system is used to manage documents and records inside government institutions and aims to reduce paper use and improve document handling.
+\par Mukred et al. \cite{mukred2021} study the adoption of Electronic Records Management Systems (ERMS) in higher education institutions and examine how such systems affect the quality of administrative decision-making. Their findings point to a consistent pattern: institutions that move from paper-based record keeping to structured digital systems see measurable improvements in how quickly and accurately decisions can be made, largely because relevant information becomes easier to locate and less likely to be incomplete or out of date.
 
-The paper shows that even when such systems exist, adoption is not always high. The main issues are not only technical, but also related to policy, training, security, and internal support.
-
-The authors explain that successful implementation depends on clear guidelines and coordination between agencies. Without this, different institutions use the system in different ways, which reduces its effectiveness.
-
-Compared to this, Doclane focuses more on workflows between citizens and institutions, but the same idea applies: a system is only useful if it is properly adopted and used in real work.
+\par The study also identifies organisational factors that affect how well these systems are adopted. Technical deployment alone is insufficient; without staff training, clear internal guidelines, and support from management, adoption tends to be inconsistent across departments. This observation is directly relevant to the discussion in this thesis of the organisational challenges Doclane would face in a real institutional deployment.
 
 % -------------------------------------------------
 
-\section{Enter Finland}
+\section{User acceptance of electronic document management systems}
 
-Enter Finland (\url{https://enterfinland.fi}) is a government service used in Finland for immigration applications. Users can fill forms online, upload documents, and pay fees. After submission, some cases still require an in-person visit.
+\par Ayaz and Yanartaș \cite{ayaz2020} analyse user acceptance of an Electronic Document Management System using the UTAUT framework (Unified Theory of Acceptance and Use of Technology). Their study finds that performance expectancy and effort expectancy are the strongest predictors of whether employees actually use such systems in their day-to-day work. In practical terms, this means users adopt digital tools when they perceive them as genuinely faster than the alternative and not excessively complicated to use.
 
-The system reduces the need for paper submission and physical visits at the start of the process. However, it is limited to immigration services and one type of institution.
-
-Compared to this, Doclane is designed for different types of document workflows across multiple institutions.
+\par This has direct implications for system design. A digital document workflow that is technically complete but poorly designed from a usability perspective will face adoption resistance regardless of how much it improves the underlying process. The Doclane interface was designed with this in mind, particularly in the document submission flow where citizens are given explicit guidance on what each upload slot requires and what an acceptable document looks like.
 
 % -------------------------------------------------
 
-\section{DocuSign}
+\section{Implementation challenges in public sector digital document systems}
 
-DocuSign (\url{https://www.docusign.com}) is a platform used for signing documents online. Users can upload documents, send them for signature, and track their status.
+\par Az Ab Aziz et al. \cite{abaziz2019ddms} study the rollout of a Digital Document Management System in the Malaysian public sector and find that the technical side of implementation is rarely the primary obstacle. Policy alignment, inter-agency coordination, security requirements, and staff training tend to create more friction than the software itself. Institutions that deployed the system without addressing these factors first ended up with inconsistent usage patterns across departments, reducing the overall effectiveness of the rollout.
 
-It removes the need to print and scan documents in many cases. It is mostly used in business environments.
-
-However, it focuses mainly on signing and approval. It does not support full administrative workflows like structured requests or multi-step validation.
-
-Compared to this, Doclane handles full workflows from submission to approval and feedback.
+\par The authors conclude that successful implementation depends on establishing clear guidelines before deployment rather than trying to retrofit them after. For a system like Doclane, which is designed to be adopted by multiple institutions independently, this suggests that documentation, onboarding support, and predefined workflow structures are as important as the technical architecture.
 
 % -------------------------------------------------
 
-\section{GOV.UK Services}
+\section{Risk and reward in e-government document management}
 
-GOV.UK (\url{https://www.gov.uk}) is a UK government platform for online public services. Users can apply for documents, submit forms, and access different services.
+\par Jones and Mauricio \cite{jones2012egovernment} conduct a literature analysis of e-government document management implementations, organising their findings around four themes that consistently appear across studies: IT security, user adoption, implementation barriers, and the relationship between digital services and democratic accountability. Their conclusion is that these themes are interconnected and that ignoring any one of them tends to create problems in the others. A system with strong security but poor usability will see low adoption; high adoption without adequate security creates risk.
 
-It reduces the need for physical visits and allows many tasks to be done online. It covers many services in one platform.
-
-However, each service has its own workflow and is not part of one unified system.
-
-Compared to this, Doclane aims to provide a single workflow system for different types of document requests.
+\par This framing is useful for understanding where Doclane sits in relation to production-grade e-government systems. The current implementation addresses security through IRSA, presigned URLs, HTTP-only cookies, and JWT validation, and addresses usability through structured submission flows and direct feedback mechanisms. The remaining themes, particularly the policy and accountability dimensions, fall outside the scope of this project but would need to be addressed in any real institutional deployment.
 
 % -------------------------------------------------
 
-\section{Comparison}
+\section{Estonia's X-Road and the case for interoperable infrastructure}
 
-The systems described above solve parts of the same problem in different ways.
+\par Estonia's X-Road platform is one of the most extensively studied examples of national digital infrastructure for public administration \cite{xroad2016}. X-Road is a distributed data exchange layer that allows different government information systems to communicate with each other securely, enabling services that span multiple institutions to share data without building point-to-point integrations between every pair of systems. The result is a public administration environment where citizens can interact with government services without needing to repeatedly supply the same information to different institutions.
 
-Enter Finland is focused on one domain. GOV.UK provides many services, but they are specifically for one institution alone. DocuSign focuses on document signing.
-
-All of them reduce paper use and improve digital access, but they are limited either by domain, structure, or function.
+\par X-Road is relevant here not as a direct comparison but as an illustration of what the upper end of the problem space looks like. Doclane operates at a much smaller scope: it standardises the document exchange workflow within an institution or a small set of institutions, but does not attempt to solve the cross-institutional data sharing problem that X-Road addresses. At the same time, the architectural principle behind X-Road, that institutions should share a common infrastructure layer rather than each building isolated systems, is one that Doclane reflects in a more modest way by offering a reusable workflow structure rather than bespoke software for each institution.
 
 % -------------------------------------------------
 
-\section{Gap}
+\section{GOV.UK and the challenge of service fragmentation}
 
-The systems described above solve parts of the problem but none of them cover the full workflow in a way that works across different institutions. They are either built for one domain, one country, or one specific function like signing.
+\par GOV.UK (\url{https://www.gov.uk}) is the UK government's unified platform for public-facing digital services. It consolidates a large number of services, ranging from passport applications to tax filings, into a single domain with consistent design patterns. The platform has been widely cited as a successful example of how to improve citizen-facing government services at scale \cite{govuk2012}.
 
-Outside of these platforms, many institutions rely on software that is built specifically for them. This kind of tailored software is expensive and takes time to develop. For smaller public institutions with limited budgets, this is often not a realistic option.
+\par Its limitation from the perspective of this thesis is that each service on GOV.UK has its own independent workflow. There is no shared submission, validation, or feedback mechanism across services; the unification is at the surface level of design and navigation rather than at the level of the underlying process. This means that each new service still requires custom development to build out its workflow, which does not solve the problem of smaller institutions without the resources to commission bespoke software.
 
-Doclane tries to fill this gap by offering a simple, general system that can be used across different institutions without needing custom development. The goal is not to replace large government platforms, but to give smaller institutions a working solution that covers the full document workflow from submission to feedback.
+% -------------------------------------------------
+
+\section{eIDAS and the legal foundation for digital identity in the EU}
+
+\par The eIDAS Regulation (EU No 910/2014), amended in 2024 by Regulation (EU) 2024/1183, establishes the legal framework for electronic identification and trust services across EU member states \cite{eidas2014}. It defines requirements for electronic signatures, seals, timestamps, and identity schemes, and mandates mutual recognition of notified identity schemes across member states. The 2024 amendment introduced the European Digital Identity Wallet, which member states are required to make available to citizens within 24 months of the implementing acts entering into force.
+
+\par For a system like Doclane, eIDAS is relevant primarily as the regulatory context that would govern any serious production deployment. Submissions made through an e-government platform carry greater legal weight when the submitter's identity has been verified through a notified eID scheme, and in some administrative contexts this verification may be a legal requirement rather than an optional enhancement. The current implementation uses Cognito-managed accounts, which provide authentication but no identity assurance in the eIDAS sense. Integration with an eIDAS-compliant identity provider is identified as the most significant future extension to the system.
+
+% -------------------------------------------------
+
+\section{Summary and positioning}
+
+\par The systems and studies reviewed here address overlapping parts of the same broad problem: how to move document-based administrative processes into a digital environment in a way that works for both institutions and citizens. The academic literature consistently identifies adoption and organisational change as harder problems than technical implementation. The real government platforms, GOV.UK and X-Road, demonstrate what is achievable at scale but also illustrate the gap between national-level infrastructure projects and the needs of smaller institutions.
+
+\par The gap that Doclane addresses is at the lower end of this spectrum. Many smaller public institutions cannot commission bespoke workflow software and do not have access to national-level infrastructure. A general-purpose, configurable workflow system that covers the full submission-to-feedback cycle, and that is designed to be reusable across different institution types without custom development, fills a space that none of the systems reviewed above occupies directly.

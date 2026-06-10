@@ -1,122 +1,24 @@
 \chapter{Introduction}
-
-%\chapter*{Introducere}
 \label{intro}
 
 \section{Introducing the problem}
 
-\par Public institutions play an important role in the daily lives of citizens, providing access to services such as official documents, permits, and administrative procedures. Because of this, it is important that the processes involved are efficient, reliable, and easy to use.
+\par Public institutions are among the most essential points of contact between the state and its citizens, handling everything from official documents and permits to a wide range of administrative procedures. Given how frequently people depend on these services, the efficiency and reliability of the underlying processes matter considerably, both for citizens trying to complete routine tasks and for the institutions themselves trying to manage high volumes of requests.
 
-\par In many cases, these processes are still based on physical documents and in-person interactions. Citizens are often required to visit institutions, wait in queues, and submit printed files in order to complete simple requests. This approach leads to long waiting times, repeated visits, and inefficient handling of information.
+\par The reality in many public institutions, however, is that these processes still rely heavily on physical documents and in-person interactions. Citizens are regularly required to travel to an office, wait in queues, and hand over printed paperwork just to initiate what are often straightforward requests. This model creates predictable problems: long waiting times, repeated visits when something is missing, and a general inefficiency in how information flows between citizens and the institution. Physical documents can be lost or damaged in transit or storage, and errors introduced during manual processing can delay procedures that are sometimes time-sensitive. Taken together, these issues point to a clear need for rethinking how document-based workflows are handled in public administration.
 
-\par In addition, physical documents can be lost, damaged, or incorrectly processed, which can delay important procedures. These inefficiencies do not only create inconvenience, but can also impact the ability of citizens to complete time-sensitive administrative tasks.
+\section{The role of information technology in public administration and limitations of existing digital solutions}
 
-\par As a result, improving the way public institutions handle document-based workflows becomes an important problem to address.
+\par The adoption of digital systems in public institutions has grown steadily over the past decade, and for good reason. Software platforms allow institutions to manage large volumes of data with greater consistency, automate repetitive steps that would otherwise require manual effort, and offer citizens access to services without requiring a physical visit. Where these transitions have been implemented well, the results are visible: shorter processing times, fewer errors from manual handling, and greater transparency about where a request stands at any given moment.
 
-\section{Role of Information Technology in Public Administration}
+\par That said, the picture is uneven. Many of the digital tools currently in use were built for specific services or individual institutions, which means a citizen dealing with multiple types of requests may still need to navigate several disconnected systems. Some platforms cover only part of the workflow, handling document submission but not validation, or validation but not feedback, leaving gaps that still require manual intervention or in-person follow-up. Financial constraints, insufficient technical infrastructure, and limited digital literacy among both staff and citizens have also slowed adoption in many places.
 
-\par The use of information technology in public institutions has become increasingly important in recent years. Digital systems allow institutions to manage large amounts of data, automate processes, and reduce the time required to complete administrative tasks.
+\par The result is a landscape where digital tools exist but rarely cover the full process end-to-end, and where the absence of a consistent, reusable workflow structure means each institution effectively solves the same problem from scratch. This is the gap the present work attempts to address.
 
-\par By moving services to digital platforms, interactions between citizens and institutions can be simplified. Instead of relying on physical documents and in-person visits, many processes can be handled online, improving accessibility and reducing waiting times.
+\section{Proposed solution, objectives, and scope}
 
-\par In addition, digital systems make it easier to store, organize, and retrieve information. This can improve decision-making and reduce errors caused by manual processing of documents.
+\par The system developed as part of this thesis, Doclane, is a web-based application designed to support document-based workflows between citizens and public institutions. Users can submit requests, upload the required documents, and follow the status of their application through the platform. On the institutional side, employees can review submissions, validate documents, and communicate feedback directly through the system, without needing to resort to separate channels or manual record-keeping.
 
-\par However, the adoption of such systems is not always straightforward. Public institutions may face challenges such as limited financial resources, lack of technical infrastructure, and insufficient digital skills among both employees and citizens.
+\par The core objective is to reduce the dependency on physical visits and paper-based handling by embedding the entire request lifecycle into a structured digital workflow. This includes making the process more legible for citizens, who are shown exactly what documents are required at each step and receive timely feedback if something needs to be corrected or resubmitted. The broader technical goals guiding the implementation are: a backend capable of handling document requests reliably, secure authentication with role-based access, cloud storage for file management, and an architecture that can be extended or adapted without significant rework.
 
-\par Despite these challenges, the use of information technology remains a key factor in improving the efficiency and quality of public services.
-
-\section{Challenges in Traditional Systems}
-
-\par Traditional document handling in public institutions comes with several practical challenges that affect both citizens and employees.
-
-\par One of the main issues is the need for physical presence. In most cases, citizens are required to visit an institution in person in order to submit or collect documents. This creates queues and waiting times, especially during busy hours or peak periods.
-
-\par Another problem is the use of paper-based documents. Files are printed, copied, and stored physically. This takes space and also creates the risk of documents being lost, damaged, or misplaced. It also makes it harder to search and manage information when needed.
-
-\par The process of checking and validating documents is often manual. Employees need to go through each file one by one, which takes time and can lead to delays, especially when the number of requests is high.
-
-\par Feedback to citizens is also not always immediate. If a document is missing or incorrect, the citizen usually finds out later, sometimes after waiting for a long time or making another visit. This leads to repeated submissions and additional waiting time.
-
-\par In addition, many of these processes are not transparent to the user. Citizens often do not know the current status of their request or how long it will take until it is completed.
-
-\par These challenges show that the traditional way of handling document-based workflows is slow and can be improved with more structured and digital solutions.
-
-\section{Limitations of existing digital solutions}
-
-\par Even though some public services already use digital platforms, they are often limited in scope. Most of these systems are built for a specific type of service or a single institution.
-
-\par In many cases, users still need to switch between different systems depending on the service they need. This creates fragmentation and makes the overall process less consistent.
-
-\par Some systems also only cover part of the workflow, such as submitting documents or signing them, but not the full process from submission to final approval and feedback.
-
-\par Because of this, there is still a need for systems that can be reused across different institutions, where each institution can use its own instance of the same workflow structure instead of relying on completely separate tools.
-
-\section{Proposed solution}
-
-\par The proposed system, Doclane, is a web-based application designed to handle document-based workflows between citizens and public institutions.
-
-\par The system allows users to submit requests, upload required documents, and track the status of their applications. On the other side, institution employees can review submissions, validate documents, and provide feedback when needed.
-
-\par The goal of the system is to reduce the need for physical visits and repeated submissions by moving the process into a structured digital workflow.
-
-\par Doclane also focuses on making the process more clear for users by showing what is required at each step and giving feedback when something is missing or incorrect.
-
-\section{Objectives}
-
-\par The main objective of this thesis is to design and implement a system that improves document-based workflows in public institutions.
-
-\par The specific objectives include:
-\begin{itemize}
-    \item Designing a backend system that can handle document requests.
-    \item Implementing secure authentication and role-based access.
-    \item Building a structured workflow for submission and validation.
-    \item Using cloud storage for document handling.
-    \item Making the system scalable and easy to extend.
-\end{itemize}
-
-\section{Scope of the system}
-
-\par The system focuses on improving the workflow between citizens and public institutions when it comes to document-based requests.
-
-\par It does not change the legal process of document approval. Final decisions are still made by authorized personnel within the institution.
-
-\par The system is designed as a support tool that helps organize and digitalize the existing workflow, not replace institutional rules or procedures.
-
-% \section{Motivation}
-
-% \par The idea behind Doclane was optimizing a complex, lengthy process that most people go through on a regular basis into a predominantly digital, simplified and shorter one.
-
-% \par With the way public institutions are structured, they handle thousands of requests per day, many of those requiring files that will be kept in a physical archive for years, or maybe indefinetly. This is not only wasteful when taking into account the consumed paper, but also in human time.
-
-% \par Paper can be lost and it can be damaged. The solution to making sure it won't get lost is to make copies of it, which is again wasteful. Why not optimize this process by digitalizing the biggest bottleneck in it and implement modern technologies such as cloud storage, which proves to be so much more efficient in the long term? And why stop at just cloud storage, when we can optimize this process, to also save time instead of physical resources? We reduce costs, save the planet and save our time, everyone wins in this equation.
-
-% \section{Problem statement}
-
-% \par This thesis addresses inefficiencies in traditional public administration workflows, particularly in the submission, validation, and processing of document-based requests. These workflows are often characterized by manual handling, repeated physical interactions, and lack of structured feedback mechanisms.
-
-% \section{Objectives}
-
-% The main objective \cite{Sommerville2010} of this thesis is to design and implement a cloud-based system that improves the efficiency of document request workflows in public institutions.
-
-% The specific objectives include:
-% \begin{itemize}
-%     \item Designing a scalable backend architecture for handling document requests.
-%     \item Implementing secure authentication and role-based access control.
-%     \item Providing a structured document submission and validation workflow.
-%     \item Integrating cloud storage for secure file management.
-%     \item Ensuring system reliability through modern cloud infrastructure.
-% \end{itemize}
-
-% \section{Limitations}
-
-% The system is designed as a digital workflow optimization platform and does not replace the legal authority of public institutions. Final document issuance and validation remain under institutional control.
-
-% \section{Current process}
-
-% \par Let's take the example of how you could, in this current day, retrieve a document from a public institution, maybe an urbanim certificate so that you can build stuff on your property. You'd schedule an appointment whenever the next free time slot is (and queue times are definetly not short), then you go present yourself, you take your identification with you and all the required documents such that it can be emitted. Let's say you did not forget anything and you do not need to reschedule, although this happens sometimes too. By the time you have your certificate emitted, half your day is gone, not only because the process itself is lengthy but due to the sheer number of other citizens that need their requests solved you might have to wait longer than your appointment timeline, and maybe delays occur too.
-
-% \section{What Doclane promises}
-
-% \par Doclane digitalizes the bottleneck in this entire process. Let's take a look at how you can receive the same urbanism certificate while reducing human interaction to just one step. You wake up, you log in to Doclane, your account is linked to the local institution you belong to, and in the app you select the certificate you need, and then choose to submit the request. You will be prompted by the application to upload relevant documents to your applications in specific slots, each slot also providing you with examples on how the uploads should look. You uploaded everything within 5 minutes, then on the other side public institution employees are notified, they check the documents, emit an approval and you go pick up your document.
-
-% \par Did you submit something that the institution cannot accept? They can notify you within the application and let you know what you didn't do right, so that you may correct it. No more re-scheduling appointments and losing hours upon hours to have the paper you need released.
+\par It is worth noting what the system does not do. Doclane is a support tool, not a replacement for institutional authority. Final decisions regarding document approval remain with authorised personnel within each institution, and the system does not alter or bypass any part of the legal process. Its role is to organise and digitise the workflow around those decisions, making the process faster and more transparent without changing who holds responsibility for the outcome.

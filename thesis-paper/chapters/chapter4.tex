@@ -1,195 +1,90 @@
 \chapter{Deployment}
 \label{chap:ch4}
 
-\par When it comes to deploying an application, there are many paths one could take. One might be ordering a physical server at home and running your application on there, another one could be running it locally on your machine where only people in your network can access it, and another one could be deploying the application in the cloud. The last one was chosen for Doclane.
+\par Deploying an application involves a range of decisions that compound on each other: where the application runs, how it is packaged, how traffic reaches it, and how the infrastructure itself is managed. For Doclane, all of these decisions pointed toward a cloud-based setup, specifically on AWS, using containers orchestrated by Kubernetes and infrastructure defined entirely as code.
 
-\section{Cloud computing}
+\section{Cloud computing and provider selection}
 
-\par Cloud computing was preferred since it is the more modern approach, and reduces overhead with managing physical servers. Without the burden and expenses of buying, setting up and maintaining servers, more effort could be redirected to the development of the app and adding features that bring more value to it. It is also that renting those servers means you can just get rid of them whenever you're not using them anymore, and you only pay for how much you use them.
+\par The case for cloud computing over self-hosted infrastructure is largely practical. Buying and maintaining physical servers introduces overhead that has nothing to do with building the application itself: procurement, setup, ongoing maintenance, and the risk of hardware failure with no built-in redundancy. Renting compute from a cloud provider sidesteps most of that. Resources can be provisioned when needed and released when they are not, and the billing follows actual usage rather than a fixed capital cost.
 
-\section{Amazon Web Services}
-
-\par The deployment of the app was done on AWS. The architecture leverages containers orchestrated by Kubernetes, specifically the managed EKS (Elastic Kubernetes Service) offering from AWS.
-
-\par AWS is the leading cloud provider, covering roughly 31\% of the global market as of 2026. Part of the reason it is so widely used is because it was the first to market, so it had the most amount of time out of all competitors to refine their services and offerings, which is half of the reason it was chosen. The other half was because the author of this thesis project is a certified Solutions Architect Professional on AWS and had a bias to pick this provider.
-
-\subsection{Containers and Kubernetes}
-
-\par A container is a lightweight, standalone package that includes everything needed to run a piece of software: the code, runtime, libraries and dependencies. Unlike virtual machines, containers share the host operating system kernel, making them fast to start and efficient with resources.
-
-\par Docker is the tool used to build these containers. The backend and frontend of Doclane each have a Dockerfile that defines how the container image is built. The backend produces a small static Go binary running on a minimal base image, while the frontend uses Next.js standalone output on a Node.js base image.
-
-\par Kubernetes is an open-source container orchestration platform. It takes your containers and runs them across a cluster of machines, handling scaling, networking, health checks and restarts automatically. Instead of manually starting containers on servers, you declare what you want (for example: "run 2 copies of the backend") and Kubernetes makes it happen.
-
-\par EKS (Elastic Kubernetes Service) is AWS' managed Kubernetes offering. AWS handles the control plane (the brain of the cluster), while you manage the worker nodes (the machines that actually run your containers). This removes the operational burden of maintaining Kubernetes itself while giving full access to its features.
+\par AWS was the chosen provider for two reasons. It holds the largest share of the global cloud market, roughly 31\% as of 2026, which reflects both the breadth of its service catalogue and the maturity of those services after years of iteration. The second reason is that the author holds an AWS Solutions Architect Professional certification and was already familiar with the platform, which reduced the ramp-up time considerably when making architectural decisions.
 
 \section{The architecture}
 
-\par The architecture consists of an EKS cluster running in a VPC with two availability zones. Traffic enters through an ALB (Application Load Balancer) that routes requests to the appropriate service: the backend or the frontend. The backend connects to an RDS PostgreSQL database and an S3 bucket for document storage. Authentication is handled by Cognito.
+\par The system runs inside an EKS (Elastic Kubernetes Service) cluster deployed within a VPC across two availability zones. Incoming traffic is handled by an ALB (Application Load Balancer) that routes requests either to the backend or the frontend depending on the path. The backend connects to an RDS PostgreSQL instance for persistent storage and an S3 bucket for uploaded documents. Authentication is delegated to Cognito.
+
+\subsection{Containers and Kubernetes}
+
+\par Both the backend and frontend are packaged as Docker containers using multi-stage builds. The backend Dockerfile compiles the Go source into a fully static binary in the first stage, then copies it into a minimal distroless base image that contains no shell, no package manager, and no unnecessary dependencies. The resulting image is approximately 36 MB and runs as a non-root user. The frontend follows the same two-stage pattern: the first stage runs the Next.js build, and the second stage copies only the standalone server output into a Node.js Alpine image, producing a final image of around 370 MB. The NEXT\_PUBLIC environment variables, things like the Cognito pool ID and backend URL, are passed as build arguments at build time since Next.js inlines them into the JavaScript bundle and they are not sensitive values.
+
+\par Kubernetes manages the lifecycle of these containers across the cluster. Rather than manually starting containers on individual machines, the desired state is declared, for example two replicas of the backend, and Kubernetes reconciles reality to match that declaration, handling restarts, health checks, and rescheduling automatically. EKS offloads the management of the Kubernetes control plane itself to AWS, so the operational concern is limited to the worker nodes and the workloads running on them.
+
+\par The backend runs as a Deployment with two replicas by default, each serving the HTTP router on port 8080. A HorizontalPodAutoscaler scales this between two and six replicas based on CPU utilization, adding capacity when average usage crosses 70\%. Liveness and readiness probes are configured so that crashed containers are restarted and traffic is only routed to pods that are ready to serve. The frontend is deployed similarly with two to four replicas, and server-side rendering requests from the frontend to the backend travel over the internal Kubernetes network using the service DNS name, never leaving the cluster.
 
 \subsection{Networking}
 
-\par The networking part of Doclane consists of a VPC (Virtual Private Cloud) in the eu-west-1 Region on AWS. This VPC consists of two private subnets and two public subnets. The private subnets host the EKS worker nodes and the RDS database, so that no direct public internet access can be established to them.
+\par The VPC is provisioned in the eu-west-1 region and spans two availability zones, with both private and public subnets in each. Worker nodes and the RDS instance sit in private subnets with no direct route to the public internet. The ALB and NAT Gateway are placed in the public subnets: the ALB receives inbound traffic from the internet, and the NAT Gateway allows resources in private subnets to reach the internet for things like pulling container images, without being reachable from it in return. The distinction between public and private subnets comes down entirely to the route table: a public subnet has a direct route to the internet gateway, while a private subnet routes outbound internet traffic through the NAT Gateway.
 
-\par The public subnets host the NAT Gateway and the ALB (Application Load Balancer). The NAT Gateway allows resources in private subnets to reach the internet (for example to pull container images) without being directly accessible from the internet.
+\par The subnets carry Kubernetes-specific tags so that the AWS Load Balancer Controller can automatically discover which ones to place ALBs in when an Ingress object is created inside the cluster.
 
-\par Both the private and public subnets span two AZs (Availability Zones), such that high availability is achieved. In case one data center from AWS goes down where our application runs, then it will still continue to run as if nothing has happened.
+\par Network security is enforced through Security Groups. The RDS instance is protected by a group that permits inbound connections on port 5432 only from the EKS cluster Security Group, meaning only pods running inside the cluster can reach the database. All traffic between the backend and RDS is encrypted over SSL/TLS, and traffic between pods stays within the internal Kubernetes network and never leaves the VPC.
 
-\par An internet gateway was provisioned and added to the route table of the public subnet, such that internet access is possible to and from it. Private subnets are associated with a route table that routes internet-bound traffic through the NAT Gateway. So the thing that makes a subnet public or private is whether or not the associated route table has a direct route to the internet gateway or goes through a NAT Gateway.
+\subsection{Ingress, DNS, and HTTPS}
 
-\par The subnets are tagged with Kubernetes-specific labels so that the AWS Load Balancer Controller can automatically discover which subnets to place ALBs in.
+\par The AWS Load Balancer Controller runs inside the cluster and watches for Ingress objects. When one is created, the controller provisions a real ALB in AWS configured to match the routing rules it defines. For Doclane, the Ingress routes requests to \texttt{/api} to the backend service and everything else to the frontend. The ALB terminates TLS using an ACM certificate, redirects plain HTTP to HTTPS, and routes traffic directly to pod IPs using IP-mode target groups rather than going through node ports.
 
-\subsubsection{Security}
-
-\par When it comes to network security, the architecture leverages Security Groups for securing traffic at the pod level and at the RDS level.
-
-\par A Security Group in AWS is a stateful firewall that operates at a single resource level. It consists of inbound / outbound rules, inbound rules meaning what kind of traffic is allowed (on which port and from which source), while outbound rules control what traffic is allowed to go out of our resource.
-
-\par The RDS database is protected by a Security Group that only allows inbound traffic on port 5432 from the EKS cluster Security Group. This means only pods running in the cluster can reach the database. Any other traffic is dropped.
-
-\par The entire communication between the backend pods and RDS happens over encrypted connections (SSL/TLS is enforced on the database). Traffic between pods within the cluster uses the internal Kubernetes network and never leaves the VPC.
-
-\subsection{Database layer}
-
-\par RDS (Relational Database Service) was the preferred choice for the database. As a relational database was needed, the natural choice was AWS' managed service for this.
-
-\par RDS is built in such a way that AWS handles all the operating system patching of the server that is running your database, and you also benefit from automated backups out of the box.
-
-\par The engine is PostgreSQL, chosen for being popular, fast and well supported by RDS. The database schema is automatically applied on every fresh deployment by a Kubernetes Job that runs the initialization SQL script.
-
-\subsection{Backend layer}
-
-\par The backend runs as a Deployment in Kubernetes with 2 replicas by default. Each replica is a container running the Go binary that serves the chi HTTP router on port 8080. 
-
-\par A HorizontalPodAutoscaler is configured to scale the backend from 2 to 6 replicas based on CPU utilization. If average CPU goes above 70\%, Kubernetes automatically adds more pods to handle the load.
-
-\par Health checks are configured using Kubernetes liveness and readiness probes. The liveness probe ensures crashed containers get restarted. The readiness probe ensures traffic is only sent to pods that are ready to serve requests.
-
-\subsubsection{IAM Roles for Service Accounts (IRSA)}
-
-\par The backend pods need access to AWS services like S3, Textract, Bedrock, Polly and Cognito. Instead of using static credentials, the pods use IRSA (IAM Roles for Service Accounts).
-
-\par IRSA works by linking a Kubernetes Service Account to an IAM Role. When a pod uses that Service Account, the AWS SDK automatically receives short-lived credentials scoped to exactly the permissions defined in the IAM Role. No static keys exist anywhere, not in the image, not in environment variables, not on disk.
-
-\par The IAM policy attached to the backend pod role follows the principle of least privilege. It only allows the specific actions needed: uploading and downloading from the documents S3 bucket, calling Textract for text extraction, calling Bedrock for document interpretation, calling Polly for speech synthesis, and looking up users in Cognito.
-
-\subsection{Frontend layer}
-
-\par The frontend runs as a Deployment in Kubernetes with 2 replicas. Each replica runs the Next.js standalone server on port 3000. The standalone output mode produces a minimal server bundle that does not need the full node\_modules directory, keeping the container image small.
-
-\par A HorizontalPodAutoscaler scales the frontend from 2 to 4 replicas based on CPU utilization.
-
-\par Server-side rendering (SSR) calls from the frontend to the backend happen over the internal Kubernetes network using the service DNS name. This means SSR requests never leave the cluster and have minimal latency.
-
-\subsection{Ingress and Load Balancing}
-
-\par Traffic enters the cluster through an ALB (Application Load Balancer) that is automatically provisioned by the AWS Load Balancer Controller. This controller runs inside the cluster and watches for Ingress objects. When it sees one, it creates and configures a real ALB in AWS to match the routing rules defined in the Ingress.
-
-\par The Ingress defines two routing rules: requests to /api are sent to the backend service, and all other requests are sent to the frontend service. The ALB terminates TLS using an ACM certificate and redirects HTTP traffic to HTTPS.
-
-\par The ALB uses IP-mode target groups, meaning it routes traffic directly to pod IPs rather than going through node ports. This is more efficient and allows for faster health checks.
-
-\subsection{DNS and HTTPS}
-
-\par The application is served at thesis.robert-beres.com. An ACM (AWS Certificate Manager) certificate was provisioned for this domain and validated automatically via DNS. The certificate is attached to the ALB so all traffic is encrypted.
-
-\par A Route53 alias record points the domain to the ALB. When the infrastructure is torn down and recreated, the ALB gets a new DNS name, but Terraform automatically updates the Route53 record to point to the new one.
-
-\subsection{Document storage}
-
-\par S3 (Simple Storage Service) is used for storing uploaded documents. The bucket has versioning enabled so previous versions of files are preserved, and server-side encryption is applied to all objects.
-
-\par The backend generates presigned URLs for downloads. This means clients download directly from S3 using a temporary URL that expires after a set time, without any permanent credentials ever existing. This makes the process so much more secure since if somehow credentials get leaked the attack surface is very small due to the scoped permissions, and the attack surface is also ephemeral.
+\par The application is served at \texttt{thesis.robert-beres.com}. The ACM certificate for this domain was validated via DNS and attached to the ALB. A Route53 alias record points the domain to the ALB, and when the infrastructure is torn down and recreated, Terraform updates the record automatically to reflect the new ALB DNS name.
 
 \subsection{Authentication}
 
-\par Cognito is used as the identity provider. It manages user registration, login, password policies and token issuance. The frontend uses the Amplify library to interact with Cognito directly from the browser.
+\par User registration, login, password policy enforcement, and token issuance are all handled by Cognito. The frontend uses the Amplify library to interact with Cognito directly from the browser. After a successful login, Cognito issues a JWT that the frontend stores in an HTTP-only cookie, keeping it inaccessible to JavaScript and removing the most common vector for token theft via XSS. The backend validates incoming tokens by checking their signature against Cognito's published public keys.
 
-\par After a user logs in, Cognito issues a JWT (JSON Web Token). This token is stored in an HTTP-only cookie and sent with every request. The backend validates the token by checking its signature against Cognito's public keys (JWKS).
+\subsection{Document storage}
 
-\subsection{Logging and monitoring}
+\par Uploaded documents are stored in S3 with versioning and server-side encryption enabled. The backend never exposes permanent credentials to the client; instead, it generates presigned URLs, which are time-limited links that allow a client to upload or download a specific object directly from S3. When the URL expires it cannot be reused, and the IAM permissions scoped to the backend role ensure that even a leaked presigned URL can only be used for the specific operation it was generated for.
 
-\par Container logs from all pods are collected by Kubernetes and can be viewed using kubectl. The structured JSON logging from the backend makes it easy to filter and search for specific events or errors.
+\subsection{Backend credentials and least privilege}
 
-\section{Machine Learning}
+\par The backend pods require access to several AWS services. Rather than embedding static credentials in the container image or environment variables, the application uses IRSA (IAM Roles for Service Accounts), which links a Kubernetes Service Account to an IAM Role. When a pod runs under that Service Account, the AWS SDK automatically receives short-lived credentials scoped to exactly the permissions the role defines. The attached policy follows the principle of least privilege: it permits uploading and downloading from the documents bucket, calling Textract for text extraction, calling Bedrock for document interpretation, calling Polly for text-to-speech synthesis, and looking up users in Cognito. Nothing beyond that is permitted.
 
-\par This section goes into detail on the AWS services leveraged to build the machine learning assisted features aforementioned in the implementation chapter.
+\subsection{Database layer}
 
-\subsection{Textract}
+\par RDS was used for the database rather than running PostgreSQL directly on a cluster node. The managed service handles operating system patching and provides automated backups without any additional configuration. The database schema is applied on every fresh deployment by a Kubernetes Job that runs the initialization SQL script, and a separate Job bootstraps the admin user, so the entire environment can be torn down and recreated without manual intervention.
 
-\par Textract is a fully managed serverless service offered by AWS that extracts text from documents. API calls are made to Textract from Doclane in order to extract text from documents.
+\subsection{Logging}
 
-\subsection{Polly}
+\par Container logs from all pods are collected by Kubernetes and accessible via kubectl. The backend emits structured JSON logs, which makes filtering for specific events or errors straightforward without needing a separate log aggregation service during development.
 
-\par Polly is a fully managed serverless service offered by AWS that generates speech from text. API calls are made to Polly to generate speech from selected documents.
+\section{AWS managed services for intelligent document processing}
 
-\subsection{Bedrock}
+\par Doclane integrates three AWS managed services to add document processing capabilities to the workflow. These are fully managed, serverless offerings: no model training was done, no datasets were curated, and there is no custom ML pipeline. The application makes API calls to these services and receives results back, with all the underlying infrastructure and model maintenance handled by AWS.
 
-\par Bedrock is a fully managed serverless service offered by AWS that gives you access to different LLMs that you can prompt. In our case we use the Nova Lite model from Amazon to interpret whether a document provided by an user is actually what it is required by the request.
+\par Textract is used to extract text from uploaded documents. When a document is submitted, the backend sends it to Textract and receives a structured representation of the text content, which can then be used for downstream processing or validation.
 
-\section{Infrastructure as Code - Terraform}
+\par Polly converts text to synthesised speech. This is used to generate audio from document content, allowing users to listen to a document rather than read it, which can be useful for accessibility purposes or for quickly reviewing a lengthy submission.
 
-\par Whenever deploying applications in the Cloud, you can manually click in the AWS console and provision everything you need. It's straight forward, intuitive and it provides a friendly experience. Although this is convenient, it is a manual process. And manual processes are prone to errors. It becomes easy to forget what change in configuration you made last week, more simply put, it's a mess.
+\par Bedrock provides access to large language models through a managed API. Doclane uses the Amazon Nova Lite model to interpret whether a document uploaded by a user actually matches what the request template requires. The backend sends the extracted text alongside the expected document description and receives a structured assessment in return. The model is not fine-tuned or modified in any way; it is prompted at inference time with context specific to the request being validated.
 
-\par That's where the concept of IaC (Infrastructure as Code) comes into play. This involves specifying your infrastructure in a declarative manner, and having everything defined as code, it becomes much easier to maintain and have control over.
+\section{Infrastructure as Code}
 
-\par Terraform by HashiCorp is the chosen tool for the project. Unlike CloudFormation which is AWS-specific, Terraform is cloud-agnostic and has a large ecosystem of providers. It was chosen for its ergonomics: features like force\_destroy on S3 buckets, native Helm and Kubernetes providers, cross-region resource management with provider aliases, and the ability to manage the entire stack (AWS resources, Kubernetes manifests, Helm charts) from a single tool.
+\par Provisioning cloud infrastructure manually through the AWS console is intuitive for one-off tasks, but it does not scale well as a practice. Changes made by clicking through a UI leave no audit trail, are difficult to reproduce exactly, and become hard to reason about as the architecture grows. Infrastructure as Code addresses this by treating infrastructure the same way source code is treated: declared in files, version controlled, and applied through a repeatable process.
+
+\par Terraform was chosen for this. Unlike CloudFormation, which is AWS-specific, Terraform is provider-agnostic and has a large ecosystem of providers. It was also chosen for practical ergonomics: the ability to manage AWS resources, Kubernetes manifests, and Helm charts from a single tool with a consistent workflow was more convenient than stitching together multiple tools.
 
 \subsection{State management}
 
-\par Terraform keeps track of what it manages in a state file. This file maps the resources defined in code to the real resources in AWS. It is stored remotely in an S3 bucket with versioning enabled, so it can be recovered if corrupted. A DynamoDB table is used as a lock to prevent two people (or two CI runs) from modifying infrastructure at the same time.
+\par Terraform tracks what it manages in a state file that maps declared resources to their real counterparts in AWS. This state is stored remotely in an S3 bucket with versioning enabled so it can be recovered if corrupted. A DynamoDB table serves as a lock to prevent concurrent modifications from two different operators or CI runs from leaving the state inconsistent.
 
 \subsection{Stack layout}
 
-\par The infrastructure is split into multiple Terraform stacks, each with its own state file:
-
-\par \textbf{bootstrap} - Creates the S3 bucket and DynamoDB table for state management. Run once, never destroyed.
-
-\par \textbf{platform-data} - Contains long-lived resources that are cheap to keep running: ECR container registries, Cognito user pool, ACM certificate, GitHub OIDC role. These persist across compute teardowns.
-
-\par \textbf{platform-compute} - Contains the expensive resources: VPC, NAT Gateway, EKS cluster, RDS database, S3 documents bucket, IRSA roles. These are created when working and destroyed when not needed.
-
-\par \textbf{workload} - Contains everything inside the Kubernetes cluster: Helm charts, deployments, services, ingress, database seeding jobs. Destroyed together with platform-compute.
-
-\par This split allows tearing down the expensive compute resources while not using the app, since in development you do not need the app running 24 hours a day, while keeping the cheap persistent resources alive. A full environment can be recreated from scratch with a single command.
+\par The infrastructure is split into four stacks, each with its own state file. The \textbf{bootstrap} stack creates the S3 bucket and DynamoDB table used for state management itself and is run once and never destroyed. The \textbf{platform-data} stack contains long-lived, inexpensive resources: ECR container registries, the Cognito user pool, the ACM certificate, and the GitHub OIDC role used for CI. These persist across compute teardowns so that users do not lose their accounts and the certificate does not need to be revalidated every time the rest of the infrastructure is recreated. The \textbf{platform-compute} stack contains the expensive resources: VPC, NAT Gateway, EKS cluster, RDS database, S3 documents bucket, and IRSA roles. The \textbf{workload} stack contains everything deployed inside the cluster: Helm charts, Kubernetes manifests, the database seeding job, and the admin bootstrap job. The compute and workload stacks are destroyed together when the application is not in use.
 
 \subsection{Ephemeral environments}
 
-\par The entire compute layer is designed to be ephemeral. Running \texttt{make up} provisions the full environment from scratch in about 15 minutes: VPC, NAT, EKS cluster, RDS database, container deployments, database schema seeding, admin user creation, ALB, HTTPS, DNS record. Running \texttt{make down} destroys everything in about 10 minutes, bringing the cost to zero.
+\par The compute layer is designed to be torn down and recreated freely. Running \texttt{make up} provisions the full environment from scratch in roughly 15 minutes, including the VPC, EKS cluster, RDS instance, container deployments, database schema, admin user, ALB, HTTPS termination, and DNS record. Running \texttt{make down} destroys everything in around 10 minutes, reducing the running cost to zero. This is practical during development when leaving a full environment running overnight serves no purpose.
 
-\par This is possible because:
-\begin{itemize}
-    \item Container images persist in ECR between sessions
-    \item The Cognito user pool persists so users do not need to re-register
-    \item The ACM certificate persists so DNS validation does not need to happen again
-    \item The database schema is applied automatically by a Kubernetes Job on every fresh deployment
-    \item The admin user is bootstrapped automatically by another Kubernetes Job
-\end{itemize}
+\section{Continuous Integration and Deployment}
 
-\section{Continuous Integration / Continuous Deployment}
+\par The deployment pipeline is fully automated using GitHub Actions. When changes are pushed to the main branch, the pipeline builds Docker images for the backend and frontend independently, only rebuilding a service when its source code has actually changed. Images are tagged with the git commit SHA for traceability and pushed to ECR.
 
-\par Modern practices of deployment have been adopted, such that the deployment pipeline of the application is fully automated. Once changes are pushed to the main branch, container images are automatically built and pushed to ECR.
-
-\par CI/CD has been done with the help of GitHub Actions. GitHub Actions are convenient to use when your repository is already on GitHub, hence why they were chosen.
-
-\par The pipeline builds Docker images for the backend and frontend, tags them with the git commit SHA for traceability, and pushes them to ECR. The backend and frontend are built independently, only when their respective code changes.
-
-\par Updates happen leveraging the least-privilege principle, without any permanent credentials ever existing or being stored anywhere. The GitHub Action worker generates an ID token using GitHub's OIDC (OpenID Connect). GitHub signs this token with their private key, and this signed token is then passed to AWS to prove the identity of the runner.
-
-\par In AWS, an OIDC provider is configured in IAM, trusting GitHub and allowing Role Assumptions for the worker as long as it proves it's from the Doclane repository. The IAM role assumed by the worker only has permissions to push images to the two ECR repositories. Nothing else.
-
-\par Role Assumption in AWS is a concept that allows generating temporary credentials to perform actions in an AWS account, leveraging the STS (Secure Token Service) from AWS. Credentials are short-lived. Once the credentials expire they cannot be used anymore, and even if they somehow get leaked the damage would be minimal since the only thing they allow is pushing container images.
-
-\section{Containerization}
-
-\par Both the backend and frontend are packaged as Docker containers using multi-stage builds.
-
-\subsection{Backend container}
-
-\par The backend Dockerfile uses a two-stage build. The first stage uses the Go compiler to build a fully static binary with no external dependencies. The second stage uses a minimal distroless base image that contains no shell, no package manager, nothing except the binary and CA certificates. The final image is about 36 MB and runs as a non-root user.
-
-\subsection{Frontend container}
-
-\par The frontend Dockerfile also uses a multi-stage build. The first stage installs dependencies and runs the Next.js build. The second stage copies only the standalone output (a minimal server bundle) into a Node.js Alpine image. The final image is about 370 MB and runs as a non-root user.
-
-\par The NEXT\_PUBLIC environment variables (Cognito pool ID, client ID, backend URL) are passed as build arguments since Next.js inlines them into the JavaScript bundle at build time. They are not secrets, they are public values that the browser needs to know.
+\par The pipeline authenticates to AWS using GitHub's OIDC integration rather than storing static credentials anywhere. The GitHub Actions runner generates a signed identity token, which AWS validates against a configured OIDC provider in IAM. If the token checks out and originates from the Doclane repository, the runner is permitted to assume a role whose only permission is pushing images to the two ECR repositories. The credentials generated through this role assumption are short-lived and expire after the job completes, so even if they were somehow extracted from a build log they would be useless shortly after.

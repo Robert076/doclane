@@ -1,38 +1,52 @@
 \chapter{System limitations and discussion}
 \label{chap:limitations}
 
-\par This chapter discusses the limitations of the current system and explains some design decisions made during development. While the system covers the main workflow of document processing in public institutions, there are still areas that can be improved.
+\par No system of this kind is without trade-offs, and being explicit about them is more useful than glossing over them. This chapter discusses the constraints Doclane operates under, the reasoning behind certain design decisions that introduce those constraints, and what would need to change for the system to mature beyond its current scope. Some of these limitations are deliberate, others are a natural consequence of the scale and timeline of the project.
 
-\section{System scope}
+\section{Scope and what the system does not do}
 
-\par Doclane is designed as a workflow system for handling document-based requests between users and public institutions. It does not change legal procedures or replace existing administrative rules. Final decisions are still made by authorized employees within the institution.
+\par Doclane is a workflow support tool, and it is worth being precise about what that means. The system organises the exchange of documents between citizens and public institutions and makes that process faster and more legible for both sides. It does not touch the legal layer underneath. Final decisions about whether a request is approved or a document is valid remain with authorised employees, and nothing in the system changes or bypasses that authority. Administrative rules, legal requirements, and institutional procedures are all assumed to exist outside the system and are not encoded into it.
 
-\par The system focuses only on digital support of existing processes. It does not automate decision-making in a legal sense, but instead helps organize and speed up document handling.
+\par This is a conscious constraint rather than an oversight. Embedding legal logic into software creates brittleness: rules change, edge cases multiply, and the moment the software's understanding of the law diverges from reality, it becomes a liability rather than an asset. By keeping Doclane strictly in the role of organiser and communicator, the system remains useful across different institutional contexts without needing to be reconfigured every time a procedural rule changes.
 
 \section{Dependence on external services}
 
-\par The system uses external services for file storage and AI-based processing. This includes cloud storage for uploaded files and third-party services for tasks such as text extraction and document analysis.
+\par A significant portion of the system's infrastructure relies on AWS managed services: S3 for file storage, Cognito for authentication, and Textract, Bedrock, and Polly for document processing. This is a deliberate architectural choice, but it comes with a real dependency. If any of these services experience an outage, the features that depend on them are unavailable. In the case of Textract, Bedrock, and Polly, this affects only the AI-assisted processing tools, and the core request submission and review workflow continues to function. In the case of S3 or Cognito, the impact would be more significant since these underpin file access and login respectively.
 
-\par This introduces a dependency on external systems. If one of these services is unavailable, some features of the system may be limited. However, the core functionality of the system remains usable.
+\par The practical risk of this is lower than it might appear: AWS maintains service level agreements with high availability targets, and extended outages of core services like S3 are rare. That said, a production deployment at institutional scale would benefit from a fallback strategy for authentication at minimum, such as caching token validation results for a short window to handle brief Cognito unavailability. This is not implemented in the current version.
 
-\section{AI limitations}
+\par There is also a cost dimension to this dependency. The managed services used here have pricing tied to usage, which is predictable and manageable at the scale of a single institution but would need to be modelled carefully before deploying across many institutions simultaneously.
 
-\par AI tools are used to assist with document processing, but they do not make final decisions. They can extract text from images or help identify document types, but the final validation is always done by the assigned employee.
+\section{Limitations of AI-assisted processing}
 
-\par In some cases, AI results may not be fully accurate. Because of this, AI is only used as a support tool and not as a replacement for human review.
+\par The three AWS services used for document processing — Textract for OCR, Bedrock for document interpretation, and Polly for text-to-speech — each carry their own accuracy constraints, and it is worth being clear about what those are in practice.
 
-\section{User adoption challenges}
+\par Textract performs well on clean, well-scanned documents but degrades on low-resolution images, handwritten text, or documents with complex layouts such as tables embedded in scanned forms. In these cases, the extracted text may be incomplete or contain errors, which in turn affects the quality of the input passed to Bedrock for interpretation.
 
-\par One possible limitation of the system is user adoption. Some users may not be familiar with digital systems or may prefer traditional paper-based processes.
+\par Bedrock's assessment of whether a document matches what a template requires is only as reliable as the prompt it receives and the quality of the extracted text. The model used, Amazon Nova Lite, is a general-purpose language model accessed through the managed API without any fine-tuning for the specific domain of Romanian public administration documents. This means it may struggle with domain-specific terminology, document formats it has not encountered, or instructions that are ambiguous in the prompt. The output is treated as a suggestion to the reviewing employee, not a decision, precisely because of this uncertainty.
 
-\par In addition, employees in public institutions may require time to adapt to the new workflow. Training and experience are important for the system to be used effectively.
+\par These limitations are not unique to the choices made here; they reflect the current state of document understanding technology more broadly. The system is designed so that none of these tools sit on the critical path of a decision: an employee can approve or reject a document without ever invoking any AI feature, and the AI output never changes the state of a request on its own.
 
-\section{Scalability and future use}
+\section{User adoption and organisational friction}
 
-\par The system is designed to be scalable and support multiple institutions. However, large-scale adoption would require additional configuration, integration with national systems, and stronger legal frameworks.
+\par The technical functionality of the system is only one part of whether it succeeds in practice. The other part is whether the people who are supposed to use it actually do, and whether the organisations adopting it are structured in a way that supports it.
 
-\par At the current stage, the system serves as a prototype that demonstrates how document workflows can be improved using digital tools.
+\par On the citizen side, the main risk is digital exclusion. Not all citizens are equally comfortable with online services, and a system that requires uploading documents, managing an account, and following a multi-step submission process will create friction for users who are less digitally literate or who do not have reliable internet access. This is not a reason to avoid digitising the process, but it is a reason to ensure that the in-person option is not entirely removed, at least during any transition period. Doclane does not replace the physical channel; it adds a digital one alongside it.
 
-\section{Summary}
+\par On the institutional side, the challenge is different. Employees who have been managing paper-based workflows for years will need time to adjust to a new tool, and without adequate training and internal buy-in, adoption tends to stall. There is also a coordination question: for the system to work well, departments need to claim and process requests within a reasonable timeframe, which requires changes to how work is organised internally, not just changes to the tools being used. These are organisational problems that software alone cannot solve.
 
-\par The system successfully covers the main workflow of document submission and processing, but it still has limitations related to external dependencies, AI accuracy, and user adoption. These limitations define the areas for future improvement and further development of the system.
+\section{Scalability and path to broader adoption}
+
+\par The current deployment demonstrates that the architecture can handle the workflow for a single institution, and the design intentionally avoids hard-coding anything institution-specific into the system. Templates are configurable, departments are managed through the admin interface, and the infrastructure can be replicated for additional instances without structural changes to the codebase. This means that scaling to multiple institutions is technically feasible.
+
+\par In practice, broader adoption would require more than a technical deployment. Integration with national identity systems would be necessary for a production rollout, since relying on self-registered accounts with no verified identity link limits the legal weight of submissions. Depending on the jurisdiction, there may also be requirements around data residency, audit logging, and document retention that would need to be addressed explicitly. None of these are insurmountable, but they represent a significant scope increase beyond what this project covers.
+
+\par At this stage, Doclane is best understood as a working prototype that demonstrates the viability of the approach. The core workflow functions end-to-end, the infrastructure is production-grade in its design, and the decisions made throughout the project were guided by the goal of building something that could be extended rather than something that only works under ideal conditions.
+
+\section{Reflection on design decisions}
+
+\par A few decisions made during development are worth discussing in hindsight, not because they were wrong, but because they involve trade-offs that are not immediately obvious from looking at the system as it stands.
+
+\par The choice to use AWS throughout means the system is deeply tied to one provider. Most of the services used have equivalents on other cloud platforms, and the application-level code is largely agnostic to the underlying infrastructure, but migrating away from AWS would still require non-trivial work on the Terraform configuration and on the authentication layer, which relies on Cognito specifically. This was an acceptable trade-off given the author's familiarity with AWS and the speed advantage that provided, but a system intended for long-term institutional use might benefit from more deliberate provider abstraction.
+
+\par The decision to keep the AI features entirely advisory rather than integrated into the approval flow was the right one for this stage, but it does limit the efficiency gains on the employee side. An employee reviewing a large number of submissions still needs to open each document and make an explicit decision; the AI output is available as context but does not reduce the number of clicks required. A more integrated design might surface high-confidence AI assessments more prominently and allow employees to batch-approve documents that meet a confidence threshold, with the individual review reserved for uncertain cases. This would require a higher degree of confidence in the model's accuracy than the current setup warrants.

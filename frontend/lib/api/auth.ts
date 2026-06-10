@@ -1,27 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { APIResponse } from "@/types";
 import { doclaneHTTPHelper } from "./core";
 import { CognitoIdentityProviderClient, ChangePasswordCommand } from "@aws-sdk/client-cognito-identity-provider";
-
-// Called by the client after Amplify signIn succeeds and returns a token
-export async function setAuthCookie(idToken: string, accessToken: string): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.set("auth_cookie", idToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    expires: new Date(Date.now() + 1000 * 60 * 60),
-  });
-  cookieStore.set("access_token", accessToken, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    expires: new Date(Date.now() + 1000 * 60 * 60),
-  });
-}
 
 // Called by the client after Amplify confirmSignUp + signIn succeeds
 export async function syncUser(
@@ -38,15 +20,6 @@ export async function syncUser(
     },
   });
 }
-
-export async function logout(): Promise<APIResponse> {
-  const cookieStore = await cookies();
-  cookieStore.delete("auth_cookie");
-  cookieStore.delete("access_token");
-  revalidatePath("/");
-  return { success: true, message: "Logged out successfully." };
-}
-
 
 export async function changePassword(
   oldPassword: string,

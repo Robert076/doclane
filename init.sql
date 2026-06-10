@@ -93,7 +93,7 @@ CREATE TABLE expected_documents (
     document_request_id     INTEGER NOT NULL REFERENCES document_requests(id) ON DELETE CASCADE,
     title                   TEXT    NOT NULL,
     description             TEXT    NOT NULL DEFAULT '',
-    status                  TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'uploaded', 'approved', 'rejected')),
+    status                  TEXT    NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'uploaded', 'accepted', 'rejected')),
     rejection_reason        TEXT,
     example_file_path       TEXT,
     example_mime_type       TEXT

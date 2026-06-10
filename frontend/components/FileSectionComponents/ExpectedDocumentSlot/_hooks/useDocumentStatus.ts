@@ -1,5 +1,6 @@
 import { updateExpectedDocumentStatus } from "@/lib/api/requests";
 import { useState } from "react";
+import toast from "react-hot-toast";
 import { ExpectedDocumentStatus } from "@/types";
 
 export function useDocumentStatus(
@@ -11,13 +12,18 @@ export function useDocumentStatus(
 
         const updateStatus = async (status: ExpectedDocumentStatus, reason?: string) => {
                 setIsLoading(true);
-                await updateExpectedDocumentStatus(
+                const res = await updateExpectedDocumentStatus(
                         expectedDocumentId,
                         status,
                         requestId,
                         reason,
                 );
                 setIsLoading(false);
+                if (!res.success) {
+                        toast.error(
+                                res.message ?? "Nu s-a putut actualiza statusul documentului.",
+                        );
+                }
         };
 
         const approve = () => updateStatus("accepted");

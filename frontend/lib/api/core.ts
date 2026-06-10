@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 import { logger } from "../logger";
+import { translateError } from "../i18n/errors";
 import { APIResponse } from "@/types";
 
 interface HTTPOptions {
@@ -41,19 +42,14 @@ export async function doclaneHTTPHelper<T = unknown>(
                 const resultData = await response.json();
 
                 if (!response.ok) {
-                        logger.error(
-                                `Error during ${method} ${fetchUrl}: ${resultData.message || resultData.error}`,
-                        );
+                        const rawMessage =
+                                resultData.error || resultData.message || "Request failed";
+                        logger.error(`Error during ${method} ${fetchUrl}: ${rawMessage}`);
+                        const translated = translateError(rawMessage);
                         return {
                                 success: false,
-                                error:
-                                        resultData.error ||
-                                        resultData.message ||
-                                        "Request failed",
-                                message:
-                                        resultData.message ||
-                                        resultData.error ||
-                                        "Request failed",
+                                error: translated,
+                                message: translated,
                         };
                 }
 
