@@ -7,8 +7,6 @@
 
 Doclane is a web-based application that supports document workflows between citizens and public institutions. It moves the document exchange entirely online, structures it clearly for both sides, and keeps the citizen informed throughout, replacing the repeated in-person visits that paper-based processes typically require.
 
-🔗 Live demo: [thesis.robert-beres.com](https://thesis.robert-beres.com)
-
 ## Overview
 
 In many public institutions, document requests still rely on physical visits, printed files, and manual processing. Citizens travel to an office, wait in queues, and hand over paperwork just to initiate routine requests, often only to discover later that a document is missing or incorrectly formatted, after which the whole cycle repeats.
