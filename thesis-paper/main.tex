@@ -42,17 +42,16 @@ ABSTRACT
 \vspace{0.5cm}	
 %\cleardoublepage
 
-Doclane is a web application that helps citizens interact with public institutions without needing to visit in person multiple times. In many countries, including Romania, people still need to go to offices, wait in lines, and bring printed documents. This takes a lot of time and effort.
+Document-based administrative workflows in public institutions remain largely dependent on physical presence, paper submissions, and manual processing. Citizens are required to visit offices, wait in queues, and resubmit documents when something is missing or incorrect, often without any visibility into the status of their request between visits. While digital tools exist in this space, they tend to cover only part of the process, handle a single service type, or require significant custom development before an institution can use them.
 
-The problem is that most current systems are not fully digital, or they only cover part of the process. Some systems allow document submission but not tracking or feedback. Others work only for one institution.
+This thesis presents Doclane, a web-based platform designed to digitise the full document request lifecycle between citizens and public institutions. The system allows citizens to browse configurable request templates, upload required documents in structured slots, and track the status of their submission in real time. Institution employees can claim incoming requests, review documents individually, and communicate feedback directly through the platform when corrections are needed. The workflow continues iteratively until all documents are approved, reducing repeated physical visits to only those required by law, such as the final collection of an issued document.
 
-Doclane tries to fix this by letting users submit requests online, upload documents, and see the status of their application. Employees at the institution can review the documents and send feedback if something is wrong or missing. This way, users do not need to visit in person just to find out that a document they provided is missing something.
+Doclane is built on a Go backend organised into clearly separated handler, service, repository, and model layers, and a Next.js frontend using server-side rendering to minimise load times on data-heavy pages. The system is deployed on AWS using a containerised, Kubernetes-based architecture, with infrastructure managed entirely through Terraform. Authentication is handled by AWS Cognito, file storage by S3 with presigned URLs, and document processing is augmented by three AWS managed services: Textract for OCR-based text extraction, Bedrock for LLM-assisted document validation using the Amazon Nova Lite model, and Polly for text-to-speech synthesis. No custom model training was performed; these services are consumed through their managed APIs.
 
-The system is built as a web application using Go for the backend and Next.js for the frontend. It is fully cloud-native and scalable, adhering to modern best practices.
+The system is designed to be institutionally configurable rather than institution-specific. Request templates, required document slots, and department structures are all defined through the admin interface, meaning the same deployment can serve different institutional contexts without changes to the underlying codebase. This distinguishes Doclane from bespoke administrative software, which requires separate development for each institution, and from large national platforms, which are out of reach for smaller public institutions with limited technical resources.
 
-The thesis also looks at existing systems like GOV.UK, Enter Finland, and DocuSign. These systems solve parts of the problem but not all of it. Doclane tries to bring these ideas together in one system that can work across different institutions.
+The thesis also reviews related work in electronic document management and e-government systems, drawing on academic literature as well as real deployments such as Estonia's X-Road and the UK's GOV.UK platform, and situates Doclane relative to the EU's eIDAS regulatory framework for electronic identification and trust services.
 
-Doclane does not replace the physical pickup of final documents, since some documents require this by law. But it removes most of the unnecessary visits that happen before that step, which is where most of the time and frustration comes from.
 \tableofcontents
 
 

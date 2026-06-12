@@ -1,7 +1,7 @@
 \chapter{Related work}
 \label{chap:ch2}
 
-\par Improving how public institutions handle document-based requests is not a new problem, and a range of systems and research efforts have addressed parts of it over the past two decades. This chapter surveys the most relevant work: academic studies on electronic document management in public administration, real government platforms that have gone live at scale, and a widely used commercial tool that operates in adjacent territory. The goal is to establish what already exists, where it falls short in relation to the specific problem this thesis addresses, and how Doclane is positioned relative to these prior efforts.
+\par Improving how public institutions handle document-based requests is not a new problem, and a range of systems and research efforts have addressed parts of it over the past two decades. This chapter surveys the most relevant work: academic studies on electronic document management in public administration, real government platforms that have gone live at scale, and a widely used commercial tool that tackle the same area of need. The goal is to establish what already exists, where it falls short in relation to the specific problem this thesis addresses, and how Doclane is positioned relative to these prior efforts.
 
 % -------------------------------------------------
 
@@ -36,14 +36,6 @@
 \par Az Ab Aziz et al. \cite{abaziz2019ddms} study the rollout of a Digital Document Management System in the Malaysian public sector and find that the technical side of implementation is rarely the primary obstacle. Policy alignment, inter-agency coordination, security requirements, and staff training tend to create more friction than the software itself. Institutions that deployed the system without addressing these factors first ended up with inconsistent usage patterns across departments, reducing the overall effectiveness of the rollout.
 
 \par The authors conclude that successful implementation depends on establishing clear guidelines before deployment rather than trying to retrofit them after. For a system like Doclane, which is designed to be adopted by multiple institutions independently, this suggests that documentation, onboarding support, and predefined workflow structures are as important as the technical architecture.
-
-% -------------------------------------------------
-
-\section{Risk and reward in e-government document management}
-
-\par Jones and Mauricio \cite{jones2012egovernment} conduct a literature analysis of e-government document management implementations, organising their findings around four themes that consistently appear across studies: IT security, user adoption, implementation barriers, and the relationship between digital services and democratic accountability. Their conclusion is that these themes are interconnected and that ignoring any one of them tends to create problems in the others. A system with strong security but poor usability will see low adoption; high adoption without adequate security creates risk.
-
-\par This framing is useful for understanding where Doclane sits in relation to production-grade e-government systems. The current implementation addresses security through IRSA, presigned URLs, HTTP-only cookies, and JWT validation, and addresses usability through structured submission flows and direct feedback mechanisms. The remaining themes, particularly the policy and accountability dimensions, fall outside the scope of this project but would need to be addressed in any real institutional deployment.
 
 % -------------------------------------------------
 
