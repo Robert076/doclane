@@ -1,7 +1,7 @@
 \chapter{Related work}
 \label{chap:ch2}
 
-\par Improving how public institutions handle document-based requests is not a new problem, and a range of systems and research efforts have addressed parts of it over the past two decades. This chapter surveys the most relevant work: academic studies on electronic document management in public administration, real government platforms that have gone live at scale, and a widely used commercial tool that tackle the same area of need. The goal is to establish what already exists, where it falls short in relation to the specific problem this thesis addresses, and how Doclane is positioned relative to these prior efforts.
+\par Improving how public institutions handle document-based requests is not a new problem, and a range of systems and research efforts have addressed parts of it over the past two decades. This chapter surveys the most relevant work: academic studies on electronic document management in public administration, real government platforms that have gone live at scale, and the EU regulatory framework that governs electronic identity in this space. The goal is to establish what already exists, where it falls short in relation to the specific problem this thesis addresses, and how Doclane is positioned relative to these prior efforts.
 
 % -------------------------------------------------
 
@@ -57,7 +57,7 @@
 
 \section{eIDAS and the legal foundation for digital identity in the EU}
 
-\par The eIDAS Regulation (EU No 910/2014), amended in 2024 by Regulation (EU) 2024/1183, establishes the legal framework for electronic identification and trust services across EU member states \cite{eidas2014}. It defines requirements for electronic signatures, seals, timestamps, and identity schemes, and mandates mutual recognition of notified identity schemes across member states. The 2024 amendment introduced the European Digital Identity Wallet, which member states are required to make available to citizens within 24 months of the implementing acts entering into force.
+\par The eIDAS Regulation (EU No 910/2014), amended in 2024 by Regulation (EU) 2024/1183, establishes the legal framework for electronic identification and trust services across EU member states \cite{eidas2014, eidas2024}. It defines requirements for electronic signatures, seals, timestamps, and identity schemes, and mandates mutual recognition of notified identity schemes across member states. The 2024 amendment introduced the European Digital Identity Wallet, which member states are required to make available to citizens within 24 months of the implementing acts entering into force \cite{eidas2024}.
 
 \par For a system like Doclane, eIDAS is relevant primarily as the regulatory context that would govern any serious production deployment. Submissions made through an e-government platform carry greater legal weight when the submitter's identity has been verified through a notified eID scheme, and in some administrative contexts this verification may be a legal requirement rather than an optional enhancement. The current implementation uses Cognito-managed accounts, which provide authentication but no identity assurance in the eIDAS sense. Integration with an eIDAS-compliant identity provider is identified as the most significant future extension to the system.
 
