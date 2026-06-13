@@ -9,7 +9,6 @@ import (
 	"testing"
 )
 
-// countComments is a small assertion helper used by the transaction tests.
 func countComments(t *testing.T, requestID int) int {
 	t.Helper()
 	var n int
@@ -60,14 +59,12 @@ func TestTxManager_RollsBackAllWritesOnError(t *testing.T) {
 	sentinel := errors.New("boom halfway through")
 
 	err := mgr.WithTx(context.Background(), func(tx *sql.Tx) error {
-		// First write succeeds...
 		if _, err := tx.ExecContext(context.Background(),
 			`INSERT INTO document_comments (request_id, user_id, comment) VALUES ($1, $2, $3)`,
 			reqID, userID, "this should be rolled back",
 		); err != nil {
 			return err
 		}
-		// ...then the unit of work fails, so nothing should survive.
 		return sentinel
 	})
 
@@ -94,7 +91,6 @@ func TestTxManager_RollsBackOnConstraintViolation(t *testing.T) {
 		); err != nil {
 			return err
 		}
-		// Violates the foreign key on user_id -> the DB rejects this insert.
 		_, err := tx.ExecContext(context.Background(),
 			`INSERT INTO document_comments (request_id, user_id, comment) VALUES ($1, $2, $3)`,
 			reqID, 999999, "invalid user",

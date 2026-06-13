@@ -28,7 +28,6 @@ func TestInvitationCodeRepo_CreateAndGetByCode(t *testing.T) {
 	if got.Code != "ABCD-EF01-2345" {
 		t.Errorf("expected the created code back, got %q", got.Code)
 	}
-	// Verifies the JOIN onto departments populates the department name.
 	if got.DepartmentName != "Registry" {
 		t.Errorf("expected department name 'Registry', got %q", got.DepartmentName)
 	}
@@ -53,7 +52,6 @@ func TestInvitationCodeRepo_GetByCreator_ExcludesUsedCodes(t *testing.T) {
 
 	repo := NewInvitationCodeRepo(testDB)
 
-	// One unused code, one that we then mark as used.
 	if err := repo.CreateInvitationCode(context.Background(), deptID, "AAAA-AAAA-AAAA", adminID, nil); err != nil {
 		t.Fatalf("create unused: %v", err)
 	}
@@ -82,11 +80,9 @@ func TestInvitationCodeRepo_InvalidateCode_IsIdempotentlyGuarded(t *testing.T) {
 
 	repo := NewInvitationCodeRepo(testDB)
 
-	// First invalidation succeeds.
 	if err := repo.InvalidateCode(context.Background(), codeID, adminID); err != nil {
 		t.Fatalf("first InvalidateCode: %v", err)
 	}
-	// Second must fail: the WHERE used_at IS NULL guard matches no rows.
 	if err := repo.InvalidateCode(context.Background(), codeID, adminID); err == nil {
 		t.Error("expected an error when invalidating an already-used code")
 	}
@@ -104,7 +100,6 @@ func TestInvitationCodeRepo_DeleteCode(t *testing.T) {
 		t.Fatalf("DeleteCode: %v", err)
 	}
 
-	// Deleting again must report the not-found path (zero rows affected).
 	if err := repo.DeleteCode(context.Background(), codeID); err == nil {
 		t.Error("expected an error when deleting a non-existent code")
 	}

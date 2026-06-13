@@ -10,8 +10,6 @@ import (
 	apierrors "github.com/Robert076/doclane/backend/types/errors"
 )
 
-// decodeBody reads the JSON body of a recorded response into a map so the
-// individual fields (success, error) can be asserted on.
 func decodeBody(t *testing.T, rec *httptest.ResponseRecorder) map[string]any {
 	t.Helper()
 	var body map[string]any
@@ -138,8 +136,6 @@ func TestWriteError_BadGatewayMapsTo502(t *testing.T) {
 	}
 }
 
-// An error that is not one of the known typed errors should fall through to
-// the default branch and be reported as a 400.
 func TestWriteError_UnknownErrorDefaultsTo400(t *testing.T) {
 	rec := httptest.NewRecorder()
 

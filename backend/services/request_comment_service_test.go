@@ -12,7 +12,6 @@ import (
 	"github.com/Robert076/doclane/backend/types/errors"
 )
 
-// discardLogger returns a logger that throws away output, keeping test runs quiet.
 func discardLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
 }
@@ -25,15 +24,12 @@ func memberClaims(userID int, departmentID int) types.CallerContext {
 	return types.CallerContext{UserID: userID, Role: types.RoleMember, DepartmentID: &departmentID}
 }
 
-// openRequestInDepartment builds a request that is neither closed nor cancelled.
 func openRequestInDepartment(departmentID, assignee int) models.RequestDTORead {
 	var req models.RequestDTORead
 	req.DepartmentID = departmentID
 	req.Assignee = assignee
 	return req
 }
-
-// ---------- validateComment ----------
 
 func TestValidateComment_ValidCommentPasses(t *testing.T) {
 	s := &RequestCommentService{logger: discardLogger()}
@@ -78,8 +74,6 @@ func TestValidateComment_TooLongFails(t *testing.T) {
 		t.Error("expected an error for a comment longer than 200 characters")
 	}
 }
-
-// ---------- checkUserIsNotSpamming ----------
 
 func TestCheckUserIsNotSpamming_RecentCommentIsBlocked(t *testing.T) {
 	commentRepo := &fakeCommentRepo{
@@ -129,8 +123,6 @@ func TestCheckUserIsNotSpamming_NoPreviousCommentIsAllowed(t *testing.T) {
 	}
 }
 
-// ---------- checkUserIsParticipantOfRequest ----------
-
 func TestCheckUserIsParticipant_AdminAlwaysAllowed(t *testing.T) {
 	requestRepo := &fakeRequestRepo{
 		getRequestByID: func(ctx context.Context, id int) (models.RequestDTORead, error) {
@@ -169,7 +161,6 @@ func TestCheckUserIsParticipant_AssigneeAllowed(t *testing.T) {
 	}
 	s := &RequestCommentService{requestRepo: requestRepo, logger: discardLogger()}
 
-	// caller is in a different department (7) but is the assignee (user 2)
 	_, err := s.checkUserIsParticipantOfRequest(context.Background(), memberClaims(2, 7), 1)
 
 	if err != nil {
@@ -194,8 +185,6 @@ func TestCheckUserIsParticipant_OutsiderForbidden(t *testing.T) {
 		t.Errorf("expected ErrForbidden, got %T", err)
 	}
 }
-
-// ---------- AddComment ----------
 
 func TestAddComment_HappyPathPopulatesFieldsAndReturnsID(t *testing.T) {
 	requestRepo := &fakeRequestRepo{

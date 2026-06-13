@@ -8,11 +8,6 @@ import (
 	"time"
 )
 
-// The seed helpers below insert the minimum rows a test needs and return the
-// generated primary key. They keep individual tests readable by hiding the
-// boilerplate INSERTs, and they fail the test immediately on error so a broken
-// fixture never masquerades as a logic failure.
-
 func seedDepartment(t *testing.T, name string) int {
 	t.Helper()
 	var id int
@@ -26,7 +21,6 @@ func seedDepartment(t *testing.T, name string) int {
 	return id
 }
 
-// seedUser inserts a user. departmentID may be 0 to leave the department NULL.
 func seedUser(t *testing.T, cognitoSub, email, firstName, lastName, role string, departmentID int) int {
 	t.Helper()
 	var deptArg any
@@ -59,8 +53,6 @@ func seedRequest(t *testing.T, title string, assignee, departmentID int) int {
 	return id
 }
 
-// seedInvitationCode inserts a code. expiresAt may be nil for a code that never
-// expires.
 func seedInvitationCode(t *testing.T, code string, createdBy, departmentID int, expiresAt *time.Time) int {
 	t.Helper()
 	var id int

@@ -1,14 +1,5 @@
 //go:build integration
 
-// Package repositories integration tests run against a real PostgreSQL instance
-// started in a throwaway container. They are gated behind the "integration"
-// build tag so the default `go test ./...` stays fast and dependency-free.
-//
-// Run with:
-//
-//	go test -tags=integration ./repositories/...
-//
-// Requires a working Docker daemon (provided by GitHub-hosted runners).
 package repositories
 
 import (
@@ -27,13 +18,8 @@ import (
 	"github.com/testcontainers/testcontainers-go/wait"
 )
 
-// testDB is the shared connection pool for the lifetime of the test binary.
-// It is initialised once in TestMain and reused by every test, which keeps the
-// suite fast: one container start, not one per test.
 var testDB *sql.DB
 
-// schemaPath points at the canonical schema the application ships with, so the
-// tests exercise the exact tables, constraints, and defaults used in production.
 const schemaPath = "../../init.sql"
 
 func TestMain(m *testing.M) {
@@ -47,7 +33,6 @@ func TestMain(m *testing.M) {
 
 	code := m.Run()
 
-	// Best-effort cleanup; the container is ryuk-reaped even if this fails.
 	_ = db.Close()
 	if err := container.Terminate(ctx); err != nil {
 		log.Printf("could not terminate postgres container: %v", err)
@@ -56,8 +41,6 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-// startPostgres spins up a Postgres container matching the production image,
-// applies the application schema, and returns a ready-to-use connection pool.
 func startPostgres(ctx context.Context) (*postgres.PostgresContainer, *sql.DB, error) {
 	schema, err := filepath.Abs(schemaPath)
 	if err != nil {
@@ -96,9 +79,7 @@ func startPostgres(ctx context.Context) (*postgres.PostgresContainer, *sql.DB, e
 	return container, db, nil
 }
 
-// resetDB truncates every application table and restarts identity sequences so
-// each test starts from a known-empty state. Register it with t.Cleanup or call
-// it at the top of a test. CASCADE handles the foreign-key ordering for us.
+// resetDB clears all tables so each test starts from an empty state.
 func resetDB(t *testing.T) {
 	t.Helper()
 	_, err := testDB.Exec(`

@@ -10,7 +10,6 @@ import (
 	"github.com/Robert076/doclane/backend/models"
 )
 
-// buildRequest assembles a minimal valid Request for insertion.
 func buildRequest(title string, assignee, departmentID int) models.Request {
 	var req models.Request
 	req.Title = title
@@ -48,7 +47,6 @@ func TestRequestRepo_AddRequestWithTx_CommitCreatesRequestAndDocs(t *testing.T) 
 		t.Fatalf("expected the transaction to commit, got %v", err)
 	}
 
-	// The request is readable...
 	got, err := requestRepo.GetRequestByID(context.Background(), requestID)
 	if err != nil {
 		t.Fatalf("GetRequestByID: %v", err)
@@ -57,7 +55,6 @@ func TestRequestRepo_AddRequestWithTx_CommitCreatesRequestAndDocs(t *testing.T) 
 		t.Errorf("expected title 'ID card', got %q", got.Title)
 	}
 
-	// ...and both expected documents were persisted atomically with it.
 	docs, err := expectedDocRepo.GetExpectedDocumentsByRequest(context.Background(), requestID)
 	if err != nil {
 		t.Fatalf("GetExpectedDocumentsByRequest: %v", err)
@@ -81,8 +78,6 @@ func TestRequestRepo_AddRequestWithTx_RollbackLeavesNoOrphans(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		// A document with an invalid status violates the CHECK constraint, which
-		// must roll back the request inserted moments earlier in the same tx.
 		ed := models.ExpectedDocument{RequestID: id, Title: "bad", Status: "not-a-valid-status"}
 		return expectedDocRepo.AddExpectedDocumentToRequestWithTx(context.Background(), tx, ed)
 	})

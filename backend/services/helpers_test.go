@@ -7,8 +7,6 @@ import (
 	"github.com/Robert076/doclane/backend/models"
 )
 
-// ---------- ValidateRequestInput ----------
-
 func TestValidateRequestInput_ValidInputPasses(t *testing.T) {
 	dto := models.RequestDTOCreate{TemplateID: 1}
 
@@ -59,8 +57,6 @@ func TestValidateRequestInput_ScheduledWithScheduledForPasses(t *testing.T) {
 		t.Errorf("expected no error when scheduled_for is set, got %v", err)
 	}
 }
-
-// ---------- ComputeStatus ----------
 
 func TestComputeStatus_NoDocumentsAndNoUploadIsPending(t *testing.T) {
 	status := ComputeStatus(nil, nil, nil)
@@ -134,8 +130,6 @@ func TestComputeStatus_FutureDueWithPendingDocIsPending(t *testing.T) {
 	}
 }
 
-// ---------- ValidatePatchDTO ----------
-
 func TestValidatePatchDTO_ValidTitlePasses(t *testing.T) {
 	if err := ValidatePatchDTO(models.RequestDTOPatch{Title: "Valid title"}); err != nil {
 		t.Errorf("expected no error for a valid title, got %v", err)
@@ -154,8 +148,6 @@ func TestValidatePatchDTO_TooLongTitleFails(t *testing.T) {
 		t.Error("expected an error for a title longer than 30 characters")
 	}
 }
-
-// ---------- ValidateRequestTemplateInput ----------
 
 func TestValidateRequestTemplateInput_ValidTemplatePasses(t *testing.T) {
 	tmpl := models.RequestTemplate{Title: "Birth certificate request"}
@@ -199,8 +191,6 @@ func TestValidateRequestTemplateInput_InvalidCronFails(t *testing.T) {
 	}
 }
 
-// ---------- ComputeNextDueAt ----------
-
 func TestComputeNextDueAt_ReturnsDueDateWhenProvided(t *testing.T) {
 	due := time.Now().Add(48 * time.Hour)
 
@@ -239,8 +229,6 @@ func TestComputeNextDueAt_NilForInvalidCron(t *testing.T) {
 	}
 }
 
-// ---------- ValidateFileInfo ----------
-
 func TestValidateFileInfo_ValidPdfPasses(t *testing.T) {
 	if err := ValidateFileInfo("document.pdf", 1024); err != nil {
 		t.Errorf("expected no error for a valid pdf, got %v", err)
@@ -271,8 +259,6 @@ func TestValidateFileInfo_AllowedImageExtensionPasses(t *testing.T) {
 		t.Errorf("expected no error for a jpeg, got %v", err)
 	}
 }
-
-// ---------- validateRequestTemplatePatchDTO ----------
 
 func TestValidateRequestTemplatePatchDTO_EmptyPatchPasses(t *testing.T) {
 	if err := validateRequestTemplatePatchDTO(models.RequestTemplateDTOPatch{}); err != nil {
@@ -306,8 +292,6 @@ func TestValidateRequestTemplatePatchDTO_InvalidCronFails(t *testing.T) {
 		t.Error("expected an error for an invalid cron expression")
 	}
 }
-
-// ---------- validateTagDTO / isValidHexColor ----------
 
 func TestValidateTagDTO_ValidNameAndColorPasses(t *testing.T) {
 	if err := validateTagDTO("Urgent", "#ff5722"); err != nil {

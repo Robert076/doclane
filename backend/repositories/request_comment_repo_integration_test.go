@@ -45,7 +45,6 @@ func TestRequestCommentRepo_AddAndGetRoundTrip(t *testing.T) {
 	if got.Comment != "Please re-upload page 2." {
 		t.Errorf("comment text mismatch: got %q", got.Comment)
 	}
-	// Verifies the JOIN onto users populates the author's name.
 	if got.UserFirstName != "Ana" || got.UserLastName != "Pop" {
 		t.Errorf("expected author Ana Pop from the users join, got %q %q", got.UserFirstName, got.UserLastName)
 	}
@@ -83,7 +82,6 @@ func TestRequestCommentRepo_GetCommentsByRequestID(t *testing.T) {
 			t.Fatalf("seeding comment: %v", err)
 		}
 	}
-	// A comment on a different request must not leak into the result.
 	if _, err := repo.AddComment(context.Background(), models.RequestComment{
 		RequestID: otherReqID, UserID: userID, Comment: "other", CreatedAt: now, UpdatedAt: now,
 	}); err != nil {

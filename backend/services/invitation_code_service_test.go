@@ -10,12 +10,9 @@ import (
 	"github.com/Robert076/doclane/backend/types/errors"
 )
 
-// existingDepartment is a department lookup that always succeeds.
 func departmentExists(ctx context.Context, id int) (models.DepartmentDTORead, error) {
 	return models.DepartmentDTORead{}, nil
 }
-
-// ---------- generateInvitationCode ----------
 
 func TestGenerateInvitationCode_FormatIsCorrect(t *testing.T) {
 	code, err := generateInvitationCode()
@@ -37,8 +34,6 @@ func TestGenerateInvitationCode_ProducesDistinctValues(t *testing.T) {
 		t.Errorf("expected two generated codes to differ, both were %q", first)
 	}
 }
-
-// ---------- CreateInvitationCode ----------
 
 func TestCreateInvitationCode_NonAdminForbidden(t *testing.T) {
 	s := &InvitationCodeService{logger: discardLogger()}
@@ -129,8 +124,6 @@ func TestCreateInvitationCode_NoExpiryWhenDaysZero(t *testing.T) {
 	}
 }
 
-// ---------- GetInvitationCodeInfo ----------
-
 func TestGetInvitationCodeInfo_UnknownCodeIsNotFound(t *testing.T) {
 	invRepo := &fakeInvitationRepo{
 		getByCode: func(ctx context.Context, code string) (models.InvitationCodeReadDTO, error) {
@@ -204,8 +197,6 @@ func TestGetInvitationCodeInfo_ValidCodeReturned(t *testing.T) {
 	}
 }
 
-// ---------- DeleteInvitationCode ----------
-
 func TestDeleteInvitationCode_NonAdminForbidden(t *testing.T) {
 	s := &InvitationCodeService{logger: discardLogger()}
 
@@ -254,8 +245,6 @@ func TestDeleteInvitationCode_OtherUsersCodeForbidden(t *testing.T) {
 	}
 }
 
-// ---------- deleteExpiredCodes ----------
-
 func TestDeleteExpiredCodes_RemovesExpiredKeepsValid(t *testing.T) {
 	expired := time.Now().Add(-time.Hour)
 	future := time.Now().Add(time.Hour)
@@ -285,7 +274,6 @@ func TestDeleteExpiredCodes_RemovesExpiredKeepsValid(t *testing.T) {
 }
 
 func TestDeleteExpiredCodes_NonAdminCannotReachThisButValidCodesPassThrough(t *testing.T) {
-	// All codes valid: nothing should be deleted and all should pass through.
 	future := time.Now().Add(time.Hour)
 	invRepo := &fakeInvitationRepo{
 		deleteCode: func(ctx context.Context, id int) error {
