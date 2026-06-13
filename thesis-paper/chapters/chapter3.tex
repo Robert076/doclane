@@ -60,3 +60,5 @@
 \par The frontend is built with Next.js, a React-based framework that supports server-side rendering. The decision to use it rather than a client-side-only approach comes down to the nature of the application: because almost every page in Doclane depends on data fetched from the backend, a purely client-side setup would mean users frequently encounter loading states while data is retrieved after the page has already been painted. By fetching data on the server before the response is sent to the browser, Next.js eliminates most of that latency from the user's perspective.
 
 \par On the component level, the frontend follows the DRY (Don't Repeat Yourself) principle by breaking the interface into small, reusable pieces. Any UI element that appears in more than one place is defined once and composed where needed, which keeps the codebase consistent and reduces the surface area for visual inconsistencies as the application evolves.
+
+\input{chapters/chapter_testing}
