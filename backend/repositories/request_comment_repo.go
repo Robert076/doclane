@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Robert076/doclane/backend/models"
+	"github.com/Robert076/doclane/backend/types/errors"
 )
 
 type RequestCommentRepo struct {
@@ -57,14 +58,8 @@ func (r *RequestCommentRepo) GetCommentByID(ctx context.Context, commentID int) 
 		FROM document_comments c JOIN users u ON c.user_id = u.id WHERE c.id = $1
 	`
 
-	row, err := r.db.QueryContext(ctx, query)
-	if err != nil {
-		return models.RequestCommentDTO{}, err
-	}
-	defer row.Close()
-
 	var c models.RequestCommentDTO
-	err = row.Scan(
+	err := r.db.QueryRowContext(ctx, query, commentID).Scan(
 		&c.ID,
 		&c.RequestID,
 		&c.UserID,
@@ -74,6 +69,9 @@ func (r *RequestCommentRepo) GetCommentByID(ctx context.Context, commentID int) 
 		&c.UserFirstName,
 		&c.UserLastName,
 	)
+	if err == sql.ErrNoRows {
+		return models.RequestCommentDTO{}, errors.ErrNotFound{Msg: "Comment not found."}
+	}
 
 	return c, err
 }
