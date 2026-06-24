@@ -31,7 +31,7 @@ export async function changePassword(
 
   try {
     const client = new CognitoIdentityProviderClient({ 
-      region: process.env.NEXT_PUBLIC_AWS_REGION 
+      region: process.env.NEXT_PUBLIC_AWS_REGION ?? "eu-west-1"
     });
     await client.send(new ChangePasswordCommand({
       AccessToken: accessToken,

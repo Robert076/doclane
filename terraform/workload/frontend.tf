@@ -35,6 +35,11 @@ resource "kubernetes_deployment" "frontend" {
             value = "https://thesis.robert-beres.com"
           }
 
+          env {
+            name  = "NEXT_PUBLIC_AWS_REGION"
+            value = "eu-west-1"
+          }
+
           liveness_probe {
             http_get {
               path = "/api/health"
