@@ -6,6 +6,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/Robert076/doclane/backend/events"
 	"github.com/Robert076/doclane/backend/repositories"
@@ -152,6 +153,11 @@ func initDB() *sql.DB {
 	if err := db.Ping(); err != nil {
 		log.Fatal("Cannot connect to database:", err)
 	}
+
+	db.SetMaxOpenConns(20)
+	db.SetMaxIdleConns(10)
+	db.SetConnMaxLifetime(5 * time.Minute)
+	db.SetConnMaxIdleTime(2 * time.Minute)
 
 	return db
 }

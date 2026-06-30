@@ -670,6 +670,11 @@ func (s *RequestService) AddDocument(
 	content io.Reader,
 ) (*int, error) {
 	if err := ValidateFileInfo(fileName, fileSize); err != nil {
+		s.logger.Info("extension not supported",
+			slog.Int("caller_id", claims.UserID),
+			slog.Int("request_id", requestID),
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 
